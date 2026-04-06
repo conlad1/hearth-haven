@@ -1,28 +1,26 @@
-import './App.css';
-import { CartProvider } from './context/CartContext';
-import AdminProjectsPage from './pages/AdminProjectsPage';
-import CartPage from './pages/CartPage';
-import DonatePage from './pages/DonatePage';
-import ProjectsPage from './pages/ProjectsPage';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Routes, Route } from "react-router-dom";
+
+import Header from './components/Header';
+import Footer from './components/Footer';
+
+import LandingPage from './pages/LandingPage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
 
 function App() {
   return (
     <>
-      <CartProvider>
-        <Router>
-          <Routes>
-            <Route path="/" element={<ProjectsPage />} />
-            <Route path="/projects" element={<ProjectsPage />} />
-            <Route
-              path="/donate/:projectName/:projectId"
-              element={<DonatePage />}
-            />
-            <Route path="/cart" element={<CartPage />} />
-            <Route path="/adminprojects" element={<AdminProjectsPage />} />
-          </Routes>
-        </Router>
-      </CartProvider>
+      <Header />
+
+      <main>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+        </Routes>
+      </main>
+
+      <Footer />
     </>
   );
 }
