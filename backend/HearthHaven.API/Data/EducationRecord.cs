@@ -1,0 +1,43 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace HearthHaven.API.Data;
+
+[Table("education_records")]
+public class EducationRecord
+{
+    [Key]
+    [Column("education_record_id")]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public int EducationRecordId { get; set; }
+
+    [Column("resident_id")]
+    public int ResidentId { get; set; }
+
+    [Column("record_date")]
+    public DateOnly RecordDate { get; set; }
+
+    [Column("education_level")]
+    public required string EducationLevel { get; set; }
+
+    [Column("school_name")]
+    public string? SchoolName { get; set; }
+
+    [Column("enrollment_status")]
+    public required string EnrollmentStatus { get; set; }
+
+    [Column("attendance_rate")]
+    public decimal AttendanceRate { get; set; }
+
+    [Column("progress_percent")]
+    public decimal ProgressPercent { get; set; }
+
+    [Column("completion_status")]
+    public required string CompletionStatus { get; set; }
+
+    [Column("notes")]
+    public string? Notes { get; set; }
+
+    [ForeignKey(nameof(ResidentId))]
+    public Resident? Resident { get; set; }
+}
