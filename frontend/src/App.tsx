@@ -15,6 +15,11 @@ import DonorsPage from "./pages/DonorPage";
 import AllocationPage from "./pages/AllocationPage";
 import ImpactDashboard from "./pages/ImpactDashboard";
 import { AuthService } from "./api/AuthService";
+import OutreachPage from "./pages/OutreachPage";
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
+import TermsPage from "./pages/TermsPage";
+import TeapotPage from "./pages/TeapotPage";
+import CookieConsentBanner from "./components/CookieConsentBanner";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return AuthService.isAuthenticated() ? <>{children}</> : <Navigate to="/login" replace />;
@@ -57,6 +62,7 @@ function App() {
     <>
       <ScrollToHash />
       <Header isAuthenticated={isAuthenticated} />
+      <CookieConsentBanner />
 
       <main>
         <Routes>
@@ -66,10 +72,23 @@ function App() {
           <Route path="/cases" element={<CasePage />} />
           <Route path="/cases/:id" element={<ResidentDetailPage />} />
           <Route path="/donate" element={<DonatePage />} />
-          <Route path="/donate/thank-you" element={<ThankYouPage />} />
           <Route path="/impact" element={<ImpactDashboard />} />
-          <Route path="/donors" element={<ProtectedRoute><DonorsPage /></ProtectedRoute>} />
-          <Route path="/allocations" element={<ProtectedRoute><AllocationPage /></ProtectedRoute>} />
+          <Route
+            path="/donors"
+            element={(
+              <ProtectedRoute>
+                <DonorsPage />
+              </ProtectedRoute>
+            )}
+          />
+          <Route
+            path="/allocations"
+            element={(
+              <ProtectedRoute>
+                <AllocationPage />
+              </ProtectedRoute>
+            )}
+          />
         </Routes>
       </main>
 

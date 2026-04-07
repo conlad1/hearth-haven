@@ -1,10 +1,16 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import React from 'react';
 import { AuthService } from '../api/AuthService';
 
+type RegisterNavigationState = {
+  returnTo?: string;
+} | null;
+
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const locationState = location.state as RegisterNavigationState;
   
   // State for the form inputs
   const [fullName, setFullName] = useState('');
@@ -32,7 +38,13 @@ const RegisterPage: React.FC = () => {
       const response = await AuthService.register(email, password);
       
       if (response.ok) {
-        navigate('/login', { replace: true, state: { registered: true } });
+        navigate('/login', {
+          replace: true,
+          state: {
+            registered: true,
+            returnTo: locationState?.returnTo || '/',
+          },
+        });
       } else {
         // If the backend rejects the password (e.g., no uppercase letter)
         const data = await response.json();

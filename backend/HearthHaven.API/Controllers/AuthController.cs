@@ -53,5 +53,12 @@ namespace HearthHaven.API.Controllers
 
             return Unauthorized(new { Message = "Invalid login attempt." });
         }
+
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            await _signInManager.SignOutAsync();
+            return Ok(new { Message = "Logout successful." });
+        }
     }
 }

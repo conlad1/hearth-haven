@@ -23,29 +23,28 @@ function Footer() {
           <div className="footer-col">
             <h4>Quick Links</h4>
             <a href="/">Home</a>
-            <a href="/analytics">Analytics</a>
+            <a href="/outreach">Outreach</a>
             <a href="/cases">Case Management</a>
             <a href="/donors">Donors</a>
-            <a href="/safehouses">Safehouses</a>
+            <a href="/donate">Donate</a>
           </div>
 
           {/* Get Involved */}
           <div className="footer-col">
             <h4>Get Involved</h4>
             <a href="/donate">Donate</a>
-            <a href="/volunteer">Become a Volunteer</a>
-            <a href="/partner">Partner With Us</a>
-            <a href="/events">Upcoming Events</a>
+            <a href="/register">Create an Account</a>
+            <a href="/login">Sign In</a>
+            <a href="/outreach">Outreach Insights</a>
           </div>
 
           {/* Support */}
           <div className="footer-col">
             <h4>Support</h4>
             <a href="/#contact">Contact Us</a>
-            <a href="/faq">FAQ</a>
             <a href="/privacy">Privacy Policy</a>
             <a href="/terms">Terms of Service</a>
-            <a href="/accessibility">Accessibility</a>
+            <a href="/teapot">Teapot</a>
           </div>
         </div>
 
@@ -56,12 +55,12 @@ function Footer() {
         <div className="footer-bottom">
           <p className="footer-copy">
             © {new Date().getFullYear()} Hearth Haven. All rights reserved.
-            Registered 501(c)(3) nonprofit organization.
+            Soon to be a registered 501(c)(3) nonprofit organization.
           </p>
           <div className="footer-legal-links">
             <a href="/privacy">Privacy Policy</a>
             <a href="/terms">Terms of Service</a>
-            <a href="/#contact">Contact Us</a>
+            <a href="/teapot">Teapot</a>
           </div>
         </div>
       </div>

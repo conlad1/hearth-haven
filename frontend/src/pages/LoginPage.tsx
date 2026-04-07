@@ -3,19 +3,24 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import React from 'react';
 import { AuthService } from '../api/AuthService';
 
+type LoginNavigationState = {
+  registered?: boolean;
+  returnTo?: string;
+} | null;
+
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-
-  const registrationSuccessMessage = (location.state as { registered?: boolean } | null)?.registered
-    ? 'Account created successfully. Please sign in.'
-    : '';
+  const locationState = location.state as LoginNavigationState;
+  const returnTo = locationState?.returnTo || '/';
+  const fromRegistration = !!locationState?.registered;
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
-  const [success] = useState(registrationSuccessMessage);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('Login successful. Redirecting...');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,8 +30,16 @@ const LoginPage: React.FC = () => {
       const response = await AuthService.login(email, password);
 
       if (response.ok) {
+        const modalMessage = fromRegistration
+          ? 'Account created and login confirmed. Redirecting you to Hearth Haven...'
+          : 'Login successful. Redirecting you now...';
+
+        setSuccessMessage(modalMessage);
         AuthService.setAuthenticated(true);
-        navigate('/');
+        setShowSuccessModal(true);
+        window.setTimeout(() => {
+          navigate(returnTo, { replace: true });
+        }, 1200);
       } else {
         const data = await response.json();
         const message = data?.message || data?.Message || 'Invalid email or password.';
@@ -48,7 +61,6 @@ const LoginPage: React.FC = () => {
         <div className="auth-box">
           <h2>Sign In</h2>
 
-          {success && <p style={{ color: 'green', marginBottom: '10px' }}>{success}</p>}
           {error && <p style={{ color: 'red', marginBottom: '10px' }}>{error}</p>}
 
           <form className="auth-form" onSubmit={handleLogin}>
@@ -84,6 +96,15 @@ const LoginPage: React.FC = () => {
           </p>
         </div>
       </div>
+
+      {showSuccessModal && (
+        <div className="auth-modal-backdrop" role="alertdialog" aria-modal="true" aria-labelledby="auth-success-title">
+          <div className="auth-modal">
+            <h3 id="auth-success-title">Welcome to Hearth Haven</h3>
+            <p>{successMessage}</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -5,13 +5,17 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "node scripts/generate-sitemap.mjs",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
     "bootstrap": "^5.3.3",
+    "chart.js": "^4.5.1",
+    "chartjs-plugin-annotation": "^3.1.0",
     "react": "^19.0.0",
+    "react-chartjs-2": "^5.3.1",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.14.0"
   },
