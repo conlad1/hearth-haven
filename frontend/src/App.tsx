@@ -1,28 +1,51 @@
-import './App.css';
-import { CartProvider } from './context/CartContext';
-import AdminProjectsPage from './pages/AdminProjectsPage';
-import CartPage from './pages/CartPage';
-import DonatePage from './pages/DonatePage';
-import ProjectsPage from './pages/ProjectsPage';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { useEffect } from "react";
+import { Routes, Route, useLocation } from "react-router-dom";
+
+import Header from './components/Header';
+import Footer from './components/Footer';
+
+import LandingPage from './pages/LandingPage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import CasePage from './pages/CasePage';
+import DonatePage from "./pages/DonatePage";
+
+function ScrollToHash() {
+  const location = useLocation();
+
+  useEffect(() => {
+    if (!location.hash) {
+      return;
+    }
+
+    const elementId = location.hash.replace("#", "");
+    const element = document.getElementById(elementId);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [location]);
+
+  return null;
+}
 
 function App() {
   return (
     <>
-      <CartProvider>
-        <Router>
-          <Routes>
-            <Route path="/" element={<ProjectsPage />} />
-            <Route path="/projects" element={<ProjectsPage />} />
-            <Route
-              path="/donate/:projectName/:projectId"
-              element={<DonatePage />}
-            />
-            <Route path="/cart" element={<CartPage />} />
-            <Route path="/adminprojects" element={<AdminProjectsPage />} />
-          </Routes>
-        </Router>
-      </CartProvider>
+      <ScrollToHash />
+      <Header />
+
+      <main>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/cases" element={<CasePage />} />
+          <Route path="/donate" element={<DonatePage />} />
+
+        </Routes>
+      </main>
+
+      <Footer />
     </>
   );
 }
