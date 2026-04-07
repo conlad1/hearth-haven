@@ -1,55 +1,48 @@
 using HearthHaven.API.Controllers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
+using HearthHaven.API.Data; // Ensure this matches your exact namespace
 
 var builder = WebApplication.CreateBuilder(args);
-// 1. Tell .NET where to find your database using the connection string we just made
-builder.Services.AddDbContext<SecurityDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("SecurityDbConnection")));
 
+// 1. Grab the connection string
+var connectionString = builder.Configuration.GetConnectionString("AZURE_SQL_CONNECTIONSTRING");
+
+// 2. Setup your Operational Database
 builder.Services.AddDbContext<HearthHavenDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("AZURE_SQL_CONNECTIONSTRING")));
+    options.UseSqlServer(connectionString));
 
-// 2. Turn on ASP.NET Core Identity and link it to your SecurityDbContext
+// 3. Setup your Security Database
+builder.Services.AddDbContext<SecurityDbContext>(options =>
+    options.UseSqlServer(connectionString));
+
+// 4. Turn on ASP.NET Core Identity
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options => 
 {
-    // IS 414 requires strict password policies. You can set them here later!
     options.Password.RequireDigit = true;
-    options.Password.RequiredLength = 12; // Example strict policy
+    options.Password.RequiredLength = 12; 
+    options.Password.RequireUppercase = true;
+    options.Password.RequireNonAlphanumeric = true;
 })
 .AddEntityFrameworkStores<SecurityDbContext>()
 .AddDefaultTokenProviders();
-// Add services to the container.
 
+// 5. ADDED: Configure CORS policy
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend", policy =>
+    options.AddPolicy("AllowReactApp", policy =>
     {
-        policy.WithOrigins("http://localhost:3000")
+        policy.WithOrigins("http://localhost:3000", "http://localhost:5173") // Included 5173 just in case you switch to standard Vite ports
               .AllowAnyHeader()
-              .AllowAnyMethod();
+              .AllowAnyMethod()
+              .AllowCredentials(); // Required if you pass authentication cookies/tokens
     });
 });
 
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
-string? connection;
-if (builder.Environment.IsDevelopment())
-{
-    builder.Configuration.AddEnvironmentVariables().AddJsonFile("appsettings.Development.json");
-    connection = builder.Configuration.GetConnectionString("AZURE_SQL_CONNECTIONSTRING");
-}
-else
-{
-    connection = Environment.GetEnvironmentVariable("AZURE_SQL_CONNECTIONSTRING");
-}
-
-builder.Services.AddDbContext<HearthHavenDbContext>(options =>
-    options.UseSqlServer(connection));
 
 var app = builder.Build();
 
@@ -63,8 +56,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseCors("AllowFrontend");
+// 6. ADDED: Apply the CORS policy BEFORE Authentication and Authorization
+app.UseCors("AllowReactApp");
 
+app.UseAuthentication(); 
 app.UseAuthorization();
 
 app.MapControllers();
