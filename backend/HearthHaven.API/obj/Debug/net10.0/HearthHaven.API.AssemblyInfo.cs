@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("HearthHaven.API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4ed053c0b7307d060babfcc650de0ebe16e91760")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+51b72d0874f639111145bb33478eb1cbe9301f7c")]
 [assembly: System.Reflection.AssemblyProductAttribute("HearthHaven.API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("HearthHaven.API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

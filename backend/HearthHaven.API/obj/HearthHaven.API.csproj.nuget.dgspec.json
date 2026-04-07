@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "/Users/conrad/projects/hearth-haven/backend/HearthHaven.API/HearthHaven.API.csproj": {}
+    "/Users/michellejohanson/Programming/INTEX_Projects/INTEX/backend/HearthHaven.API/HearthHaven.API.csproj": {}
   },
   "projects": {
-    "/Users/conrad/projects/hearth-haven/backend/HearthHaven.API/HearthHaven.API.csproj": {
+    "/Users/michellejohanson/Programming/INTEX_Projects/INTEX/backend/HearthHaven.API/HearthHaven.API.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/conrad/projects/hearth-haven/backend/HearthHaven.API/HearthHaven.API.csproj",
+        "projectUniqueName": "/Users/michellejohanson/Programming/INTEX_Projects/INTEX/backend/HearthHaven.API/HearthHaven.API.csproj",
         "projectName": "HearthHaven.API",
-        "projectPath": "/Users/conrad/projects/hearth-haven/backend/HearthHaven.API/HearthHaven.API.csproj",
-        "packagesPath": "/Users/conrad/.nuget/packages/",
-        "outputPath": "/Users/conrad/projects/hearth-haven/backend/HearthHaven.API/obj/",
+        "projectPath": "/Users/michellejohanson/Programming/INTEX_Projects/INTEX/backend/HearthHaven.API/HearthHaven.API.csproj",
+        "packagesPath": "/Users/michellejohanson/.nuget/packages/",
+        "outputPath": "/Users/michellejohanson/Programming/INTEX_Projects/INTEX/backend/HearthHaven.API/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/Users/conrad/.nuget/NuGet/NuGet.Config"
+          "/Users/michellejohanson/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net10.0"
@@ -38,7 +38,7 @@
           "auditLevel": "low",
           "auditMode": "all"
         },
-        "SdkAnalysisLevel": "10.0.200"
+        "SdkAnalysisLevel": "10.0.100"
       },
       "frameworks": {
         "net10.0": {
@@ -92,7 +92,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/10.0.201/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/10.0.101/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.AspNetCore": "(,10.0.32767]",
             "Microsoft.AspNetCore.Antiforgery": "(,10.0.32767]",
