@@ -21,6 +21,19 @@ export const AuthService = {
         return response;
     },
 
+    logout: async () => {
+        try {
+            await fetch(`${API_URL}/logout`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+            });
+        } finally {
+            localStorage.removeItem(AUTH_STORAGE_KEY);
+            window.dispatchEvent(new Event("auth-change"));
+        }
+    },
+
     setAuthenticated: (isAuthenticated: boolean) => {
         if (isAuthenticated) {
             localStorage.setItem(AUTH_STORAGE_KEY, "true");

@@ -1817,3 +1817,274 @@ body,
     grid-template-columns: 1fr;
   }
 }
+
+.auth-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.auth-modal {
+  width: min(420px, calc(100% - 32px));
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 24px;
+  text-align: center;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+}
+
+.auth-modal h3 {
+  margin: 0 0 10px;
+}
+
+.auth-modal p {
+  margin: 0;
+  color: #4b5563;
+}
+
+.cookie-banner {
+  position: fixed;
+  left: 20px;
+  right: 20px;
+  bottom: 20px;
+  z-index: 999;
+  display: flex;
+  justify-content: center;
+}
+
+.cookie-banner-card {
+  width: min(800px, 100%);
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  padding: 18px;
+}
+
+.cookie-banner-card h3 {
+  margin: 0 0 8px;
+}
+
+.cookie-option-row {
+  margin: 10px 0;
+}
+
+.cookie-option-row label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #374151;
+}
+
+.cookie-banner-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.simple-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 56px 20px 70px;
+}
+
+.page-subtitle {
+  color: #6b7280;
+  margin-bottom: 20px;
+}
+
+.outreach-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.outreach-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.outreach-card h3 {
+  margin: 0;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.outreach-card p {
+  margin: 8px 0 0;
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.outreach-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.outreach-panel {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.outreach-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.outreach-table th,
+.outreach-table td {
+  font-size: 13px;
+  border-bottom: 1px solid #f3f4f6;
+  text-align: left;
+  padding: 10px 6px;
+}
+
+.outreach-list {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.outreach-list li {
+  color: #374151;
+}
+
+.outreach-list li span {
+  display: block;
+  margin-top: 4px;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.outreach-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.outreach-chart-row {
+  display: grid;
+  grid-template-columns: 92px 1fr auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.outreach-chart-row span {
+  font-size: 13px;
+  color: #374151;
+}
+
+.outreach-chart-row strong {
+  font-size: 12px;
+  color: #4b5563;
+}
+
+.outreach-chart-track {
+  background: #f3f4f6;
+  border-radius: 999px;
+  overflow: hidden;
+  height: 10px;
+}
+
+.outreach-chart-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #fb923c, #ea580c);
+}
+
+.legal-page h2 {
+  margin-top: 26px;
+}
+
+.legal-page ul {
+  padding-left: 20px;
+  line-height: 1.7;
+}
+
+.teapot-page {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 50px 20px 70px;
+}
+
+.teapot-page .card {
+  background: #ffffff;
+  border: 1px solid #ecd7cb;
+  border-radius: 16px;
+  padding: 22px;
+  margin-bottom: 16px;
+}
+
+.teapot-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #f1d7ca;
+  border-radius: 999px;
+  padding: 6px 12px;
+  color: #a04f2c;
+  font-size: 13px;
+}
+
+.teapot-badge-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #d97706;
+}
+
+.teapot-song {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.teapot-video-inner {
+  margin-top: 12px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.teapot-video-inner iframe {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+}
+
+.teapot-footer {
+  margin-top: 8px;
+}
+
+.muted {
+  color: #6b7280;
+}
+
+.muted-small {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+@media (max-width: 900px) {
+  .outreach-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .outreach-grid,
+  .teapot-song {
+    grid-template-columns: 1fr;
+  }
+}

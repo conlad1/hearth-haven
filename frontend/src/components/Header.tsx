@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { AuthService } from '../api/AuthService';
 
 type HeaderProps = {
   isAuthenticated: boolean;
@@ -7,6 +8,13 @@ type HeaderProps = {
 
 function Header({ isAuthenticated }: HeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await AuthService.logout();
+    setMenuOpen(false);
+    navigate('/');
+  };
 
   return (
     <>
@@ -24,6 +32,8 @@ function Header({ isAuthenticated }: HeaderProps) {
             <Link to="/analytics">Analytics</Link>
             <Link to="/impact">Impact</Link>
             <Link to="/cases">Case Management</Link>
+            <Link to="/donors">Donors</Link>
+            <Link to="/outreach">Outreach</Link>
             {isAuthenticated && <Link to="/donors">Donors</Link>}
             <Link to="/safehouses">Safehouses</Link>
             <Link to="/#contact">Contact</Link>
@@ -46,6 +56,10 @@ function Header({ isAuthenticated }: HeaderProps) {
                 </Link>
               </>
             )}
+
+            {isAuthenticated && (
+              <button className="btn-light" onClick={handleLogout}>Logout</button>
+            )}
           </div>
 
           {/* HAMBURGER — mobile only */}
@@ -67,6 +81,8 @@ function Header({ isAuthenticated }: HeaderProps) {
         <Link to="/analytics" onClick={() => setMenuOpen(false)}>Analytics</Link>
         <Link to="/impact" onClick={() => setMenuOpen(false)}>Impact</Link>
         <Link to="/cases" onClick={() => setMenuOpen(false)}>Case Management</Link>
+        <Link to="/donors" onClick={() => setMenuOpen(false)}>Donors</Link>
+        <Link to="/outreach" onClick={() => setMenuOpen(false)}>Outreach</Link>
         {isAuthenticated && <Link to="/donors" onClick={() => setMenuOpen(false)}>Donors</Link>}
         <Link to="/safehouses" onClick={() => setMenuOpen(false)}>Safehouses</Link>
         <Link to="/#contact" onClick={() => setMenuOpen(false)}>Contact</Link>
@@ -88,6 +104,10 @@ function Header({ isAuthenticated }: HeaderProps) {
                 <button className="btn-dark">Register</button>
               </Link>
             </>
+          )}
+
+          {isAuthenticated && (
+            <button className="btn-light" onClick={handleLogout}>Logout</button>
           )}
         </div>
       </div>
