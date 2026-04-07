@@ -1,0 +1,106 @@
+.impact-page {
+  min-height: 100vh;
+  background: #f9fafb;
+}
+
+/* ── Hero ── */
+.impact-hero {
+  background: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%);
+  color: white;
+  text-align: center;
+  padding: 64px 24px;
+}
+.impact-hero h1 { margin: 0 0 12px; font-size: 42px; font-weight: 700; }
+.impact-hero p  { margin: 0; font-size: 18px; opacity: .88; max-width: 560px; margin: 0 auto; }
+
+/* ── Status ── */
+.impact-status       { text-align: center; padding: 60px; color: #6b7280; font-size: 16px; }
+.impact-status.impact-error { color: #dc2626; }
+
+/* ── Stat cards ── */
+.impact-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  max-width: 1100px;
+  margin: -36px auto 0;
+  padding: 0 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.impact-card {
+  background: white;
+  border-radius: 16px;
+  padding: 28px 24px;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0,0,0,.08);
+  border-top: 4px solid transparent;
+}
+.impact-card-purple { border-top-color: #7c3aed; }
+.impact-card-pink   { border-top-color: #ec4899; }
+.impact-card-green  { border-top-color: #10b981; }
+.impact-card-blue   { border-top-color: #3b82f6; }
+
+.impact-card-icon  { font-size: 28px; margin-bottom: 8px; }
+.impact-card-value { font-size: 30px; font-weight: 700; color: #111827; margin-bottom: 4px; }
+.impact-card-label { font-size: 13px; color: #6b7280; }
+
+/* ── Two-column grid ── */
+.impact-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  max-width: 1100px;
+  margin: 40px auto;
+  padding: 0 24px;
+}
+@media (max-width: 720px) { .impact-grid { grid-template-columns: 1fr; } }
+
+.impact-section {
+  background: white;
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 2px 12px rgba(0,0,0,.06);
+}
+.impact-section h2          { margin: 0 0 4px; font-size: 18px; }
+.impact-section-sub         { margin: 0 0 20px; color: #6b7280; font-size: 13px; }
+.impact-empty               { color: #9ca3af; font-size: 14px; }
+
+/* Program area bars */
+.impact-bar-row    { margin-bottom: 16px; }
+.impact-bar-label  { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; color: #374151; }
+.impact-bar-track  { background: #f3f4f6; border-radius: 999px; height: 10px; overflow: hidden; }
+.impact-bar-fill   { height: 100%; border-radius: 999px; transition: width .6s ease; }
+
+/* Donation type list */
+.impact-donut-list   { display: flex; flex-direction: column; gap: 12px; }
+.impact-type-row     { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+.impact-type-dot     { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.impact-type-name    { flex: 1; color: #374151; }
+.impact-type-count   { color: #6b7280; font-size: 13px; }
+
+.impact-divider      { border: none; border-top: 1px solid #f3f4f6; margin: 20px 0; }
+.impact-summary-row  { display: flex; justify-content: space-between; font-size: 14px; color: #374151; margin-bottom: 10px; }
+.impact-summary-row strong { color: #111827; }
+
+/* ── CTA ── */
+.impact-cta {
+  text-align: center;
+  padding: 64px 24px;
+  max-width: 600px;
+  margin: 0 auto 60px;
+}
+.impact-cta h2   { font-size: 28px; margin: 0 0 12px; }
+.impact-cta p    { color: #6b7280; margin: 0 0 24px; font-size: 16px; }
+.impact-cta-btn  {
+  display: inline-block;
+  background: linear-gradient(135deg, #7c3aed, #ec4899);
+  color: white;
+  padding: 14px 32px;
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 16px;
+}
+.impact-cta-btn:hover { opacity: .9; }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AuthService } from '../api/AuthService';
+import AllocationPage from './AllocationPage';
 import { Supporter, Contribution, DonorFilterOptions, SupporterFilters, ContributionFilters } from '../types/Donor';
 import {
   fetchSupporters,
@@ -192,7 +193,7 @@ const contributionRequired: { key: keyof Contribution; label: string }[] = [
 export default function DonorPage() {
   const isLoggedIn = AuthService.isAuthenticated();
 
-  const [activeTab, setActiveTab] = useState<'supporters' | 'contributions'>('supporters');
+  const [activeTab, setActiveTab] = useState<'supporters' | 'contributions' | 'allocations'>('supporters');
 
   // shared
   const [loading,    setLoading]    = useState(false);
@@ -267,7 +268,7 @@ export default function DonorPage() {
   useEffect(() => { loadData(); }, [activeTab, page, pageSize, supporterFilters, contributionFilters, isLoggedIn]);
 
   // ── Tab switch resets ────────────────────────────────────────────────────
-  const switchTab = (tab: 'supporters' | 'contributions') => {
+  const switchTab = (tab: 'supporters' | 'contributions' | 'allocations') => {
     setActiveTab(tab);
     setPage(1);
     setSearchInput('');
@@ -529,6 +530,12 @@ export default function DonorPage() {
                   >
                     🎁 Contributions
                   </button>
+                  <button
+                    className={activeTab === 'allocations' ? 'active' : ''}
+                    onClick={() => switchTab('allocations')}
+                  >
+                    📊 Allocations
+                  </button>
                 </div>
 
                 {/* Action button */}
@@ -676,6 +683,9 @@ export default function DonorPage() {
                 }
               </>
             )}
+
+            {/* ── ALLOCATIONS TAB ───────────────────────────────────────── */}
+            {activeTab === 'allocations' && <AllocationPage />}
 
             {/* Pagination */}
             {((activeTab === 'supporters' && supporters.length > 0) || (activeTab === 'contributions' && contributions.length > 0)) && (
