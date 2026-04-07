@@ -10,6 +10,7 @@ import RegisterPage from './pages/RegisterPage';
 import CasePage from './pages/CasePage';
 import ResidentDetailPage from './pages/ResidentDetailPage';
 import DonatePage from "./pages/DonatePage";
+import ThankYouPage from "./pages/ThankYouPage";
 import DonorsPage from "./pages/DonorPage";
 import AllocationPage from "./pages/AllocationPage";
 import ImpactDashboard from "./pages/ImpactDashboard";
@@ -65,6 +66,7 @@ function App() {
           <Route path="/cases" element={<CasePage />} />
           <Route path="/cases/:id" element={<ResidentDetailPage />} />
           <Route path="/donate" element={<DonatePage />} />
+          <Route path="/donate/thank-you" element={<ThankYouPage />} />
           <Route path="/impact" element={<ImpactDashboard />} />
           <Route path="/donors" element={<ProtectedRoute><DonorsPage /></ProtectedRoute>} />
           <Route path="/allocations" element={<ProtectedRoute><AllocationPage /></ProtectedRoute>} />
