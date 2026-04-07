@@ -26,7 +26,9 @@ function Header() {
 
           {/* RIGHT — Desktop action buttons */}
           <div className="nav-actions">
-            <button className="btn-donate">Donate</button>
+            <Link to="/donate">
+              <button className="btn-donate">Donate</button>
+            </Link>
 
             <Link to="/login">
               <button className="btn-light">Sign in</button>
@@ -74,6 +76,9 @@ function Header() {
         <hr className="mobile-menu-divider" />
 
         <div className="mobile-menu-actions">
+            <Link to="/donate" onClick={() => setMenuOpen(false)}>
+              <button className="btn-donate">Donate</button>
+            </Link>
           <button className="btn-donate">Donate</button>
 
           <Link to="/login" onClick={() => setMenuOpen(false)}>
