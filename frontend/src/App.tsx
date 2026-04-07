@@ -9,6 +9,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import CasePage from './pages/CasePage';
 import DonatePage from "./pages/DonatePage";
+import DonorsPage from "./pages/DonorPage";
 
 function ScrollToHash() {
   const location = useLocation();
@@ -41,6 +42,7 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/cases" element={<CasePage />} />
           <Route path="/donate" element={<DonatePage />} />
+          <Route path="/donors" element={<DonorsPage />} />
 
         </Routes>
       </main>
