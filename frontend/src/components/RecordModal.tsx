@@ -84,25 +84,25 @@ export default function RecordModal({
             <div className="resident-modal-actions">
               {mode === 'view' && (
                 <>
-                  {onEdit && <button className="resident-modal-btn resident-modal-btn-edit" onClick={onEdit}>Edit</button>}
+                  {onEdit && <button className="resident-modal-btn resident-modal-btn-edit" onClick={onEdit} title="Edit"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg></button>}
                   {onDelete && <button className="resident-modal-btn resident-modal-btn-delete"
-                    onClick={() => setShowDeleteConfirm(true)}>Delete</button>}
+                    onClick={() => setShowDeleteConfirm(true)} title="Delete"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>}
                 </>
               )}
               {mode === 'edit' && (
                 <>
-                  <button className="resident-modal-btn resident-modal-btn-save" onClick={onSave} disabled={saving}>
-                    {saving ? 'Saving...' : 'Save'}
+                  <button className="resident-modal-btn resident-modal-btn-save" onClick={onSave} disabled={saving} title="Save">
+                    {saving ? 'Saving...' : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
                   </button>
-                  <button className="resident-modal-btn resident-modal-btn-cancel" onClick={onCancel} disabled={saving}>Cancel</button>
+                  <button className="resident-modal-btn resident-modal-btn-cancel" onClick={onCancel} disabled={saving} title="Cancel"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
                 </>
               )}
               {mode === 'create' && (
                 <>
-                  <button className="resident-modal-btn resident-modal-btn-save" onClick={onSave} disabled={saving}>
-                    {saving ? 'Creating...' : 'Create'}
+                  <button className="resident-modal-btn resident-modal-btn-save" onClick={onSave} disabled={saving} title="Create">
+                    {saving ? 'Creating...' : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
                   </button>
-                  <button className="resident-modal-btn resident-modal-btn-cancel" onClick={onCancel} disabled={saving}>Cancel</button>
+                  <button className="resident-modal-btn resident-modal-btn-cancel" onClick={onCancel} disabled={saving} title="Cancel"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
                 </>
               )}
             </div>
