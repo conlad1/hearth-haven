@@ -126,6 +126,14 @@ public class CaseController : ControllerBase
         return Ok(options);
     }
 
+    [HttpGet("{id}")]
+    public IActionResult GetResident(int id)
+    {
+        var resident = _hearthHavenContext.Residents.Find(id);
+        if (resident == null) return NotFound();
+        return Ok(resident);
+    }
+
     [HttpPost]
     public IActionResult CreateResident([FromBody] Resident resident)
     {

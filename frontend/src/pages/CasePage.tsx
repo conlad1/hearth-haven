@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { Resident } from '../types/Resident';
 import {
@@ -6,8 +7,6 @@ import {
   fetchSafehouses,
   fetchFilterOptions,
   createResident,
-  updateResident,
-  deleteResident,
   Safehouse,
   FilterOptions,
   CaseFilters,
@@ -291,12 +290,7 @@ export default function CasePage() {
   const [searchInput, setSearchInput] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
 
-  // modal state
-  const [selectedResident, setSelectedResident] = useState<Resident | null>(
-    null
-  );
-  const [editData, setEditData] = useState<Resident | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
 
   // onboard modal state
@@ -389,67 +383,6 @@ export default function CasePage() {
   const handlePageSizeChange = (newSize: number) => {
     setPageSize(newSize);
     setPage(1);
-  };
-
-  // modal handlers
-  const openModal = (resident: Resident) => {
-    setSelectedResident(resident);
-    setEditData({ ...resident });
-    setIsEditing(false);
-  };
-
-  const closeModal = () => {
-    setSelectedResident(null);
-    setEditData(null);
-    setIsEditing(false);
-  };
-
-  const handleEditField = (key: keyof Resident, value: unknown) => {
-    if (!editData) return;
-    const next = { ...editData, [key]: value };
-    const dob = String(next.dateOfBirth || '');
-    if (key === 'dateOfBirth' || key === 'dateOfAdmission') {
-      const doa = String(next.dateOfAdmission || '');
-      next.ageUponAdmission = calcAge(dob, doa);
-    }
-    if (key === 'dateOfBirth') {
-      next.presentAge = calcAge(dob, new Date().toISOString().slice(0, 10));
-    }
-    setEditData(next);
-  };
-
-  const handleSave = async () => {
-    if (!editData) return;
-    setSaving(true);
-    try {
-      const updated = await updateResident(editData.residentId, editData);
-      setSelectedResident(updated);
-      setEditData({ ...updated });
-      setIsEditing(false);
-      loadCases();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to save');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!selectedResident) return;
-    if (
-      !window.confirm('Are you sure you want to delete this resident record?')
-    )
-      return;
-    setSaving(true);
-    try {
-      await deleteResident(selectedResident.residentId);
-      closeModal();
-      loadCases();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete');
-    } finally {
-      setSaving(false);
-    }
   };
 
   // onboard handlers
@@ -625,11 +558,6 @@ export default function CasePage() {
         onChange={(e) => onChange(col.key, e.target.value || null)}
       />
     );
-  };
-
-  const renderFieldInput = (col: { key: keyof Resident; label: string }) => {
-    if (!editData) return null;
-    return renderInput(col, editData, handleEditField);
   };
 
   const renderOnboardInput = (col: { key: keyof Resident; label: string }) => {
@@ -844,7 +772,7 @@ export default function CasePage() {
                     {residents.map((r) => (
                       <tr
                         key={r.residentId}
-                        onClick={() => openModal(r)}
+                        onClick={() => navigate(`/cases/${r.residentId}`)}
                         className="case-row-clickable"
                       >
                         {tableColumns.map((col) => (
@@ -874,102 +802,6 @@ export default function CasePage() {
           )}
         </div>
       </div>
-
-      {selectedResident &&
-        editData &&
-        createPortal(
-          <div className="resident-modal-overlay" onClick={closeModal}>
-            <div
-              className="resident-modal-body"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="resident-modal-top-bar">
-                <img
-                  src="/portrait_resident.png"
-                  alt="Resident"
-                  className="resident-modal-portrait"
-                />
-                <div className="resident-modal-profile-info">
-                  <h2>{selectedResident.caseControlNo}</h2>
-                  <p>
-                    {selectedResident.internalCode} &middot;{' '}
-                    {selectedResident.caseStatus}
-                  </p>
-                </div>
-                <div className="resident-modal-actions">
-                  {isEditing ? (
-                    <>
-                      <button
-                        className="resident-modal-btn resident-modal-btn-save"
-                        onClick={handleSave}
-                        disabled={saving}
-                      >
-                        {saving ? 'Saving...' : 'Save'}
-                      </button>
-                      <button
-                        className="resident-modal-btn resident-modal-btn-cancel"
-                        onClick={() => {
-                          setEditData({ ...selectedResident });
-                          setIsEditing(false);
-                        }}
-                        disabled={saving}
-                      >
-                        Cancel
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        className="resident-modal-btn resident-modal-btn-edit"
-                        onClick={() => setIsEditing(true)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="resident-modal-btn resident-modal-btn-delete"
-                        onClick={handleDelete}
-                        disabled={saving}
-                      >
-                        Delete
-                      </button>
-                    </>
-                  )}
-                </div>
-                <button className="resident-modal-close" onClick={closeModal}>
-                  &times;
-                </button>
-              </div>
-
-              {modalSections.map((section) => (
-                <div className="resident-modal-section" key={section.title}>
-                  <h3 className="resident-modal-section-title">
-                    {section.title}
-                  </h3>
-                  <div className="resident-modal-fields">
-                    {section.fields.map((col) => (
-                      <div className="resident-modal-field" key={col.key}>
-                        <label>
-                          {col.label}
-                          {fieldTooltips[col.key] && (
-                            <span className="resident-modal-info-icon" data-tip={fieldTooltips[col.key]}>i</span>
-                          )}
-                        </label>
-                        {isEditing ? (
-                          renderFieldInput(col)
-                        ) : (
-                          <span className="resident-modal-field-value">
-                            {formatCell(selectedResident[col.key])}
-                          </span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>,
-          document.body
-        )}
 
       {isOnboarding &&
         createPortal(
