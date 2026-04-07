@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace HearthHaven.API.Data;
 
@@ -27,6 +28,7 @@ public class InKindDonationItem
     public required string UnitOfMeasure { get; set; }
 
     [Column("estimated_unit_value")]
+    [Precision(12, 2)]
     public decimal EstimatedUnitValue { get; set; }
 
     [Column("intended_use")]

@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace HearthHaven.API.Data;
 
@@ -21,6 +22,7 @@ public class DonationAllocation
     public required string ProgramArea { get; set; }
 
     [Column("amount_allocated")]
+    [Precision(14, 2)]
     public decimal AmountAllocated { get; set; }
 
     [Column("allocation_date")]

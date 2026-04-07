@@ -8,7 +8,9 @@ import { BrowserRouter } from 'react-router-dom'; // 👈 ADD THIS
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <BrowserRouter>   {/* 👈 THIS FIXES EVERYTHING */}
+    <BrowserRouter>
+      {' '}
+      {/* 👈 THIS FIXES EVERYTHING */}
       <App />
     </BrowserRouter>
   </StrictMode>

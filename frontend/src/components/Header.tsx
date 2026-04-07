@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -8,7 +8,6 @@ function Header() {
     <>
       <nav className="navbar">
         <div className="nav-container">
-
           {/* LEFT — Logo */}
           <Link className="nav-logo" to="/">
             <img src="/Logo.svg" alt="Hearth Haven logo" />
@@ -48,18 +47,29 @@ function Header() {
             <span />
             <span />
           </button>
-
         </div>
       </nav>
 
       {/* MOBILE MENU */}
-      <div className={`mobile-menu ${menuOpen ? "open" : ""}`}>
-        <Link to="/" onClick={() => setMenuOpen(false)}>Home</Link>
-        <Link to="/analytics" onClick={() => setMenuOpen(false)}>Analytics</Link>
-        <Link to="/cases" onClick={() => setMenuOpen(false)}>Case Management</Link>
-        <Link to="/donors" onClick={() => setMenuOpen(false)}>Donors</Link>
-        <Link to="/safehouses" onClick={() => setMenuOpen(false)}>Safehouses</Link>
-        <Link to="/contact" onClick={() => setMenuOpen(false)}>Contact</Link>
+      <div className={`mobile-menu ${menuOpen ? 'open' : ''}`}>
+        <Link to="/" onClick={() => setMenuOpen(false)}>
+          Home
+        </Link>
+        <Link to="/analytics" onClick={() => setMenuOpen(false)}>
+          Analytics
+        </Link>
+        <Link to="/cases" onClick={() => setMenuOpen(false)}>
+          Case Management
+        </Link>
+        <Link to="/donors" onClick={() => setMenuOpen(false)}>
+          Donors
+        </Link>
+        <Link to="/safehouses" onClick={() => setMenuOpen(false)}>
+          Safehouses
+        </Link>
+        <Link to="/contact" onClick={() => setMenuOpen(false)}>
+          Contact
+        </Link>
 
         <hr className="mobile-menu-divider" />
 

@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace HearthHaven.API.Data;
 
@@ -27,9 +28,11 @@ public class Donation
     public string? CurrencyCode { get; set; }
 
     [Column("amount")]
+    [Precision(14, 2)]
     public decimal? Amount { get; set; }
 
     [Column("estimated_value")]
+    [Precision(14, 2)]
     public decimal? EstimatedValue { get; set; }
 
     [Column("impact_unit")]

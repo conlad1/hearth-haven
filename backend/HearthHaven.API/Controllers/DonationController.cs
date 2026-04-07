@@ -15,6 +15,7 @@ public class DonationController : ControllerBase
     public IActionResult GetDonations(int numDonations = 10)
     {
         var donations = _hearthHavenContext.Donations
+            .OrderBy(x => x.DonationDate)
             .Take(numDonations)
             .ToList();
         

@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace HearthHaven.API.Data;
 
@@ -24,9 +25,11 @@ public class SafehouseMonthlyMetric
     public int ActiveResidents { get; set; }
 
     [Column("avg_education_progress")]
+    [Precision(5, 2)]
     public decimal? AvgEducationProgress { get; set; }
 
     [Column("avg_health_score")]
+    [Precision(3, 1)]
     public decimal? AvgHealthScore { get; set; }
 
     [Column("process_recording_count")]

@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace HearthHaven.API.Data;
 
@@ -72,6 +73,7 @@ public class SocialMediaPost
     public bool IsBoosted { get; set; }
 
     [Column("boost_budget_php")]
+    [Precision(12, 2)]
     public decimal? BoostBudgetPhp { get; set; }
 
     [Column("impressions")]
@@ -99,6 +101,7 @@ public class SocialMediaPost
     public int? VideoViews { get; set; }
 
     [Column("engagement_rate")]
+    [Precision(10, 6)]
     public decimal EngagementRate { get; set; }
 
     [Column("profile_visits")]
@@ -108,6 +111,7 @@ public class SocialMediaPost
     public int DonationReferrals { get; set; }
 
     [Column("estimated_donation_value_php")]
+    [Precision(12, 2)]
     public decimal EstimatedDonationValuePhp { get; set; }
 
     [Column("follower_count_at_post")]

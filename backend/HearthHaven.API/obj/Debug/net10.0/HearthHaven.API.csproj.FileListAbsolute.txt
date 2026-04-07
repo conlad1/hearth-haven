@@ -324,3 +324,5 @@
 /Users/michellejohanson/Programming/INTEX_Projects/INTEX/backend/HearthHaven.API/obj/Debug/net10.0/HearthHaven.API.pdb
 /Users/michellejohanson/Programming/INTEX_Projects/INTEX/backend/HearthHaven.API/obj/Debug/net10.0/HearthHaven.API.genruntimeconfig.cache
 /Users/michellejohanson/Programming/INTEX_Projects/INTEX/backend/HearthHaven.API/obj/Debug/net10.0/ref/HearthHaven.API.dll
+/Users/conrad/projects/hearth-haven/backend/HearthHaven.API/bin/Debug/net10.0/package-lock.json
+/Users/conrad/projects/hearth-haven/backend/HearthHaven.API/bin/Debug/net10.0/package.json

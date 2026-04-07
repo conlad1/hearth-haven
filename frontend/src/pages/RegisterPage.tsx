@@ -1,5 +1,5 @@
-import { useNavigate } from "react-router-dom";
-import React from "react";
+import { useNavigate } from 'react-router-dom';
+import React from 'react';
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
@@ -7,7 +7,6 @@ const RegisterPage: React.FC = () => {
   return (
     <div className="auth-page">
       <div className="auth-container">
-
         <div className="auth-left">
           <h1>Create an Account</h1>
           <p>Join us in restoring hope and rebuilding lives.</p>
@@ -28,11 +27,8 @@ const RegisterPage: React.FC = () => {
           {/* 🔥 SWITCH TO LOGIN PAGE */}
           <p className="auth-switch">
             Already have an account?
-            <span onClick={() => navigate("/login")}>
-              Login
-            </span>
+            <span onClick={() => navigate('/login')}>Login</span>
           </p>
-
         </div>
       </div>
     </div>

@@ -2,10 +2,8 @@ function Footer() {
   return (
     <footer className="footer">
       <div className="footer-container">
-
         {/* TOP ROW */}
         <div className="footer-top">
-
           {/* Brand */}
           <div className="footer-brand">
             <div className="footer-logo">
@@ -49,7 +47,6 @@ function Footer() {
             <a href="/terms">Terms of Service</a>
             <a href="/accessibility">Accessibility</a>
           </div>
-
         </div>
 
         {/* DIVIDER */}
@@ -67,7 +64,6 @@ function Footer() {
             <a href="/contact">Contact Us</a>
           </div>
         </div>
-
       </div>
     </footer>
   );

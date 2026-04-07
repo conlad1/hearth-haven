@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace HearthHaven.API.Data;
 
@@ -24,6 +25,7 @@ public class InterventionPlan
     public string? ServicesProvided { get; set; }
 
     [Column("target_value")]
+    [Precision(10, 2)]
     public decimal? TargetValue { get; set; }
 
     [Column("target_date")]

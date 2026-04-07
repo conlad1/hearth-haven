@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace HearthHaven.API.Data;
 
@@ -27,9 +28,11 @@ public class EducationRecord
     public required string EnrollmentStatus { get; set; }
 
     [Column("attendance_rate")]
+    [Precision(5, 4)]
     public decimal AttendanceRate { get; set; }
 
     [Column("progress_percent")]
+    [Precision(5, 2)]
     public decimal ProgressPercent { get; set; }
 
     [Column("completion_status")]
