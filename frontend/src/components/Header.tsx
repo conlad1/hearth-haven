@@ -22,7 +22,7 @@ function Header() {
             <Link to="/cases">Case Management</Link>
             <Link to="/donors">Donors</Link>
             <Link to="/safehouses">Safehouses</Link>
-            <Link to="/contact">Contact</Link>
+            <Link to="/#contact">Contact</Link>
           </div>
 
           {/* RIGHT — Desktop action buttons */}
@@ -61,7 +61,7 @@ function Header() {
         <Link to="/cases" onClick={() => setMenuOpen(false)}>Case Management</Link>
         <Link to="/donors" onClick={() => setMenuOpen(false)}>Donors</Link>
         <Link to="/safehouses" onClick={() => setMenuOpen(false)}>Safehouses</Link>
-        <Link to="/contact" onClick={() => setMenuOpen(false)}>Contact</Link>
+        <Link to="/#contact" onClick={() => setMenuOpen(false)}>Contact</Link>
 
         <hr className="mobile-menu-divider" />
 
