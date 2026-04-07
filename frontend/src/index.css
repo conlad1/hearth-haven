@@ -283,11 +283,13 @@ body,
 }
 
 .btn-secondary {
-  background: #eee;
-  border: none;
+  background: #ffffff;
+  border: 2px solid #d97757;
   padding: 12px 22px;
   border-radius: 10px;
   cursor: pointer;
+  text-decoration: none;
+  color: #d97757;
 }
 
 /* ================= FEATURES ================= */
@@ -1019,6 +1021,54 @@ body,
   cursor: pointer;
   font-weight: 600;
   margin-left: 5px;
+}
+
+.auth-confirm-rows {
+  border: 1px solid #f0f0f0;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.auth-confirm-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 13px 16px;
+  font-size: 14px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.auth-confirm-row:last-child {
+  border-bottom: none;
+}
+
+.auth-confirm-row span:first-child {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.auth-confirm-row span:last-child {
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.auth-back {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.auth-back:hover {
+  background: #e5e7eb;
 }
 
 @media (max-width: 768px) {

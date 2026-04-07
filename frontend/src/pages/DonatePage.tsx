@@ -17,6 +17,7 @@ function DonatePage() {
 
   const navigate = useNavigate();
 
+  const [step,         setStep]         = useState<'form' | 'confirm'>('form');
   const [authMode,     setAuthMode]     = useState<AuthMode>('anonymous');
   const [donorType,    setDonorType]    = useState<DonorType>('individual');
   const [donationType, setDonationType] = useState<DonationType>('monetary');
@@ -43,6 +44,11 @@ function DonatePage() {
       setDonationType('monetary');
       setDonorType('individual');
     }
+  }
+
+  function handleNext(e: React.MouseEvent) {
+    e.preventDefault();
+    setStep('confirm');
   }
 
   function handleSubmit(e: React.MouseEvent) {

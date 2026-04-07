@@ -67,7 +67,6 @@ function Header() {
             <Link to="/donate" onClick={() => setMenuOpen(false)}>
               <button className="btn-donate">Donate</button>
             </Link>
-          <button className="btn-donate">Donate</button>
 
           <Link to="/login" onClick={() => setMenuOpen(false)}>
             <button className="btn-light">Sign in</button>
