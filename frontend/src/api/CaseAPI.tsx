@@ -102,14 +102,22 @@ export const fetchSafehouses = async (): Promise<Safehouse[]> => {
 export const createResident = async (
   data: Partial<Resident>
 ): Promise<Resident> => {
+  // Strip residentId (auto-generated) and convert empty strings to null
+  // so DateOnly and nullable fields deserialize correctly on the backend
+  const { residentId, createdAt, ...rest } = data as Resident;
+  const cleaned = Object.fromEntries(
+    Object.entries(rest).map(([k, v]) => [k, v === '' ? null : v])
+  );
+
   const response = await fetch(`${API_BASE_URL}/Case`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
+    body: JSON.stringify(cleaned),
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to create resident: ${response.status}`);
+    const body = await response.text();
+    throw new Error(`Failed to create resident: ${response.status} — ${body}`);
   }
 
   return await response.json();

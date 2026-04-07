@@ -488,7 +488,27 @@ export default function CasePage() {
     });
   };
 
+  const requiredFields: { key: keyof Resident; label: string }[] = [
+    { key: 'caseControlNo', label: 'Case Control No.' },
+    { key: 'internalCode', label: 'Internal Code' },
+    { key: 'caseStatus', label: 'Status' },
+    { key: 'sex', label: 'Sex' },
+    { key: 'dateOfBirth', label: 'Date of Birth' },
+    { key: 'birthStatus', label: 'Birth Status' },
+    { key: 'caseCategory', label: 'Category' },
+    { key: 'dateOfAdmission', label: 'Date of Admission' },
+    { key: 'referralSource', label: 'Referral Source' },
+    { key: 'initialRiskLevel', label: 'Initial Risk Level' },
+    { key: 'currentRiskLevel', label: 'Current Risk Level' },
+    { key: 'dateEnrolled', label: 'Date Enrolled' },
+  ];
+
   const handleCreate = async () => {
+    const missing = requiredFields.filter((f) => !onboardData[f.key]);
+    if (missing.length > 0) {
+      alert(`Please fill in required fields:\n${missing.map((f) => f.label).join(', ')}`);
+      return;
+    }
     setSaving(true);
     try {
       await createResident(onboardData);

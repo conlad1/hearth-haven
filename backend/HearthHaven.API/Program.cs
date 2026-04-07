@@ -1,12 +1,14 @@
 using HearthHaven.API.Controllers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
-using HearthHaven.API.Data; // Change this to match your actual namespace!
 
 var builder = WebApplication.CreateBuilder(args);
 // 1. Tell .NET where to find your database using the connection string we just made
 builder.Services.AddDbContext<SecurityDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("SecurityDbConnection")));
+
+builder.Services.AddDbContext<HearthHavenDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("AZURE_SQL_CONNECTIONSTRING")));
 
 // 2. Turn on ASP.NET Core Identity and link it to your SecurityDbContext
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options => 
