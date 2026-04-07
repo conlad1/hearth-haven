@@ -1172,6 +1172,113 @@ body,
   padding: 40px 24px 80px;
 }
 
+.resident-detail-page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+}
+
+.resident-detail-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+  margin-bottom: 24px;
+  transition: background-color 0.15s;
+}
+
+.resident-detail-back:hover {
+  background-color: #f3f4f6;
+}
+
+.resident-detail-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.resident-detail-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid #e5e7eb;
+  margin-bottom: 24px;
+  margin-top: 20px;
+}
+
+.resident-detail-tab {
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.resident-detail-tab:hover {
+  color: #1f2937;
+}
+
+.resident-detail-tab.active {
+  color: #ea580c;
+  border-bottom-color: #ea580c;
+}
+
+.tab-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+}
+
+.tab-empty {
+  font-size: 14px;
+  color: #9ca3af;
+  padding: 32px 0;
+  text-align: center;
+}
+
+.tab-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.tab-add-btn {
+  margin-left: auto;
+}
+
+.tab-filter-bar select,
+.tab-filter-bar input[type="date"] {
+  padding: 7px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #1f2937;
+  background-color: #ffffff;
+}
+
+.tab-filter-date {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
 .case-header {
   display: flex;
   align-items: center;
@@ -1652,6 +1759,47 @@ body,
 
 .resident-modal-btn-delete:hover:not(:disabled) {
   background-color: #fef2f2;
+}
+
+.delete-confirm-modal {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 420px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  text-align: center;
+}
+
+.delete-confirm-modal h3 {
+  margin: 0 0 12px;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.delete-confirm-modal p {
+  margin: 0 0 24px;
+  font-size: 14px;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+.delete-confirm-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.delete-confirm-actions .resident-modal-btn-delete {
+  background-color: #dc2626;
+  color: #ffffff;
+  border: none;
+  margin-left: 0;
+}
+
+.delete-confirm-actions .resident-modal-btn-delete:hover:not(:disabled) {
+  background-color: #b91c1c;
 }
 
 @media (max-width: 768px) {
