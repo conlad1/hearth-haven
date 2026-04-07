@@ -6,7 +6,10 @@ import { HealthWellbeingRecord } from '../types/HealthWellbeingRecord';
 import { EducationRecord } from '../types/EducationRecord';
 import { IncidentReport } from '../types/IncidentReport';
 import { HomeVisitation } from '../types/HomeVisitation';
+import { ProcessRecording } from '../types/ProcessRecording';
+import { InterventionPlan } from '../types/InterventionPlan';
 import RecordModal, { RecordFieldDef } from '../components/RecordModal';
+import { SafetyChart, HealthChart, EducationChart } from '../components/ProgressChart';
 import {
   fetchResident,
   fetchSafehouses,
@@ -47,6 +50,19 @@ import {
   GlobalEducationOptions,
   GlobalIncidentOptions,
   GlobalVisitationOptions,
+  fetchProcessRecordings,
+  fetchProcessRecordingFilterOptions,
+  fetchGlobalProcessRecordingOptions,
+  createProcessRecording,
+  updateProcessRecording,
+  deleteProcessRecording,
+  ProcessRecordingFilters,
+  ProcessRecordingFilterOptions,
+  GlobalProcessRecordingOptions,
+  fetchInterventionPlans,
+  createInterventionPlan,
+  updateInterventionPlan,
+  deleteInterventionPlan,
 } from '../api/CaseAPI';
 
 // ── Resident field config (unchanged) ──
@@ -197,13 +213,12 @@ function BoolSelect({ label, value, onChange }: {
 
 // ── Tabs ──
 
-type TabKey = 'resident' | 'health' | 'education' | 'incidents' | 'visitations';
+type TabKey = 'resident' | 'safety' | 'physicalHealth' | 'education';
 const tabList: { key: TabKey; label: string }[] = [
-  { key: 'resident', label: 'Resident Data' },
-  { key: 'health', label: 'Health & Wellbeing' },
+  { key: 'resident', label: 'Resident Profile' },
+  { key: 'safety', label: 'Safety' },
+  { key: 'physicalHealth', label: 'Physical Health' },
   { key: 'education', label: 'Education' },
-  { key: 'incidents', label: 'Incidents' },
-  { key: 'visitations', label: 'Visitations' },
 ];
 
 // ── Record field definitions for CRUD modals ──
@@ -228,23 +243,34 @@ function mergeOpts(defaults: string[], fromDb?: string[]): string[] {
   return [...new Set([...defaults, ...(fromDb ?? [])])].sort();
 }
 
-const defaultEducationLevels = ['Pre-School', 'Elementary', 'Junior High School', 'Senior High School', 'College', 'Vocational', 'ALS/Alternative Learning'];
-const defaultEnrollmentStatuses = ['Enrolled', 'Not Enrolled', 'Dropped Out', 'Graduated', 'On Hold'];
-const defaultCompletionStatuses = ['In Progress', 'Completed', 'Incomplete', 'Withdrawn'];
+const defaultEducationLevels = ['Primary', 'Secondary', 'Vocational', 'CollegePrep'];
+const defaultCompletionStatuses = ['NotStarted', 'InProgress', 'Completed'];
 
-const defaultIncidentTypes = ['Behavioral', 'Medical', 'Accident', 'Abuse', 'Neglect', 'Runaway', 'Conflict', 'Self-Harm', 'Substance Use', 'Other'];
-const defaultSeverities = ['Low', 'Medium', 'High', 'Critical'];
+const defaultIncidentTypes = ['Behavioral', 'Medical', 'Security', 'RunawayAttempt', 'SelfHarm', 'ConflictWithPeer', 'PropertyDamage'];
+const defaultSeverities = ['Low', 'Medium', 'High'];
 
-const defaultVisitTypes = ['Home Visit', 'School Visit', 'Community Visit', 'Follow-up Visit', 'Court Visit', 'Other'];
-const defaultCooperationLevels = ['Very Cooperative', 'Cooperative', 'Neutral', 'Uncooperative', 'Hostile'];
-const defaultVisitOutcomes = ['Successful', 'Partially Successful', 'Unsuccessful', 'Rescheduled', 'Cancelled'];
+const defaultVisitTypes = ['Initial Assessment', 'Routine Follow-Up', 'Reintegration Assessment', 'Post-Placement Monitoring', 'Emergency'];
+const defaultCooperationLevels = ['Highly Cooperative', 'Cooperative', 'Neutral', 'Uncooperative'];
+const defaultVisitOutcomes = ['Favorable', 'Needs Improvement', 'Unfavorable', 'Inconclusive'];
+
+const defaultSessionTypes = ['Individual', 'Group'];
+const defaultEmotionalStates = ['Calm', 'Anxious', 'Sad', 'Angry', 'Hopeful', 'Withdrawn', 'Happy', 'Distressed'];
+
+const defaultPlanCategories = ['Safety', 'Physical Health', 'Education'];
+const defaultPlanStatuses = ['Open', 'In Progress', 'Achieved', 'On Hold', 'Closed'];
+
+const tabPlanCategories: Record<string, string[]> = {
+  safety: ['Safety'],
+  physicalHealth: ['Physical Health'],
+  education: ['Education'],
+};
 
 function getEducationFields(opts?: GlobalEducationOptions): RecordFieldDef[] {
   return [
     { key: 'recordDate', label: 'Record Date', type: 'date', required: true },
     { key: 'educationLevel', label: 'Education Level', type: 'select', options: mergeOpts(defaultEducationLevels, opts?.educationLevels), required: true },
     { key: 'schoolName', label: 'School Name', type: 'text' },
-    { key: 'enrollmentStatus', label: 'Enrollment Status', type: 'select', options: mergeOpts(defaultEnrollmentStatuses, opts?.enrollmentStatuses), required: true },
+    { key: 'enrollmentStatus', label: 'Enrollment Status', type: 'select', options: mergeOpts([], opts?.enrollmentStatuses), required: true },
     { key: 'attendanceRate', label: 'Attendance Rate', type: 'number', required: true },
     { key: 'progressPercent', label: 'Progress %', type: 'number', required: true },
     { key: 'completionStatus', label: 'Completion Status', type: 'select', options: mergeOpts(defaultCompletionStatuses, opts?.completionStatuses), required: true },
@@ -282,6 +308,34 @@ function getVisitationFields(opts?: GlobalVisitationOptions, socialWorkers?: str
     { key: 'visitOutcome', label: 'Visit Outcome', type: 'select', options: mergeOpts(defaultVisitOutcomes, opts?.visitOutcomes), required: true },
   ];
 }
+
+function getProcessRecordingFields(opts?: GlobalProcessRecordingOptions, socialWorkers?: string[]): RecordFieldDef[] {
+  return [
+    { key: 'sessionDate', label: 'Session Date', type: 'date', required: true },
+    { key: 'socialWorker', label: 'Social Worker', type: 'select', options: socialWorkers ?? opts?.socialWorkers ?? [], required: true },
+    { key: 'sessionType', label: 'Session Type', type: 'select', options: mergeOpts(defaultSessionTypes, opts?.sessionTypes), required: true },
+    { key: 'sessionDurationMinutes', label: 'Duration (min)', type: 'number', required: true },
+    { key: 'emotionalStateObserved', label: 'Emotional State (Start)', type: 'select', options: mergeOpts(defaultEmotionalStates, opts?.emotionalStates), required: true },
+    { key: 'emotionalStateEnd', label: 'Emotional State (End)', type: 'select', options: mergeOpts(defaultEmotionalStates, opts?.emotionalStates), required: true },
+    { key: 'sessionNarrative', label: 'Session Narrative', type: 'textarea' },
+    { key: 'interventionsApplied', label: 'Interventions Applied', type: 'textarea' },
+    { key: 'followUpActions', label: 'Follow-up Actions', type: 'textarea' },
+    { key: 'progressNoted', label: 'Progress Noted', type: 'checkbox' },
+    { key: 'concernsFlagged', label: 'Concerns Flagged', type: 'checkbox' },
+    { key: 'referralMade', label: 'Referral Made', type: 'checkbox' },
+    { key: 'notesRestricted', label: 'Restricted Notes', type: 'textarea' },
+  ];
+}
+
+const interventionPlanFields: RecordFieldDef[] = [
+  { key: 'planCategory', label: 'Category', type: 'select', options: defaultPlanCategories, required: true },
+  { key: 'planDescription', label: 'Description', type: 'textarea', required: true },
+  { key: 'servicesProvided', label: 'Services Provided', type: 'textarea' },
+  { key: 'targetValue', label: 'Target Value', type: 'number' },
+  { key: 'targetDate', label: 'Target Date', type: 'date', required: true },
+  { key: 'status', label: 'Status', type: 'select', options: defaultPlanStatuses, required: true },
+  { key: 'caseConferenceDate', label: 'Case Conference Date', type: 'date' },
+];
 
 export default function ResidentDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -328,17 +382,34 @@ export default function ResidentDetailPage() {
   const [visFilters, setVisFilters] = useState<VisitationFilters>({});
   const [visFilterOpts, setVisFilterOpts] = useState<VisitationFilterOptions | null>(null);
 
+  // Process Recordings tab state
+  const [procRecordings, setProcRecordings] = useState<ProcessRecording[]>([]);
+  const [procPage, setProcPage] = useState(1);
+  const [procTotal, setProcTotal] = useState({ totalPages: 1, totalCount: 0 });
+  const [procFilters, setProcFilters] = useState<ProcessRecordingFilters>({});
+  const [procFilterOpts, setProcFilterOpts] = useState<ProcessRecordingFilterOptions | null>(null);
+
   // Global options for modal dropdowns
   const [globalEduOpts, setGlobalEduOpts] = useState<GlobalEducationOptions>();
   const [globalIncOpts, setGlobalIncOpts] = useState<GlobalIncidentOptions>();
   const [globalVisOpts, setGlobalVisOpts] = useState<GlobalVisitationOptions>();
+  const [globalProcOpts, setGlobalProcOpts] = useState<GlobalProcessRecordingOptions>();
+
+  // Intervention plans
+  const [interventionPlans, setInterventionPlans] = useState<InterventionPlan[]>([]);
+
+  // Chart data (all records, unpaginated)
+  const [allIncidents, setAllIncidents] = useState<IncidentReport[]>([]);
+  const [allHealthRecords, setAllHealthRecords] = useState<HealthWellbeingRecord[]>([]);
+  const [allEducationRecords, setAllEducationRecords] = useState<EducationRecord[]>([]);
 
   const [tabLoading, setTabLoading] = useState(false);
   const [tabError, setTabError] = useState<string | null>(null);
 
   // Record modal state (shared across all tabs)
+  type EntityKey = 'health' | 'education' | 'incidents' | 'visitations' | 'processRecordings' | 'interventionPlan';
   const [recordModal, setRecordModal] = useState<{
-    tab: TabKey;
+    entity: EntityKey;
     mode: 'view' | 'edit' | 'create';
     data: Record<string, unknown>;
     original?: Record<string, unknown>;
@@ -357,6 +428,7 @@ export default function ResidentDetailPage() {
     fetchGlobalEducationOptions().then(setGlobalEduOpts).catch(console.error);
     fetchGlobalIncidentOptions().then(setGlobalIncOpts).catch(console.error);
     fetchGlobalVisitationOptions().then(setGlobalVisOpts).catch(console.error);
+    fetchGlobalProcessRecordingOptions().then(setGlobalProcOpts).catch(console.error);
   }, []);
 
   useEffect(() => {
@@ -370,51 +442,71 @@ export default function ResidentDetailPage() {
 
   // ── Tab data fetching ──
 
+  // Intervention plans — fetch when any non-resident tab is active
   useEffect(() => {
-    if (activeTab !== 'health') return;
-    setTabLoading(true); setTabError(null);
-    fetchHealthRecords(residentId, healthPage, 10, healthFilters)
-      .then((res) => { setHealthRecords(res.data); setHealthTotal({ totalPages: res.totalPages, totalCount: res.totalCount }); })
-      .catch((err) => setTabError(err.message))
-      .finally(() => setTabLoading(false));
-  }, [activeTab, healthPage, healthFilters, residentId, refreshKey]);
+    if (activeTab === 'resident') return;
+    fetchInterventionPlans(residentId).then(setInterventionPlans).catch(console.error);
+  }, [activeTab, residentId, refreshKey]);
 
+  // Safety tab: incidents + visitations
   useEffect(() => {
-    if (activeTab !== 'education') return;
-    setTabLoading(true); setTabError(null);
-    fetchEducationRecords(residentId, eduPage, 10, eduFilters)
-      .then((res) => { setEducationRecords(res.data); setEduTotal({ totalPages: res.totalPages, totalCount: res.totalCount }); })
-      .catch((err) => setTabError(err.message))
-      .finally(() => setTabLoading(false));
-  }, [activeTab, eduPage, eduFilters, residentId, refreshKey]);
-
-  useEffect(() => {
-    if (activeTab !== 'incidents') return;
-    setTabLoading(true); setTabError(null);
+    if (activeTab !== 'safety') return;
     fetchIncidentReports(residentId, incPage, 10, incFilters)
       .then((res) => { setIncidentReports(res.data); setIncTotal({ totalPages: res.totalPages, totalCount: res.totalCount }); })
-      .catch((err) => setTabError(err.message))
-      .finally(() => setTabLoading(false));
+      .catch(console.error);
   }, [activeTab, incPage, incFilters, residentId, refreshKey]);
 
   useEffect(() => {
-    if (activeTab !== 'visitations') return;
-    setTabLoading(true); setTabError(null);
+    if (activeTab !== 'safety') return;
     fetchVisitations(residentId, visPage, 10, visFilters)
       .then((res) => { setVisitations(res.data); setVisTotal({ totalPages: res.totalPages, totalCount: res.totalCount }); })
-      .catch((err) => setTabError(err.message))
-      .finally(() => setTabLoading(false));
+      .catch(console.error);
   }, [activeTab, visPage, visFilters, residentId, refreshKey]);
+
+  // Physical Health tab: health records + counseling sessions
+  useEffect(() => {
+    if (activeTab !== 'physicalHealth') return;
+    fetchHealthRecords(residentId, healthPage, 10, healthFilters)
+      .then((res) => { setHealthRecords(res.data); setHealthTotal({ totalPages: res.totalPages, totalCount: res.totalCount }); })
+      .catch(console.error);
+  }, [activeTab, healthPage, healthFilters, residentId, refreshKey]);
+
+  useEffect(() => {
+    if (activeTab !== 'physicalHealth') return;
+    fetchProcessRecordings(residentId, procPage, 10, procFilters)
+      .then((res) => { setProcRecordings(res.data); setProcTotal({ totalPages: res.totalPages, totalCount: res.totalCount }); })
+      .catch(console.error);
+  }, [activeTab, procPage, procFilters, residentId, refreshKey]);
+
+  // Education tab
+  useEffect(() => {
+    if (activeTab !== 'education') return;
+    fetchEducationRecords(residentId, eduPage, 10, eduFilters)
+      .then((res) => { setEducationRecords(res.data); setEduTotal({ totalPages: res.totalPages, totalCount: res.totalCount }); })
+      .catch(console.error);
+  }, [activeTab, eduPage, eduFilters, residentId, refreshKey]);
 
   // Load filter options once per tab
   useEffect(() => {
     if (activeTab === 'education' && !eduFilterOpts)
       fetchEducationFilterOptions(residentId).then(setEduFilterOpts).catch(console.error);
-    if (activeTab === 'incidents' && !incFilterOpts)
+    if (activeTab === 'safety' && !incFilterOpts)
       fetchIncidentFilterOptions(residentId).then(setIncFilterOpts).catch(console.error);
-    if (activeTab === 'visitations' && !visFilterOpts)
+    if (activeTab === 'safety' && !visFilterOpts)
       fetchVisitationFilterOptions(residentId).then(setVisFilterOpts).catch(console.error);
+    if (activeTab === 'physicalHealth' && !procFilterOpts)
+      fetchProcessRecordingFilterOptions(residentId).then(setProcFilterOpts).catch(console.error);
   }, [activeTab]);
+
+  // Chart data — fetch all records (unpaginated) for each tab
+  useEffect(() => {
+    if (activeTab === 'safety')
+      fetchIncidentReports(residentId, 1, 500, {}).then((res) => setAllIncidents(res.data)).catch(console.error);
+    if (activeTab === 'physicalHealth')
+      fetchHealthRecords(residentId, 1, 500, {}).then((res) => setAllHealthRecords(res.data)).catch(console.error);
+    if (activeTab === 'education')
+      fetchEducationRecords(residentId, 1, 500, {}).then((res) => setAllEducationRecords(res.data)).catch(console.error);
+  }, [activeTab, residentId, refreshKey]);
 
   // ── Resident edit handlers ──
 
@@ -453,12 +545,12 @@ export default function ResidentDetailPage() {
 
   // ── Record modal handlers ──
 
-  const openRecordCreate = (tab: TabKey, defaults: Record<string, unknown>) => {
-    setRecordModal({ tab, mode: 'create', data: { ...defaults, residentId } });
+  const openRecordCreate = (entity: EntityKey, defaults: Record<string, unknown>) => {
+    setRecordModal({ entity, mode: 'create', data: { ...defaults, residentId } });
   };
 
-  const openRecordView = (tab: TabKey, record: Record<string, unknown>) => {
-    setRecordModal({ tab, mode: 'view', data: { ...record }, original: { ...record } });
+  const openRecordView = (entity: EntityKey, record: Record<string, unknown>) => {
+    setRecordModal({ entity, mode: 'view', data: { ...record }, original: { ...record } });
   };
 
   const handleRecordField = (key: string, value: unknown) => {
@@ -471,19 +563,23 @@ export default function ResidentDetailPage() {
     setRecordSaving(true);
     try {
       if (recordModal.mode === 'create') {
-        switch (recordModal.tab) {
+        switch (recordModal.entity) {
           case 'health': await createHealthRecord(recordModal.data as Partial<HealthWellbeingRecord>); break;
           case 'education': await createEducationRecord(recordModal.data as Partial<EducationRecord>); break;
           case 'incidents': await createIncidentReport(recordModal.data as Partial<IncidentReport>); break;
           case 'visitations': await createVisitation(recordModal.data as Partial<HomeVisitation>); break;
+          case 'processRecordings': await createProcessRecording(recordModal.data as Partial<ProcessRecording>); break;
+          case 'interventionPlan': await createInterventionPlan(recordModal.data as Partial<InterventionPlan>); break;
         }
       } else {
         const d = recordModal.data;
-        switch (recordModal.tab) {
+        switch (recordModal.entity) {
           case 'health': await updateHealthRecord(d.healthRecordId as number, d as unknown as HealthWellbeingRecord); break;
           case 'education': await updateEducationRecord(d.educationRecordId as number, d as unknown as EducationRecord); break;
           case 'incidents': await updateIncidentReport(d.incidentId as number, d as unknown as IncidentReport); break;
           case 'visitations': await updateVisitation(d.visitationId as number, d as unknown as HomeVisitation); break;
+          case 'processRecordings': await updateProcessRecording(d.recordingId as number, d as unknown as ProcessRecording); break;
+          case 'interventionPlan': await updateInterventionPlan(d.planId as number, d as unknown as InterventionPlan); break;
         }
       }
       setRecordModal(null);
@@ -500,11 +596,13 @@ export default function ResidentDetailPage() {
     setRecordSaving(true);
     try {
       const d = recordModal.data;
-      switch (recordModal.tab) {
+      switch (recordModal.entity) {
         case 'health': await deleteHealthRecord(d.healthRecordId as number); break;
         case 'education': await deleteEducationRecord(d.educationRecordId as number); break;
         case 'incidents': await deleteIncidentReport(d.incidentId as number); break;
         case 'visitations': await deleteVisitation(d.visitationId as number); break;
+        case 'processRecordings': await deleteProcessRecording(d.recordingId as number); break;
+        case 'interventionPlan': await deleteInterventionPlan(d.planId as number); break;
       }
       setRecordModal(null);
       triggerRefresh();
@@ -557,6 +655,146 @@ export default function ResidentDetailPage() {
     </>
   );
 
+  // ── Intervention plan inline CRUD ──
+
+  const [editingPlanId, setEditingPlanId] = useState<number | null>(null);
+  const [editPlanData, setEditPlanData] = useState<Record<string, unknown>>({});
+  const [planSaving, setPlanSaving] = useState(false);
+  const [showPlanDeleteConfirm, setShowPlanDeleteConfirm] = useState<number | null>(null);
+
+  const startEditPlan = (p: InterventionPlan) => {
+    setEditingPlanId(p.planId);
+    setEditPlanData({ ...p } as unknown as Record<string, unknown>);
+  };
+  const cancelEditPlan = () => { setEditingPlanId(null); setEditPlanData({}); };
+
+  const savePlan = async () => {
+    if (editingPlanId == null) return;
+    setPlanSaving(true);
+    try {
+      await updateInterventionPlan(editingPlanId, editPlanData as unknown as InterventionPlan);
+      setEditingPlanId(null);
+      triggerRefresh();
+    } catch (err) { alert(err instanceof Error ? err.message : 'Failed to save'); }
+    finally { setPlanSaving(false); }
+  };
+
+  const confirmDeletePlan = async (planId: number) => {
+    setPlanSaving(true);
+    try {
+      await deleteInterventionPlan(planId);
+      setShowPlanDeleteConfirm(null);
+      triggerRefresh();
+    } catch (err) { alert(err instanceof Error ? err.message : 'Failed to delete'); }
+    finally { setPlanSaving(false); }
+  };
+
+  const renderPlanField = (p: InterventionPlan, key: string, label: string, type: 'text' | 'date' | 'number' | 'select' | 'textarea' = 'text', options?: string[]) => {
+    const isEditing = editingPlanId === p.planId;
+    const val = isEditing ? editPlanData[key] : (p as unknown as Record<string, unknown>)[key];
+    if (!isEditing) return <div className="resident-modal-field"><label>{label}</label><span className="resident-modal-field-value">{fmt(val)}</span></div>;
+    const onChange = (v: unknown) => setEditPlanData((d) => ({ ...d, [key]: v }));
+    let input;
+    if (type === 'select' && options) {
+      input = <select className="ip-edit-field" value={val == null ? '' : String(val)} onChange={(e) => onChange(e.target.value || null)}>
+        <option value="">— Select —</option>
+        {options.map((o) => <option key={o} value={o}>{o}</option>)}
+      </select>;
+    } else if (type === 'date') {
+      input = <input className="ip-edit-field" type="date" value={val == null ? '' : String(val).slice(0, 10)} onChange={(e) => onChange(e.target.value || null)} />;
+    } else if (type === 'number') {
+      input = <input className="ip-edit-field" type="number" value={val == null ? '' : String(val)} onChange={(e) => onChange(e.target.value ? Number(e.target.value) : null)} />;
+    } else if (type === 'textarea') {
+      input = <textarea className="ip-edit-field" rows={2} value={val == null ? '' : String(val)} onChange={(e) => onChange(e.target.value || null)} />;
+    } else {
+      input = <input className="ip-edit-field" type="text" value={val == null ? '' : String(val)} onChange={(e) => onChange(e.target.value || null)} />;
+    }
+    return <div className="resident-modal-field"><label>{label}</label>{input}</div>;
+  };
+
+  // ── Intervention plans renderer ──
+
+  const renderInterventionPlans = (categories: string[]) => {
+    const plans = interventionPlans.filter((p) => categories.includes(p.planCategory));
+    const existingCategories = plans.map((p) => p.planCategory);
+    const missingCategories = categories.filter((c) => !existingCategories.includes(c));
+
+    return (
+      <div className="ip-section">
+        <div className="ip-header">
+          <h3>Intervention Plans</h3>
+          <div className="ip-add-btns">
+            {missingCategories.map((cat) => (
+              <button key={cat} className="resident-modal-btn resident-modal-btn-edit"
+                onClick={() => openRecordCreate('interventionPlan', {
+                  planCategory: cat, status: 'Open', targetDate: new Date().toISOString().slice(0, 10),
+                })}>
+                + {cat} Plan
+              </button>
+            ))}
+          </div>
+        </div>
+        {plans.length === 0 ? (
+          <p style={{ color: '#9ca3af', fontSize: 13 }}>No intervention plans for this category yet.</p>
+        ) : plans.map((p) => {
+          const isEditing = editingPlanId === p.planId;
+          const statusClass = `ip-status ip-status-${p.status.toLowerCase().replace(/ /g, '-')}`;
+          return (
+            <div className="ip-card" key={p.planId}>
+              <div className="ip-card-title-row">
+                <strong style={{ flex: 1 }}>{p.planCategory}</strong>
+                <span className={statusClass}>{p.status}</span>
+                <div className="ip-card-actions">
+                  {isEditing ? (
+                    <>
+                      <button className="ip-icon-btn ip-icon-save" onClick={savePlan} disabled={planSaving}
+                        title="Save"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>
+                      <button className="ip-icon-btn ip-icon-cancel" onClick={cancelEditPlan} disabled={planSaving}
+                        title="Cancel"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                    </>
+                  ) : (
+                    <>
+                      <button className="ip-icon-btn ip-icon-edit" onClick={() => startEditPlan(p)}
+                        title="Edit"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg></button>
+                      <button className="ip-icon-btn ip-icon-delete" onClick={() => setShowPlanDeleteConfirm(p.planId)}
+                        title="Delete"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
+                    </>
+                  )}
+                </div>
+              </div>
+              <div className="resident-modal-fields" style={{ marginTop: 8 }}>
+                {renderPlanField(p, 'planDescription', 'Description', 'textarea')}
+                {renderPlanField(p, 'servicesProvided', 'Services Provided', 'textarea')}
+                {renderPlanField(p, 'targetValue', 'Target Value', 'number')}
+                {renderPlanField(p, 'targetDate', 'Target Date', 'date')}
+                {renderPlanField(p, 'status', 'Status', 'select', defaultPlanStatuses)}
+                {renderPlanField(p, 'caseConferenceDate', 'Case Conference Date', 'date')}
+              </div>
+            </div>
+          );
+        })}
+
+        {showPlanDeleteConfirm != null && createPortal(
+          <div className="resident-modal-overlay" onClick={() => setShowPlanDeleteConfirm(null)}>
+            <div className="delete-confirm-modal" onClick={(e) => e.stopPropagation()}>
+              <h3>Delete Intervention Plan</h3>
+              <p>Are you sure you want to delete this plan? This action cannot be undone.</p>
+              <div className="delete-confirm-actions">
+                <button className="resident-modal-btn resident-modal-btn-delete"
+                  onClick={() => confirmDeletePlan(showPlanDeleteConfirm)} disabled={planSaving}>
+                  {planSaving ? 'Deleting...' : 'Delete'}
+                </button>
+                <button className="resident-modal-btn resident-modal-btn-cancel"
+                  onClick={() => setShowPlanDeleteConfirm(null)} disabled={planSaving}>Cancel</button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
+      </div>
+    );
+  };
+
   // ── Tab renderers ──
 
   const renderResidentTab = () => {
@@ -592,7 +830,7 @@ export default function ResidentDetailPage() {
           onChange={(v) => { setHealthFilters((p) => ({ ...p, psychologicalCheckupDone: v })); setHealthPage(1); }} />
         <button className="resident-modal-btn resident-modal-btn-edit tab-add-btn"
           onClick={() => openRecordCreate('health', { recordDate: new Date().toISOString().slice(0, 10), medicalCheckupDone: false, dentalCheckupDone: false, psychologicalCheckupDone: false })}>
-          + Add Record
+          + Add Health Record
         </button>
       </div>
       {healthRecords.length === 0 ? <p className="tab-empty">No health & wellbeing records found.</p> : (
@@ -643,7 +881,7 @@ export default function ResidentDetailPage() {
         </>}
         <button className="resident-modal-btn resident-modal-btn-edit tab-add-btn"
           onClick={() => openRecordCreate('education', { recordDate: new Date().toISOString().slice(0, 10), attendanceRate: 0, progressPercent: 0 })}>
-          + Add Record
+          + Add Education Record
         </button>
       </div>
       {educationRecords.length === 0 ? <p className="tab-empty">No education records found.</p> : (
@@ -690,7 +928,7 @@ export default function ResidentDetailPage() {
           onChange={(v) => { setIncFilters((p) => ({ ...p, resolved: v })); setIncPage(1); }} />
         <button className="resident-modal-btn resident-modal-btn-edit tab-add-btn"
           onClick={() => openRecordCreate('incidents', { incidentDate: new Date().toISOString().slice(0, 10), resolved: false, followUpRequired: false })}>
-          + Add Record
+          + Report Incident
         </button>
       </div>
       {incidentReports.length === 0 ? <p className="tab-empty">No incident reports found.</p> : (
@@ -703,8 +941,9 @@ export default function ResidentDetailPage() {
               </tr></thead>
               <tbody>
                 {incidentReports.map((r) => (
-                  <tr key={r.incidentId} className="case-row-clickable" onClick={() => openRecordView('incidents', r as unknown as Record<string, unknown>)}>
-                    <td>{r.incidentDate}</td><td>{r.incidentType}</td><td>{r.severity}</td>
+                  <tr key={r.incidentId} className={`case-row-clickable ${r.severity === 'High' ? 'incident-row-high' : ''}`} onClick={() => openRecordView('incidents', r as unknown as Record<string, unknown>)}>
+                    <td>{r.incidentDate}</td><td>{r.incidentType}</td>
+                    <td><span className={`severity-badge severity-${r.severity?.toLowerCase()}`}>{r.severity}</span></td>
                     <td>{fmt(r.description)}</td><td>{fmt(r.responseTaken)}</td>
                     <td>{fmt(r.resolved)}</td><td>{fmt(r.resolutionDate)}</td>
                     <td>{r.reportedBy}</td><td>{fmt(r.followUpRequired)}</td>
@@ -742,7 +981,7 @@ export default function ResidentDetailPage() {
           onChange={(v) => { setVisFilters((p) => ({ ...p, safetyConcernsNoted: v })); setVisPage(1); }} />
         <button className="resident-modal-btn resident-modal-btn-edit tab-add-btn"
           onClick={() => openRecordCreate('visitations', { visitDate: new Date().toISOString().slice(0, 10), safetyConcernsNoted: false, followUpNeeded: false })}>
-          + Add Record
+          + Add Visitation
         </button>
       </div>
       {visitations.length === 0 ? <p className="tab-empty">No visitation records found.</p> : (
@@ -771,15 +1010,102 @@ export default function ResidentDetailPage() {
     </>
   );
 
+  const renderProcessRecordingsTab = () => (
+    <>
+      <div className="tab-filter-bar">
+        <DateRange from={procFilters.dateFrom} to={procFilters.dateTo}
+          onChange={(f, t) => { setProcFilters((p) => ({ ...p, dateFrom: f, dateTo: t })); setProcPage(1); }} />
+        {procFilterOpts && <>
+          <select value={procFilters.sessionType || ''} onChange={(e) => { setProcFilters((p) => ({ ...p, sessionType: e.target.value || undefined })); setProcPage(1); }}>
+            <option value="">All Types</option>
+            {procFilterOpts.sessionTypes.map((o) => <option key={o} value={o}>{o}</option>)}
+          </select>
+          <select value={procFilters.socialWorker || ''} onChange={(e) => { setProcFilters((p) => ({ ...p, socialWorker: e.target.value || undefined })); setProcPage(1); }}>
+            <option value="">All Workers</option>
+            {procFilterOpts.socialWorkers.map((o) => <option key={o} value={o}>{o}</option>)}
+          </select>
+        </>}
+        <BoolSelect label="Concerns" value={procFilters.concernsFlagged}
+          onChange={(v) => { setProcFilters((p) => ({ ...p, concernsFlagged: v })); setProcPage(1); }} />
+        <button className="resident-modal-btn resident-modal-btn-edit tab-add-btn"
+          onClick={() => openRecordCreate('processRecordings', { sessionDate: new Date().toISOString().slice(0, 10), progressNoted: false, concernsFlagged: false, referralMade: false })}>
+          + Add Session
+        </button>
+      </div>
+      {procRecordings.length === 0 ? <p className="tab-empty">No counseling sessions found.</p> : (
+        <>
+          <div className="tab-table-wrap">
+            <table className="case-table">
+              <thead><tr>
+                <th>Date</th><th>Worker</th><th>Type</th><th>Duration</th><th>State (Start)</th>
+                <th>State (End)</th><th>Progress</th><th>Concerns</th><th>Referral</th>
+              </tr></thead>
+              <tbody>
+                {procRecordings.map((r) => (
+                  <tr key={r.recordingId} className="case-row-clickable" onClick={() => openRecordView('processRecordings', r as unknown as Record<string, unknown>)}>
+                    <td>{r.sessionDate}</td><td>{r.socialWorker}</td><td>{r.sessionType}</td>
+                    <td>{r.sessionDurationMinutes}m</td><td>{r.emotionalStateObserved}</td>
+                    <td>{r.emotionalStateEnd}</td><td>{fmt(r.progressNoted)}</td>
+                    <td>{fmt(r.concernsFlagged)}</td><td>{fmt(r.referralMade)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <TabPagination page={procPage} totalPages={procTotal.totalPages} totalCount={procTotal.totalCount} onPageChange={setProcPage} />
+        </>
+      )}
+    </>
+  );
+
+  // ── Composite tab renderers ──
+
+  const renderSafetyTab = () => {
+    const plan = interventionPlans.find((p) => p.planCategory === 'Safety') ?? null;
+    return (
+      <>
+        {renderInterventionPlans(tabPlanCategories.safety)}
+        <SafetyChart plan={plan} incidents={allIncidents} />
+        <h3 className="tab-sub-heading">Incidents</h3>
+        {renderIncidentsTab()}
+        <h3 className="tab-sub-heading">Visitations</h3>
+        {renderVisitationsTab()}
+      </>
+    );
+  };
+
+  const renderPhysicalHealthTab = () => {
+    const plan = interventionPlans.find((p) => p.planCategory === 'Physical Health') ?? null;
+    return (
+      <>
+        {renderInterventionPlans(tabPlanCategories.physicalHealth)}
+        <HealthChart plan={plan} records={allHealthRecords} />
+        <h3 className="tab-sub-heading">Health & Wellbeing</h3>
+        {renderHealthTab()}
+        <h3 className="tab-sub-heading">Counseling Sessions</h3>
+        {renderProcessRecordingsTab()}
+      </>
+    );
+  };
+
+  const renderEducationCompositeTab = () => {
+    const plan = interventionPlans.find((p) => p.planCategory === 'Education') ?? null;
+    return (
+      <>
+        {renderInterventionPlans(tabPlanCategories.education)}
+        <EducationChart plan={plan} records={allEducationRecords} />
+        <h3 className="tab-sub-heading">Education Records</h3>
+        {renderEducationTab()}
+      </>
+    );
+  };
+
   const renderTabContent = () => {
-    if (activeTab !== 'resident' && tabLoading) return <p className="case-status">Loading...</p>;
-    if (activeTab !== 'resident' && tabError) return <p className="case-status case-error">Error: {tabError}</p>;
     switch (activeTab) {
       case 'resident': return renderResidentTab();
-      case 'health': return renderHealthTab();
-      case 'education': return renderEducationTab();
-      case 'incidents': return renderIncidentsTab();
-      case 'visitations': return renderVisitationsTab();
+      case 'safety': return renderSafetyTab();
+      case 'physicalHealth': return renderPhysicalHealthTab();
+      case 'education': return renderEducationCompositeTab();
     }
   };
 
@@ -805,18 +1131,18 @@ export default function ResidentDetailPage() {
               {activeTab === 'resident' && (
                 isEditing ? (
                   <>
-                    <button className="resident-modal-btn resident-modal-btn-save" onClick={handleSave} disabled={saving}>
-                      {saving ? 'Saving...' : 'Save'}
+                    <button className="resident-modal-btn resident-modal-btn-save" onClick={handleSave} disabled={saving} title="Save">
+                      {saving ? 'Saving...' : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
                     </button>
                     <button className="resident-modal-btn resident-modal-btn-cancel"
-                      onClick={() => { setEditData({ ...resident }); setIsEditing(false); }} disabled={saving}>
-                      Cancel
+                      onClick={() => { setEditData({ ...resident }); setIsEditing(false); }} disabled={saving} title="Cancel">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                     </button>
                   </>
                 ) : (
                   <>
-                    <button className="resident-modal-btn resident-modal-btn-edit" onClick={() => setIsEditing(true)}>Edit</button>
-                    <button className="resident-modal-btn resident-modal-btn-delete" onClick={handleDelete} disabled={saving}>Delete</button>
+                    <button className="resident-modal-btn resident-modal-btn-edit" onClick={() => setIsEditing(true)} title="Edit"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg></button>
+                    <button className="resident-modal-btn resident-modal-btn-delete" onClick={handleDelete} disabled={saving} title="Delete"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
                   </>
                 )
               )}
@@ -840,16 +1166,20 @@ export default function ResidentDetailPage() {
       {recordModal && (
         <RecordModal
           title={
-            recordModal.tab === 'health' ? 'Health & Wellbeing Record'
-            : recordModal.tab === 'education' ? 'Education Record'
-            : recordModal.tab === 'incidents' ? 'Incident Report'
-            : 'Home Visitation'
+            recordModal.entity === 'health' ? 'Health & Wellbeing Record'
+            : recordModal.entity === 'education' ? 'Education Record'
+            : recordModal.entity === 'incidents' ? 'Incident Report'
+            : recordModal.entity === 'visitations' ? 'Home Visitation'
+            : recordModal.entity === 'processRecordings' ? 'Counseling Session'
+            : 'Intervention Plan'
           }
           fields={
-            recordModal.tab === 'health' ? healthFields
-            : recordModal.tab === 'education' ? getEducationFields(globalEduOpts)
-            : recordModal.tab === 'incidents' ? getIncidentFields(globalIncOpts, filterOptions?.socialWorkers)
-            : getVisitationFields(globalVisOpts, filterOptions?.socialWorkers)
+            recordModal.entity === 'health' ? healthFields
+            : recordModal.entity === 'education' ? getEducationFields(globalEduOpts)
+            : recordModal.entity === 'incidents' ? getIncidentFields(globalIncOpts, filterOptions?.socialWorkers)
+            : recordModal.entity === 'visitations' ? getVisitationFields(globalVisOpts, filterOptions?.socialWorkers)
+            : recordModal.entity === 'processRecordings' ? getProcessRecordingFields(globalProcOpts, filterOptions?.socialWorkers)
+            : interventionPlanFields
           }
           data={recordModal.data}
           mode={recordModal.mode}

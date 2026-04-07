@@ -3,6 +3,8 @@ import { HealthWellbeingRecord } from '../types/HealthWellbeingRecord';
 import { EducationRecord } from '../types/EducationRecord';
 import { IncidentReport } from '../types/IncidentReport';
 import { HomeVisitation } from '../types/HomeVisitation';
+import { ProcessRecording } from '../types/ProcessRecording';
+import { InterventionPlan } from '../types/InterventionPlan';
 
 const API_BASE_URL = 'https://localhost:7052';
 
@@ -356,7 +358,7 @@ export const fetchGlobalVisitationOptions = async (): Promise<GlobalVisitationOp
 // ── CRUD helpers for tab records ──
 
 function cleanPayload(data: Record<string, unknown>, idKey: string): Record<string, unknown> {
-  const { [idKey]: _id, ...rest } = data;
+  const { [idKey]: _id, resident: _nav, safehouse: _nav2, ...rest } = data;
   return Object.fromEntries(Object.entries(rest).map(([k, v]) => [k, v === '' ? null : v]));
 }
 
@@ -442,4 +444,108 @@ export const updateVisitation = async (id: number, data: HomeVisitation): Promis
 export const deleteVisitation = async (id: number): Promise<void> => {
   const response = await fetch(`${API_BASE_URL}/Visitation/${id}`, { method: 'DELETE' });
   if (!response.ok) throw new Error(`Failed to delete visitation: ${response.status}`);
+};
+
+// Process Recordings
+export interface ProcessRecordingFilters {
+  dateFrom?: string;
+  dateTo?: string;
+  sessionType?: string;
+  socialWorker?: string;
+  concernsFlagged?: boolean;
+}
+
+export interface ProcessRecordingFilterOptions {
+  sessionTypes: string[];
+  socialWorkers: string[];
+}
+
+export interface GlobalProcessRecordingOptions {
+  sessionTypes: string[];
+  emotionalStates: string[];
+  socialWorkers: string[];
+}
+
+export const fetchProcessRecordings = async (
+  residentId: number, page = 1, pageSize = 10, filters: ProcessRecordingFilters = {}
+): Promise<TabPaginatedResponse<ProcessRecording>> => {
+  const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+  if (filters.dateFrom) params.set('dateFrom', filters.dateFrom);
+  if (filters.dateTo) params.set('dateTo', filters.dateTo);
+  if (filters.sessionType) params.set('sessionType', filters.sessionType);
+  if (filters.socialWorker) params.set('socialWorker', filters.socialWorker);
+  if (filters.concernsFlagged !== undefined) params.set('concernsFlagged', String(filters.concernsFlagged));
+  const response = await fetch(`${API_BASE_URL}/ProcessRecording/Resident/${residentId}?${params}`);
+  if (!response.ok) throw new Error(`Failed to fetch process recordings: ${response.status}`);
+  return await response.json();
+};
+
+export const fetchProcessRecordingFilterOptions = async (residentId: number): Promise<ProcessRecordingFilterOptions> => {
+  const response = await fetch(`${API_BASE_URL}/ProcessRecording/Resident/${residentId}/FilterOptions`);
+  if (!response.ok) throw new Error(`Failed to fetch process recording filter options: ${response.status}`);
+  return await response.json();
+};
+
+export const fetchGlobalProcessRecordingOptions = async (): Promise<GlobalProcessRecordingOptions> => {
+  const response = await fetch(`${API_BASE_URL}/ProcessRecording/GlobalFilterOptions`);
+  if (!response.ok) throw new Error(`Failed to fetch global process recording options: ${response.status}`);
+  return await response.json();
+};
+
+export const createProcessRecording = async (data: Partial<ProcessRecording>): Promise<ProcessRecording> => {
+  const response = await fetch(`${API_BASE_URL}/ProcessRecording`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(cleanPayload(data as Record<string, unknown>, 'recordingId')),
+  });
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`Failed to create process recording: ${response.status} — ${body}`);
+  }
+  return await response.json();
+};
+export const updateProcessRecording = async (id: number, data: ProcessRecording): Promise<ProcessRecording> => {
+  const response = await fetch(`${API_BASE_URL}/ProcessRecording/${id}`, {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error(`Failed to update process recording: ${response.status}`);
+  return await response.json();
+};
+export const deleteProcessRecording = async (id: number): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}/ProcessRecording/${id}`, { method: 'DELETE' });
+  if (!response.ok) throw new Error(`Failed to delete process recording: ${response.status}`);
+};
+
+// Intervention Plans
+export const fetchInterventionPlans = async (residentId: number, planCategory?: string): Promise<InterventionPlan[]> => {
+  const params = new URLSearchParams();
+  if (planCategory) params.set('planCategory', planCategory);
+  const qs = params.toString() ? `?${params}` : '';
+  const response = await fetch(`${API_BASE_URL}/InterventionPlan/Resident/${residentId}${qs}`);
+  if (!response.ok) throw new Error(`Failed to fetch intervention plans: ${response.status}`);
+  return await response.json();
+};
+
+export const createInterventionPlan = async (data: Partial<InterventionPlan>): Promise<InterventionPlan> => {
+  const response = await fetch(`${API_BASE_URL}/InterventionPlan`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(cleanPayload(data as Record<string, unknown>, 'planId')),
+  });
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`Failed to create intervention plan: ${response.status} — ${body}`);
+  }
+  return await response.json();
+};
+
+export const updateInterventionPlan = async (id: number, data: InterventionPlan): Promise<InterventionPlan> => {
+  const response = await fetch(`${API_BASE_URL}/InterventionPlan/${id}`, {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error(`Failed to update intervention plan: ${response.status}`);
+  return await response.json();
+};
+
+export const deleteInterventionPlan = async (id: number): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}/InterventionPlan/${id}`, { method: 'DELETE' });
+  if (!response.ok) throw new Error(`Failed to delete intervention plan: ${response.status}`);
 };

@@ -1,5 +1,11 @@
 /* ================= DONATE PAGE ================= */
 
+.donate-field-error {
+  color: #dc2626;
+  font-size: 12px;
+  margin: 4px 0 0;
+}
+
 .donate-page {
   min-height: 100vh;
   background: #f6f1ee;

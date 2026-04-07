@@ -15,14 +15,6 @@ interface Stats {
   byDonationType:   { type: string; count: number }[];
 }
 
-const AREA_COLORS: Record<string, string> = {
-  Education:   '#6366f1',
-  Wellbeing:   '#ec4899',
-  Operations:  '#f59e0b',
-  Transport:   '#10b981',
-  Maintenance: '#3b82f6',
-  Outreach:    '#8b5cf6',
-};
 
 function fmt(n: number) {
   return '₱' + Number(n).toLocaleString('en-PH', { minimumFractionDigits: 0 });
@@ -59,22 +51,22 @@ export default function ImpactDashboard() {
         <>
           {/* ── STAT CARDS ── */}
           <div className="impact-cards">
-            <div className="impact-card impact-card-purple">
+            <div className="impact-card impact-card-orange">
               <div className="impact-card-icon">❤️</div>
               <div className="impact-card-value">{stats.totalResidents.toLocaleString()}</div>
               <div className="impact-card-label">Children Supported</div>
             </div>
-            <div className="impact-card impact-card-pink">
+            <div className="impact-card impact-card-dark">
               <div className="impact-card-icon">🏠</div>
               <div className="impact-card-value">{stats.activeSafehouses}</div>
               <div className="impact-card-label">Active Safehouses</div>
             </div>
-            <div className="impact-card impact-card-green">
+            <div className="impact-card impact-card-warm">
               <div className="impact-card-icon">💰</div>
               <div className="impact-card-value">{fmt(stats.totalMonetary)}</div>
               <div className="impact-card-label">Total Donations Received</div>
             </div>
-            <div className="impact-card impact-card-blue">
+            <div className="impact-card impact-card-muted">
               <div className="impact-card-icon">🤝</div>
               <div className="impact-card-value">{stats.totalDonors.toLocaleString()}</div>
               <div className="impact-card-label">Generous Donors</div>
@@ -99,10 +91,7 @@ export default function ImpactDashboard() {
                       <div className="impact-bar-track">
                         <div
                           className="impact-bar-fill"
-                          style={{
-                            width: `${(a.amount / maxArea) * 100}%`,
-                            background: AREA_COLORS[a.area] ?? '#6b7280',
-                          }}
+                          style={{ width: `${(a.amount / maxArea) * 100}%` }}
                         />
                       </div>
                     </div>
@@ -117,7 +106,7 @@ export default function ImpactDashboard() {
               <div className="impact-donut-list">
                 {stats.byDonationType.map(d => (
                   <div key={d.type} className="impact-type-row">
-                    <span className="impact-type-dot" style={{ background: AREA_COLORS[d.type] ?? '#9ca3af' }} />
+                    <span className="impact-type-dot" />
                     <span className="impact-type-name">{d.type}</span>
                     <span className="impact-type-count">{d.count} donation{d.count !== 1 ? 's' : ''}</span>
                   </div>
