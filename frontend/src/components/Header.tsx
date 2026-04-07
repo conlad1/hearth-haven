@@ -22,8 +22,9 @@ function Header({ isAuthenticated }: HeaderProps) {
           <div className="nav-links">
             <Link to="/">Home</Link>
             <Link to="/analytics">Analytics</Link>
+            <Link to="/impact">Impact</Link>
             <Link to="/cases">Case Management</Link>
-            <Link to="/donors">Donors</Link>
+            {isAuthenticated && <Link to="/donors">Donors</Link>}
             <Link to="/safehouses">Safehouses</Link>
             <Link to="/#contact">Contact</Link>
           </div>
@@ -64,8 +65,9 @@ function Header({ isAuthenticated }: HeaderProps) {
       <div className={`mobile-menu ${menuOpen ? "open" : ""}`}>
         <Link to="/" onClick={() => setMenuOpen(false)}>Home</Link>
         <Link to="/analytics" onClick={() => setMenuOpen(false)}>Analytics</Link>
+        <Link to="/impact" onClick={() => setMenuOpen(false)}>Impact</Link>
         <Link to="/cases" onClick={() => setMenuOpen(false)}>Case Management</Link>
-        <Link to="/donors" onClick={() => setMenuOpen(false)}>Donors</Link>
+        {isAuthenticated && <Link to="/donors" onClick={() => setMenuOpen(false)}>Donors</Link>}
         <Link to="/safehouses" onClick={() => setMenuOpen(false)}>Safehouses</Link>
         <Link to="/#contact" onClick={() => setMenuOpen(false)}>Contact</Link>
 

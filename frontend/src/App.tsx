@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -11,7 +11,13 @@ import CasePage from './pages/CasePage';
 import ResidentDetailPage from './pages/ResidentDetailPage';
 import DonatePage from "./pages/DonatePage";
 import DonorsPage from "./pages/DonorPage";
+import AllocationPage from "./pages/AllocationPage";
+import ImpactDashboard from "./pages/ImpactDashboard";
 import { AuthService } from "./api/AuthService";
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  return AuthService.isAuthenticated() ? <>{children}</> : <Navigate to="/login" replace />;
+}
 
 function ScrollToHash() {
   const location = useLocation();
@@ -59,8 +65,9 @@ function App() {
           <Route path="/cases" element={<CasePage />} />
           <Route path="/cases/:id" element={<ResidentDetailPage />} />
           <Route path="/donate" element={<DonatePage />} />
-          <Route path="/donors" element={<DonorsPage />} />
-
+          <Route path="/impact" element={<ImpactDashboard />} />
+          <Route path="/donors" element={<ProtectedRoute><DonorsPage /></ProtectedRoute>} />
+          <Route path="/allocations" element={<ProtectedRoute><AllocationPage /></ProtectedRoute>} />
         </Routes>
       </main>
 
