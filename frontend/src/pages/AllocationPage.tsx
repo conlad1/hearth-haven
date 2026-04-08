@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import './AllocationPage.css';
 
-const API = 'https://localhost:7052';
+import { API_BASE_URL as API } from '../api/config';
 
 const PROGRAM_AREAS = ['Education', 'Wellbeing', 'Operations', 'Transport', 'Maintenance', 'Outreach'];
 

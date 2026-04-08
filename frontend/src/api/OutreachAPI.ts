@@ -1,4 +1,4 @@
-const OUTREACH_API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://hearth-haven-backend-eqbyhhc4h8htajhv.westus3-01.azurewebsites.net';
+import { API_BASE_URL as OUTREACH_API_BASE_URL } from './config';
 
 export type OutreachSummary = {
   generatedAt: string;
