@@ -403,8 +403,6 @@ export default function ResidentDetailPage() {
   const [allHealthRecords, setAllHealthRecords] = useState<HealthWellbeingRecord[]>([]);
   const [allEducationRecords, setAllEducationRecords] = useState<EducationRecord[]>([]);
 
-  const [tabLoading, setTabLoading] = useState(false);
-  const [tabError, setTabError] = useState<string | null>(null);
 
   // Record modal state (shared across all tabs)
   type EntityKey = 'health' | 'education' | 'incidents' | 'visitations' | 'processRecordings' | 'interventionPlan';
