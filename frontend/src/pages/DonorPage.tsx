@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { Link } from 'react-router-dom';
 import { AuthService } from '../api/AuthService';
 import AllocationPage, { type AllocationPageHandle } from './AllocationPage';
 import { Supporter, Contribution, DonorFilterOptions, SupporterFilters, ContributionFilters } from '../types/Donor';
@@ -26,11 +27,20 @@ import {
   Filter,
   Users,
   DollarSign,
+  BarChart3,
 } from 'lucide-react';
 
 const PAGE_SIZE_OPTIONS = [20, 50, 100];
 
-const SUPPORTER_TYPES = ['Individual', 'Corporate', 'Anonymous'];
+const SUPPORTER_TYPES = [
+  'MonetaryDonor',
+  'InKindDonor',
+  'Volunteer',
+  'SkillsContributor',
+  'SocialMediaAdvocate',
+  'PartnerOrganization',
+  'Anonymous',
+];
 
 const DONATION_TYPES  = ['Monetary', 'InKind', 'Volunteer', 'Skills', 'SocialMedia'];
 const FREQUENCY_OPTIONS = ['Once', 'Monthly'];
@@ -134,14 +144,14 @@ const cSelectMap:  Partial<Record<keyof Contribution, { opts: string[]; nullable
 // ── Blank templates ───────────────────────────────────────────────────────────
 
 const blankSupporter: Supporter = {
-  supporterId: 0, supporterType: 'Individual', status: 'Active',
+  supporterId: 0, supporterType: 'MonetaryDonor', status: 'Active',
   firstName: '', lastName: '', email: '', phone: null,
   organizationName: null, address: null, notes: null, createdAt: '',
 };
 
 const blankContribution: Contribution = {
   donationId: 0, supporterId: 0, supporterName: '',
-  donationType: 'Monetary', amount: null, currencyCode: 'PHP',
+  donationType: 'Monetary', amount: null, currencyCode: 'USD',
   isRecurring: false, frequency: 'Once', channelSource: null,
   description: null, estimatedValue: null,
   donationDate: new Date().toISOString().slice(0, 10),
@@ -159,7 +169,7 @@ function formatCell(value: unknown): string {
 
 function formatAmount(amount: number | null): string {
   if (amount === null || amount === undefined) return '--';
-  return `PHP ${Number(amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
+  return `USD ${Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
 }
 
 function TypeIcon({ type }: { type: string }) {
@@ -563,6 +573,10 @@ export default function DonorPage() {
                 {activeTab === 'supporters' ? 'Supporter Profiles' : activeTab === 'contributions' ? 'Contribution Activity' : 'Allocations'}
               </h1>
               <div className="flex w-full flex-wrap items-center gap-3 lg:w-auto lg:justify-end">
+                <Link to="/donor-analytics" className="btn-secondary w-full no-underline sm:w-auto">
+                  <BarChart3 className="h-4 w-4" /> Analytics
+                </Link>
+
                 {/* Tab toggle */}
                 <div className="w-full overflow-x-auto lg:w-auto">
                   <div className="inline-flex min-w-max overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">

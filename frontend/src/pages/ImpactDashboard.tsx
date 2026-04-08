@@ -16,7 +16,7 @@ interface Stats {
 }
 
 function fmt(n: number) {
-  return '\u20B1' + Number(n).toLocaleString('en-PH', { minimumFractionDigits: 0 });
+  return '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 0 });
 }
 
 const kpiCards = [
@@ -33,21 +33,25 @@ export default function ImpactDashboard() {
 
   useEffect(() => {
     fetch(`${API}/Impact/Stats`)
-      .then(r => { if (!r.ok) throw new Error('Failed to load'); return r.json(); })
+      .then((r) => {
+        if (!r.ok) throw new Error('Failed to load');
+        return r.json();
+      })
       .then(setStats)
-      .catch(e => setError(e.message))
+      .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
 
-  const maxArea = stats ? Math.max(...stats.byProgramArea.map(a => a.amount), 1) : 1;
+  const maxArea = stats ? Math.max(...stats.byProgramArea.map((a) => a.amount), 1) : 1;
 
   return (
     <div>
-      {/* Hero */}
       <section className="py-16 text-center">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl">Our <span className="text-orange-500">Impact</span></h1>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl">
+          Our <span className="text-orange-500">Impact</span>
+        </h1>
         <p className="mx-auto mt-3 max-w-lg text-gray-500 dark:text-gray-400">
-          See how your generosity is transforming lives — every peso tracked, every child supported.
+          See how your generosity is transforming lives - every dollar tracked, every child supported.
         </p>
       </section>
 
@@ -57,7 +61,6 @@ export default function ImpactDashboard() {
 
         {stats && (
           <>
-            {/* KPI Cards */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {kpiCards.map(({ key, icon: Icon, label, color, getValue }) => (
                 <div key={key} className="card flex flex-col items-center text-center">
@@ -70,9 +73,7 @@ export default function ImpactDashboard() {
               ))}
             </div>
 
-            {/* Two-column */}
             <div className="mt-10 grid grid-cols-1 gap-6 lg:grid-cols-2">
-              {/* Program Area Bars */}
               <div className="card">
                 <h2 className="text-lg font-bold">Resources by Program Area</h2>
                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">How allocated funds are distributed across programs</p>
@@ -81,7 +82,7 @@ export default function ImpactDashboard() {
                   <p className="mt-6 text-sm text-gray-400 dark:text-gray-500">No allocations recorded yet.</p>
                 ) : (
                   <div className="mt-6 space-y-4">
-                    {stats.byProgramArea.map(a => (
+                    {stats.byProgramArea.map((a) => (
                       <div key={a.area}>
                         <div className="mb-1 flex items-center justify-between text-sm">
                           <span className="font-medium text-gray-700 dark:text-gray-300">{a.area}</span>
@@ -99,13 +100,12 @@ export default function ImpactDashboard() {
                 )}
               </div>
 
-              {/* Donation Types */}
               <div className="card">
                 <h2 className="text-lg font-bold">Ways People Give</h2>
                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Contributions by donation type</p>
 
                 <div className="mt-6 space-y-3">
-                  {stats.byDonationType.map(d => (
+                  {stats.byDonationType.map((d) => (
                     <div key={d.type} className="flex items-center gap-3">
                       <span className="h-2.5 w-2.5 rounded-full bg-orange-500" />
                       <span className="flex-1 text-sm font-medium text-gray-700 dark:text-gray-300">{d.type}</span>
@@ -129,9 +129,10 @@ export default function ImpactDashboard() {
               </div>
             </div>
 
-            {/* CTA */}
             <div className="mt-12 rounded-2xl border border-orange-200 dark:border-orange-500/20 bg-orange-50/50 dark:bg-orange-500/5 px-6 py-14 text-center shadow-sm">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Be Part of the <span className="text-orange-500">Change</span></h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Be Part of the <span className="text-orange-500">Change</span>
+              </h2>
               <p className="mx-auto mt-3 max-w-md text-gray-500 dark:text-gray-400">
                 Every donation directly supports a child in need of safety, care, and a brighter future.
               </p>

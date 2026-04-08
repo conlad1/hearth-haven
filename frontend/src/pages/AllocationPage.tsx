@@ -312,7 +312,7 @@ const AllocationPage = forwardRef<AllocationPageHandle, AllocationPageProps>(fun
                       </td>
                       <td>{a.safehouseName}</td>
                       <td>{a.programArea}</td>
-                      <td>&#x20B1;{Number(a.amountAllocated).toLocaleString()}</td>
+                      <td>USD {Number(a.amountAllocated).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
                       <td>{a.allocationDate}</td>
                       <td className="max-w-[200px] text-xs text-gray-500 dark:text-gray-400">
                         {a.notes || '\u2014'}
@@ -408,7 +408,7 @@ const AllocationPage = forwardRef<AllocationPageHandle, AllocationPageProps>(fun
             </select>
 
             <label className="mt-2 text-xs font-medium text-gray-700 dark:text-gray-300">
-              Amount Allocated (&#x20B1;)
+              Amount Allocated (USD)
             </label>
             <input
               className="input-field"

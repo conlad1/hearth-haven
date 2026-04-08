@@ -5,6 +5,7 @@ import {
   SupporterFilters,
   ContributionFilters,
   PaginatedResponse,
+  DonorAnalyticsResponse,
 } from '../types/Donor';
 
 import { API_BASE_URL } from './config';
@@ -130,4 +131,13 @@ export const deleteContribution = async (id: number): Promise<void> => {
   });
 
   if (!res.ok) throw new Error(`Failed to delete contribution: ${res.status}`);
+};
+
+export const fetchDonorAnalytics = async (): Promise<DonorAnalyticsResponse> => {
+  const res = await fetch(`${API_BASE_URL}/Donor/Analytics`, {
+    credentials: 'include',
+  });
+
+  if (!res.ok) throw new Error(`Failed to fetch donor analytics: ${res.status}`);
+  return res.json();
 };

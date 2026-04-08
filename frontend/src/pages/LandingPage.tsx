@@ -168,6 +168,11 @@ function LandingPage() {
             <p className="mt-6 text-center text-xs text-gray-400 dark:text-gray-500">
               All communications are confidential and protected. Your safety is our priority.
             </p>
+            <div className="mt-6 text-center">
+            <Link to="/resources" className="btn-primary no-underline">
+              View All Resources
+            </Link>
+</div>
           </div>
         </div>
       </section>
@@ -261,6 +266,7 @@ function LandingPage() {
         </div>
       )}
     </div>
+  
   );
 }
 
