@@ -34,6 +34,7 @@ export default function LoginPage() {
           : 'Login successful. Redirecting you now...';
         setSuccessMessage(modalMessage);
         AuthService.setAuthenticated(true);
+        AuthService.setUserEmail(email);
         setShowSuccessModal(true);
         window.setTimeout(() => navigate(returnTo, { replace: true }), 1200);
       } else {

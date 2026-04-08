@@ -8,7 +8,7 @@ import {
 } from '../types/Donor';
 
 // ── Flip to false when backend is ready ──────────────────────────────────────
-const USE_MOCK = true;
+const USE_MOCK = false;
 import { API_BASE_URL } from './config';
 
 // ── Mock Data ─────────────────────────────────────────────────────────────────
@@ -282,7 +282,7 @@ function filterContributions(data: Contribution[], filters: ContributionFilters)
 
 export const fetchDonorFilterOptions = async (): Promise<DonorFilterOptions> => {
   if (USE_MOCK) return { ...MOCK_FILTER_OPTIONS };
-  const res = await fetch(`${API_BASE_URL}/Donor/FilterOptions`);
+  const res = await fetch(`${API_BASE_URL}/Donor/FilterOptions`, { credentials: 'include' });
   if (!res.ok) throw new Error(`Failed to fetch filter options: ${res.status}`);
   return res.json();
 };
@@ -299,9 +299,10 @@ export const fetchSupporters = async (
   }
   const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
   if (filters.supporterType) params.set('supporterType', filters.supporterType);
+  if (filters.supporterId) params.set('supporterId', String(filters.supporterId));
   if (filters.status) params.set('status', filters.status);
   if (filters.search) params.set('search', filters.search);
-  const res = await fetch(`${API_BASE_URL}/Donor/Supporters?${params}`);
+  const res = await fetch(`${API_BASE_URL}/Donor/Supporters?${params}`, { credentials: 'include' });
   if (!res.ok) throw new Error(`Failed to fetch supporters: ${res.status}`);
   return res.json();
 };
@@ -323,7 +324,7 @@ export const fetchContributions = async (
   if (filters.safehouseAllocation) params.set('safehouseAllocation', filters.safehouseAllocation);
   if (filters.supporterId) params.set('supporterId', String(filters.supporterId));
   if (filters.search) params.set('search', filters.search);
-  const res = await fetch(`${API_BASE_URL}/Donor/Contributions?${params}`);
+  const res = await fetch(`${API_BASE_URL}/Donor/Contributions?${params}`, { credentials: 'include' });
   if (!res.ok) throw new Error(`Failed to fetch contributions: ${res.status}`);
   return res.json();
 };
@@ -343,6 +344,7 @@ export const createSupporter = async (data: Partial<Supporter>): Promise<Support
   const res = await fetch(`${API_BASE_URL}/Donor/Supporters`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify(data),
   });
   if (!res.ok) throw new Error(`Failed to create supporter: ${res.status}`);
@@ -357,6 +359,7 @@ export const updateSupporter = async (id: number, data: Supporter): Promise<Supp
   const res = await fetch(`${API_BASE_URL}/Donor/Supporters/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify(data),
   });
   if (!res.ok) throw new Error(`Failed to update supporter: ${res.status}`);
@@ -368,7 +371,7 @@ export const deleteSupporter = async (id: number): Promise<void> => {
     mockSupporters = mockSupporters.filter((s) => s.supporterId !== id);
     return;
   }
-  const res = await fetch(`${API_BASE_URL}/Donor/Supporters/${id}`, { method: 'DELETE' });
+  const res = await fetch(`${API_BASE_URL}/Donor/Supporters/${id}`, { method: 'DELETE', credentials: 'include' });
   if (!res.ok) throw new Error(`Failed to delete supporter: ${res.status}`);
 };
 
@@ -389,6 +392,7 @@ export const createContribution = async (data: Partial<Contribution>): Promise<C
   const res = await fetch(`${API_BASE_URL}/Donor/Contributions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify(data),
   });
   if (!res.ok) throw new Error(`Failed to create contribution: ${res.status}`);
@@ -403,6 +407,7 @@ export const updateContribution = async (id: number, data: Contribution): Promis
   const res = await fetch(`${API_BASE_URL}/Donor/Contributions/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify(data),
   });
   if (!res.ok) throw new Error(`Failed to update contribution: ${res.status}`);
@@ -414,6 +419,6 @@ export const deleteContribution = async (id: number): Promise<void> => {
     mockContributions = mockContributions.filter((c) => c.donationId !== id);
     return;
   }
-  const res = await fetch(`${API_BASE_URL}/Donor/Contributions/${id}`, { method: 'DELETE' });
+  const res = await fetch(`${API_BASE_URL}/Donor/Contributions/${id}`, { method: 'DELETE', credentials: 'include' });
   if (!res.ok) throw new Error(`Failed to delete contribution: ${res.status}`);
 };
