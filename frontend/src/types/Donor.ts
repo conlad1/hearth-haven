@@ -44,6 +44,7 @@ export interface DonorFilterOptions {
 
 export interface SupporterFilters {
   supporterType?: string;
+  supporterId?: number;
   status?: string;
   search?: string;
 }

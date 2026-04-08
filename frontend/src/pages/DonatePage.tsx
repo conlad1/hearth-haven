@@ -7,16 +7,25 @@ import { Heart, UserX, User, ArrowRight, LogIn } from 'lucide-react';
 const AMOUNTS: number[] = [10, 25, 50, 100, 250, 500];
 type AuthMode = 'anonymous' | 'loggedin';
 
+function getStoredUserForm() {
+  const email = AuthService.getUserEmail() ?? '';
+  const fullName = AuthService.getUserName() ?? '';
+  const parts = fullName.trim().split(/\s+/);
+  const firstName = parts[0] ?? '';
+  const lastName = parts.slice(1).join(' ');
+  return { firstName, lastName, email };
+}
+
 function DonatePage() {
   const navigate = useNavigate();
   const isLoggedIn = AuthService.isAuthenticated();
 
-  const [authMode, setAuthMode] = useState<AuthMode>('anonymous');
+  const [authMode, setAuthMode] = useState<AuthMode>(isLoggedIn ? 'loggedin' : 'anonymous');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [amount, setAmount] = useState<number | null>(50);
   const [customAmount, setCustomAmount] = useState('');
   const [notes, setNotes] = useState('');
-  const [form, setForm] = useState({ firstName: '', lastName: '', email: '' });
+  const [form, setForm] = useState(() => isLoggedIn ? getStoredUserForm() : { firstName: '', lastName: '', email: '' });
 
   const finalAmount = customAmount ? Number(customAmount) : (amount ?? 0);
 
@@ -26,11 +35,9 @@ function DonatePage() {
 
   function validate() {
     const e: Record<string, string> = {};
-    if (authMode === 'anonymous') {
-      if (!form.firstName.trim()) e.firstName = 'First name is required.';
-      if (!form.lastName.trim()) e.lastName = 'Last name is required.';
-      if (!form.email.trim()) e.email = 'Email is required.';
-    }
+    if (!form.firstName.trim()) e.firstName = 'First name is required.';
+    if (!form.lastName.trim()) e.lastName = 'Last name is required.';
+    if (!form.email.trim()) e.email = 'Email is required.';
     if (!finalAmount || finalAmount <= 0) e.amount = 'Enter a valid amount.';
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -41,7 +48,13 @@ function DonatePage() {
     if (!validate()) return;
 
     const payload = {
-      supporter: null,
+      supporter: authMode === 'anonymous' ? null : {
+        supporter_type: 'MonetaryDonor',
+        first_name: form.firstName,
+        last_name: form.lastName,
+        email: form.email,
+        status: 'Active',
+      },
       donation: {
         donation_type: 'Monetary',
         is_recurring: false,
@@ -112,10 +125,10 @@ function DonatePage() {
             </div>
             <div className="card space-y-3">
               <h3 className="text-lg font-semibold">Get started</h3>
-              <button className="btn-primary w-full" onClick={() => navigate('/login')}>
+              <button className="btn-primary w-full" onClick={() => navigate('/login', { state: { returnTo: '/donate' } })}>
                 <LogIn className="h-4 w-4" /> Log In
               </button>
-              <button className="btn-secondary w-full" onClick={() => navigate('/register')}>
+              <button className="btn-secondary w-full" onClick={() => navigate('/register', { state: { returnTo: '/donate' } })}>
                 Create Account
               </button>
               <button className="btn-ghost w-full text-gray-500" onClick={() => setAuthMode('anonymous')}>
@@ -134,27 +147,25 @@ function DonatePage() {
             <div className="lg:col-span-3">
               <h2 className="text-xl font-bold">Your Information</h2>
 
-              {authMode === 'anonymous' && (
-                <div className="mt-6 space-y-4">
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <label className="block">
-                      <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">First Name</span>
-                      <input name="firstName" value={form.firstName} onChange={handleInput} className="input-field" />
-                      {errors.firstName && <p className="mt-1 text-xs text-red-500">{errors.firstName}</p>}
-                    </label>
-                    <label className="block">
-                      <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Last Name</span>
-                      <input name="lastName" value={form.lastName} onChange={handleInput} className="input-field" />
-                      {errors.lastName && <p className="mt-1 text-xs text-red-500">{errors.lastName}</p>}
-                    </label>
-                  </div>
+              <div className="mt-6 space-y-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <label className="block">
-                    <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Email</span>
-                    <input name="email" value={form.email} onChange={handleInput} className="input-field" />
-                    {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
+                    <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">First Name</span>
+                    <input name="firstName" value={form.firstName} onChange={handleInput} className={`input-field ${isLoggedIn ? 'bg-gray-50 dark:bg-gray-800/50' : ''}`}/>
+                    {errors.firstName && <p className="mt-1 text-xs text-red-500">{errors.firstName}</p>}
+                  </label>
+                  <label className="block">
+                    <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Last Name</span>
+                    <input name="lastName" value={form.lastName} onChange={handleInput} className={`input-field ${isLoggedIn ? 'bg-gray-50 dark:bg-gray-800/50' : ''}`}/>
+                    {errors.lastName && <p className="mt-1 text-xs text-red-500">{errors.lastName}</p>}
                   </label>
                 </div>
-              )}
+                <label className="block">
+                  <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Email</span>
+                  <input name="email" value={form.email} onChange={handleInput} className={`input-field ${isLoggedIn ? 'bg-gray-50 dark:bg-gray-800/50' : ''}`} readOnly={isLoggedIn} />
+                  {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
+                </label>
+              </div>
 
               <label className="mt-6 block">
                 <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Notes</span>

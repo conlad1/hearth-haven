@@ -10,11 +10,16 @@ import RegisterPage from './pages/RegisterPage';
 import CasePage from './pages/CasePage';
 import ResidentDetailPage from './pages/ResidentDetailPage';
 import DonatePage from "./pages/DonatePage";
+import ThankYouPage from "./pages/ThankYouPage";
 import DonorsPage from "./pages/DonorPage";
 import AllocationPage from "./pages/AllocationPage";
 import ImpactDashboard from "./pages/ImpactDashboard";
 import { AuthService } from "./api/AuthService";
 import OutreachPage from "./pages/OutreachPage";
+import SafehouseManagementPage from "./pages/SafehouseManagementPage";
+import SafehouseDetailPage from "./pages/SafehouseDetailPage";
+import PartnerDetailPage from "./pages/PartnerDetailPage";
+import AdminDashboardPage from "./pages/AdminDashboardPage";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import TermsPage from "./pages/TermsPage";
 import TeapotPage from "./pages/TeapotPage";
@@ -70,7 +75,19 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/cases" element={<CasePage />} />
           <Route path="/cases/:id" element={<ResidentDetailPage />} />
+          <Route
+            path="/admin"
+            element={(
+              <ProtectedRoute>
+                <AdminDashboardPage />
+              </ProtectedRoute>
+            )}
+          />
+          <Route path="/safehouse-management" element={<SafehouseManagementPage />} />
+          <Route path="/safehouse-management/safehouses/:id" element={<SafehouseDetailPage />} />
+          <Route path="/safehouse-management/partners/:id" element={<PartnerDetailPage />} />
           <Route path="/donate" element={<DonatePage />} />
+          <Route path="/donate/thank-you" element={<ThankYouPage />} />
           <Route path="/impact" element={<ImpactDashboard />} />
           <Route path="/privacy" element={<PrivacyPolicyPage />} />
           <Route path="/terms" element={<TermsPage />} />

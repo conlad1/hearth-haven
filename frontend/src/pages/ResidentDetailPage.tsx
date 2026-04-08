@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { Resident } from '../types/Resident';
 import { HealthWellbeingRecord } from '../types/HealthWellbeingRecord';
@@ -389,9 +389,13 @@ const interventionPlanFields: RecordFieldDef[] = [
 export default function ResidentDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const backTo = (location.state as { from?: string })?.from || '/cases';
+  const backLabel = backTo === '/admin' ? 'Back to Dashboard' : 'Back to Cases';
   const residentId = Number(id);
 
-  const [activeTab, setActiveTab] = useState<TabKey>('resident');
+  const initialTab = (location.state as { tab?: TabKey })?.tab || 'resident';
+  const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
 
   // Resident state
   const [resident, setResident] = useState<Resident | null>(null);
@@ -1211,9 +1215,9 @@ export default function ResidentDetailPage() {
   return (
     <>
       <div className="mx-auto max-w-6xl px-4 py-6">
-        <button className="btn-ghost mb-4" onClick={() => navigate('/cases')}>
+        <button className="btn-ghost mb-4" onClick={() => navigate(backTo)}>
           <ArrowLeft size={16} />
-          Back to Cases
+          {backLabel}
         </button>
 
         <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-md">

@@ -179,10 +179,10 @@ CREATE TABLE dbo.donations (
     donation_type           NVARCHAR(20)    NOT NULL,   -- Monetary | InKind | Time | Skills | SocialMedia
     donation_date           DATE            NOT NULL,
     channel_source          NVARCHAR(30)    NOT NULL,   -- Campaign | Event | Direct | SocialMedia | PartnerReferral
-    currency_code           NVARCHAR(10)    NULL,       -- PHP for monetary
+    currency_code           NVARCHAR(10)    NULL,       -- USD for monetary
     amount                  DECIMAL(14,2)   NULL,
     estimated_value         DECIMAL(14,2)   NULL,
-    impact_unit             NVARCHAR(20)    NULL,       -- pesos | items | hours | campaigns
+    impact_unit             NVARCHAR(20)    NULL,       -- dollars | items | hours | campaigns
     is_recurring            BIT             NOT NULL DEFAULT 0,
     campaign_name           NVARCHAR(200)   NULL,
     notes                   NVARCHAR(MAX)   NULL,
@@ -195,7 +195,7 @@ CREATE TABLE dbo.donations (
     CONSTRAINT FK_donations_post FOREIGN KEY (referral_post_id) REFERENCES dbo.social_media_posts (post_id),
     CONSTRAINT CK_donations_type CHECK (donation_type IN (N'Monetary', N'InKind', N'Time', N'Skills', N'SocialMedia')),
     CONSTRAINT CK_donations_channel CHECK (channel_source IN (N'Campaign', N'Event', N'Direct', N'SocialMedia', N'PartnerReferral')),
-    CONSTRAINT CK_donations_unit CHECK (impact_unit IS NULL OR impact_unit IN (N'pesos', N'items', N'hours', N'campaigns'))
+    CONSTRAINT CK_donations_unit CHECK (impact_unit IS NULL OR impact_unit IN (N'dollars', N'items', N'hours', N'campaigns'))
 );
 
 -- ============================================================
