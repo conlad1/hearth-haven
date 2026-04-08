@@ -1,61 +1,67 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://hearthhaven.tylermitton.com/</loc>
+    <loc>https://the-hearth-project.org/</loc>
     <lastmod>2026-04-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://hearthhaven.tylermitton.com/login</loc>
+    <loc>https://the-hearth-project.org/impact</loc>
     <lastmod>2026-04-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://hearthhaven.tylermitton.com/register</loc>
+    <loc>https://the-hearth-project.org/login</loc>
     <lastmod>2026-04-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://hearthhaven.tylermitton.com/cases</loc>
+    <loc>https://the-hearth-project.org/register</loc>
     <lastmod>2026-04-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://hearthhaven.tylermitton.com/donate</loc>
+    <loc>https://the-hearth-project.org/cases</loc>
     <lastmod>2026-04-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://hearthhaven.tylermitton.com/donors</loc>
+    <loc>https://the-hearth-project.org/donate</loc>
     <lastmod>2026-04-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://hearthhaven.tylermitton.com/outreach</loc>
+    <loc>https://the-hearth-project.org/donors</loc>
     <lastmod>2026-04-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://hearthhaven.tylermitton.com/privacy</loc>
+    <loc>https://the-hearth-project.org/outreach</loc>
     <lastmod>2026-04-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://hearthhaven.tylermitton.com/terms</loc>
+    <loc>https://the-hearth-project.org/privacy</loc>
     <lastmod>2026-04-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://hearthhaven.tylermitton.com/teapot</loc>
+    <loc>https://the-hearth-project.org/terms</loc>
+    <lastmod>2026-04-08</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://the-hearth-project.org/teapot</loc>
     <lastmod>2026-04-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>

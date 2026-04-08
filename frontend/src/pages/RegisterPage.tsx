@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AuthService } from '../api/AuthService';
-import { Eye, EyeOff, UserPlus } from 'lucide-react';
+import { Check, Eye, EyeOff, UserPlus } from 'lucide-react';
+import { getPasswordRuleStatus, validatePassword, PASSWORD_MIN_LENGTH } from '../utils/passwordPolicy';
 
 type RegisterNavigationState = { returnTo?: string } | null;
 
@@ -17,6 +18,7 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
+  const passwordRuleStatus = getPasswordRuleStatus(password);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,6 +26,12 @@ export default function RegisterPage() {
 
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
+      return;
+    }
+
+    const passwordErrors = validatePassword(password);
+    if (passwordErrors.length > 0) {
+      setError(`Password must be at least ${PASSWORD_MIN_LENGTH} characters and include lowercase, uppercase, number, and special character.`);
       return;
     }
 
@@ -76,17 +84,45 @@ export default function RegisterPage() {
             <label className="block">
               <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Password</span>
               <div className="relative">
-                <input type={showPassword ? 'text' : 'password'} placeholder="Create a password" value={password} onChange={e => setPassword(e.target.value)} required className="input-field pr-10" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Create a password"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  required
+                  minLength={PASSWORD_MIN_LENGTH}
+                  autoComplete="new-password"
+                  className="input-field pr-10"
+                />
                 <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
+              </div>
+              <div className="mt-3 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/60">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Password requirements</p>
+                <ul className="mt-3 space-y-2">
+                  {passwordRuleStatus.map((rule) => (
+                    <li key={rule.id} className={`flex items-center gap-2 text-sm ${rule.isMet ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                      <Check className={`h-4 w-4 ${rule.isMet ? 'text-emerald-500' : 'text-gray-300 dark:text-gray-600'}`} />
+                      <span>{rule.label}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </label>
 
             <label className="block">
               <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Confirm Password</span>
               <div className="relative">
-                <input type={showConfirmPassword ? 'text' : 'password'} placeholder="Confirm your password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required className="input-field pr-10" />
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  placeholder="Confirm your password"
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  required
+                  autoComplete="new-password"
+                  className="input-field pr-10"
+                />
                 <button type="button" onClick={() => setShowConfirmPassword(v => !v)} className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                   {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>

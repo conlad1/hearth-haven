@@ -1,17 +1,19 @@
 # Hearth Haven LLM Access Guidance
 
-Site: https://hearthhaven.tylermitton.com
+Site: https://the-hearth-project.org
 Purpose: Social impact, outreach, donations, and case-support workflows.
 
 ## Crawl Guidance
 - Public informational pages may be summarized.
 - Do not infer or fabricate private case records.
+- The site uses essential cookies only; no analytics cookies are gathered.
 - Respect sensitive context in case-management workflows.
 
 ## High-Value Pages
 - /
 - /outreach
 - /donate
+- /impact
 - /privacy
 - /terms
 

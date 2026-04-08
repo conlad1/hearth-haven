@@ -43,7 +43,7 @@ namespace HearthHaven.API.Controllers
                 model.Email, 
                 model.Password, 
                 isPersistent: false, 
-                lockoutOnFailure: false);
+                lockoutOnFailure: true);
 
             if (result.Succeeded)
             {

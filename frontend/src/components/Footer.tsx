@@ -17,10 +17,30 @@ function Footer() {
               Restoring hope and rebuilding lives through safe refuge,
               comprehensive care, and community support.
             </p>
-            <p className="flex items-center gap-2 text-sm font-medium text-orange-500">
-              <Phone className="h-4 w-4" />
-              24/7 Crisis Line: <a href="tel:1-800-467-3123" className="text-orange-500 hover:text-orange-600">1-800-HOPE-123</a>
-            </p>
+            <div className="text-sm text-gray-600 dark:text-gray-300">
+              <div className="mb-1 flex items-center gap-2 font-semibold text-orange-500">
+                <Phone className="h-4 w-4" />
+                Emergency (General)
+              </div>
+              <p className="mb-1">
+                USA: <a href="tel:911" className="text-orange-500 hover:text-orange-600">911</a>
+              </p>
+              <p className="mb-3">
+                Malaysia: <a href="tel:999" className="text-orange-500 hover:text-orange-600">999</a>
+              </p>
+
+              <div className="mb-1 flex items-center gap-2 font-semibold text-orange-500">
+                <Phone className="h-4 w-4" />
+                Support (Sexual Assault / Abuse)
+              </div>
+              <p className="mb-1">
+                USA (RAINN National Sexual Assault Hotline):{' '}
+                <a href="tel:18006564673" className="text-orange-500 hover:text-orange-600">1-800-656-4673</a>
+              </p>
+              <p>
+                Malaysia (Talian Kasih): <a href="tel:15999" className="text-orange-500 hover:text-orange-600">15999</a>
+              </p>
+            </div>
           </div>
 
           {/* Quick Links */}
