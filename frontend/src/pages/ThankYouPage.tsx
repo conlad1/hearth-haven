@@ -1,46 +1,55 @@
 import { useNavigate } from 'react-router-dom';
+import { Heart, Home, BookOpen, Sparkles, ArrowLeft } from 'lucide-react';
 
-function ThankYouPage() {
+export default function ThankYouPage() {
   const navigate = useNavigate();
 
+  const impacts = [
+    { icon: Home, text: 'Supports safe housing for children in need' },
+    { icon: BookOpen, text: 'Provides education and wellbeing resources' },
+    { icon: Sparkles, text: 'Helps transform and restore lives' },
+  ];
+
   return (
-    <div style={{ minHeight: '100vh', background: '#f6f1ee', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div style={{ background: 'white', borderRadius: 16, padding: 40, maxWidth: 500, width: '100%', textAlign: 'center', boxShadow: '0 10px 25px rgba(0,0,0,0.08)' }}>
+    <div className="flex min-h-[80vh] items-center justify-center px-4 py-16">
+      <div className="w-full max-w-md text-center">
+        <div className="card">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-orange-50 dark:bg-orange-500/10">
+            <Heart className="h-7 w-7 text-orange-500" />
+          </div>
 
-        <div style={{ fontSize: 48, marginBottom: 12 }}>❤️</div>
-        <h1 style={{ margin: '0 0 12px', color: '#1f2937' }}>Thank You for Your Donation!</h1>
-        <p style={{ color: '#6b7280', margin: '0 0 24px' }}>
-          Your generosity helps provide safety, care, and opportunity to those who need it most.
-        </p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Thank You for Your Donation!</h1>
+          <p className="mt-2 text-gray-500 dark:text-gray-400">
+            Your generosity helps provide safety, care, and opportunity to those who need it most.
+          </p>
 
-        <div style={{ background: '#f6f1ee', borderRadius: 12, padding: '20px 24px', textAlign: 'left', marginBottom: 24 }}>
-          <h3 style={{ margin: '0 0 12px', color: '#1f2937' }}>Your Impact</h3>
-          <ul style={{ margin: 0, paddingLeft: 20, color: '#374151', lineHeight: 2 }}>
-            <li>🏠 Supports safe housing for children in need</li>
-            <li>📚 Provides education and wellbeing resources</li>
-            <li>💛 Helps transform and restore lives</li>
-          </ul>
+          <div className="mt-6 rounded-xl bg-gray-50 dark:bg-gray-800 px-5 py-4 text-left">
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white">Your Impact</h3>
+            <ul className="mt-3 space-y-3">
+              {impacts.map(({ icon: Icon, text }) => (
+                <li key={text} className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+                  <Icon className="h-4 w-4 shrink-0 text-orange-500" />
+                  {text}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="mt-6 flex gap-3">
+            <button className="btn-primary flex-1" onClick={() => navigate('/')}>
+              <ArrowLeft className="h-4 w-4" />
+              Back to Home
+            </button>
+            <button className="btn-secondary flex-1" onClick={() => navigate('/donate')}>
+              Donate Again
+            </button>
+          </div>
+
+          <p className="mt-5 text-xs text-gray-400 dark:text-gray-500">
+            The Hearth Project is a registered nonprofit. Your contribution makes a difference.
+          </p>
         </div>
-
-        <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
-          <button
-            onClick={() => navigate('/')}
-            style={{ background: 'linear-gradient(135deg, #e89b7a, #d97757)', color: 'white', border: 'none', padding: '12px 24px', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}
-          >
-            Back to Home
-          </button>
-          <button
-            onClick={() => navigate('/donate')}
-            style={{ background: '#f3f4f6', color: '#374151', border: 'none', padding: '12px 24px', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}
-          >
-            Donate Again
-          </button>
-        </div>
-
-        <p style={{ marginTop: 20, fontSize: 12, color: '#9ca3af' }}>Hearth Haven is a registered nonprofit. Your contribution makes a difference.</p>
       </div>
     </div>
   );
 }
-
-export default ThankYouPage;

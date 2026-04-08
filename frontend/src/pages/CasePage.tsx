@@ -1,6 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
+import {
+  Plus,
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  Info,
+  ArrowUpDown,
+  Filter,
+} from 'lucide-react';
 import { Resident } from '../types/Resident';
 import {
   fetchCases,
@@ -173,7 +183,7 @@ const selectFieldMap: Record<string, { optionsKey: keyof FilterOptions; nullable
 };
 
 function formatCell(value: unknown): string {
-  if (value === null || value === undefined) return '—';
+  if (value === null || value === undefined) return '--';
   if (typeof value === 'boolean') return value ? 'Yes' : 'No';
   return String(value);
 }
@@ -465,9 +475,9 @@ export default function CasePage() {
     // read-only / auto-generated
     if (readOnlyFields.includes(col.key)) {
       if (isCreate) {
-        return <span className="resident-modal-field-value">Auto-generated</span>;
+        return <span className="text-sm italic text-gray-400 dark:text-gray-500">Auto-generated</span>;
       }
-      return <span className="resident-modal-field-value">{formatCell(value)}</span>;
+      return <span className="text-sm text-gray-700 dark:text-gray-300">{formatCell(value)}</span>;
     }
 
     // booleans -> checkbox
@@ -477,6 +487,7 @@ export default function CasePage() {
           type="checkbox"
           checked={!!value}
           onChange={(e) => onChange(col.key, e.target.checked)}
+          className="h-4 w-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500"
         />
       );
     }
@@ -487,6 +498,7 @@ export default function CasePage() {
         <select
           value={value as number}
           onChange={(e) => onChange(col.key, Number(e.target.value))}
+          className="select-field"
         >
           {safehouses.map((sh) => (
             <option key={sh.safehouseId} value={sh.safehouseId}>
@@ -505,9 +517,10 @@ export default function CasePage() {
         <select
           value={value === null || value === undefined ? '' : String(value)}
           onChange={(e) => onChange(col.key, e.target.value || null)}
+          className="select-field"
         >
-          {selectConfig.nullable && <option value="">— None —</option>}
-          {!selectConfig.nullable && !value && <option value="">— Select —</option>}
+          {selectConfig.nullable && <option value="">-- None --</option>}
+          {!selectConfig.nullable && !value && <option value="">-- Select --</option>}
           {options.map((opt) => (
             <option key={opt} value={opt}>
               {opt}
@@ -524,6 +537,7 @@ export default function CasePage() {
           type="date"
           value={value === null || value === undefined ? '' : String(value).slice(0, 10)}
           onChange={(e) => onChange(col.key, e.target.value || null)}
+          className="input-field"
         />
       );
     }
@@ -535,6 +549,7 @@ export default function CasePage() {
           rows={3}
           value={value === null || value === undefined ? '' : String(value)}
           onChange={(e) => onChange(col.key, e.target.value || null)}
+          className="input-field resize-y"
         />
       );
     }
@@ -546,6 +561,7 @@ export default function CasePage() {
           type="number"
           value={value === null || value === undefined ? '' : String(value)}
           onChange={(e) => onChange(col.key, e.target.value ? Number(e.target.value) : null)}
+          className="input-field"
         />
       );
     }
@@ -556,6 +572,7 @@ export default function CasePage() {
         type="text"
         value={value === null || value === undefined ? '' : String(value)}
         onChange={(e) => onChange(col.key, e.target.value || null)}
+        className="input-field"
       />
     );
   };
@@ -566,48 +583,60 @@ export default function CasePage() {
 
   return (
     <>
-      <div className="case-layout">
-        <aside className="case-sidebar">
-          <h2>Locations</h2>
-          <ul>
-            <li>
-              <button
-                className={filters.safehouseId === undefined ? 'active' : ''}
-                onClick={() => handleSafehouseChange(undefined)}
-              >
-                All Locations
-              </button>
-            </li>
-            {safehouses.map((sh) => (
-              <li key={sh.safehouseId}>
+      <div className="flex min-h-screen bg-white dark:bg-gray-900">
+        {/* Sidebar */}
+        <aside className="w-60 shrink-0 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+          <div className="px-5 py-6">
+            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+              Locations
+            </h2>
+            <ul className="space-y-1">
+              <li>
                 <button
-                  className={
-                    filters.safehouseId === sh.safehouseId ? 'active' : ''
-                  }
-                  onClick={() => handleSafehouseChange(sh.safehouseId)}
+                  className={`w-full rounded-lg px-3 py-2 text-left text-sm font-medium transition ${
+                    filters.safehouseId === undefined
+                      ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-700'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+                  onClick={() => handleSafehouseChange(undefined)}
                 >
-                  {sh.name}
+                  All Locations
                 </button>
               </li>
-            ))}
-          </ul>
+              {safehouses.map((sh) => (
+                <li key={sh.safehouseId}>
+                  <button
+                    className={`w-full rounded-lg px-3 py-2 text-left text-sm font-medium transition ${
+                      filters.safehouseId === sh.safehouseId
+                        ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-700'
+                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
+                    }`}
+                    onClick={() => handleSafehouseChange(sh.safehouseId)}
+                  >
+                    {sh.name}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
         </aside>
 
-        <div className="case-page">
-          <div className="case-header">
-            <h1>Resident Cases</h1>
-            <div className="case-controls">
-              <button
-                className="resident-modal-btn resident-modal-btn-edit"
-                onClick={openOnboard}
-              >
+        {/* Main content */}
+        <div className="flex-1 p-8">
+          {/* Header */}
+          <div className="mb-6 flex items-center justify-between">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Resident Cases</h1>
+            <div className="flex items-center gap-4">
+              <button className="btn-primary" onClick={openOnboard}>
+                <Plus className="h-4 w-4" />
                 Onboard New Resident
               </button>
-              <label>
+              <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                 Residents per page:
                 <select
                   value={pageSize}
                   onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                  className="select-field w-auto"
                 >
                   {PAGE_SIZE_OPTIONS.map((size) => (
                     <option key={size} value={size}>
@@ -619,23 +648,30 @@ export default function CasePage() {
             </div>
           </div>
 
-          <div className="case-filter-bar">
-            <div className="case-search">
+          {/* Filter bar */}
+          <div className="mb-6 space-y-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 shadow-md">
+            {/* Search */}
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search by case no., code, worker, agency..."
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
+                className="input-field pl-10"
               />
             </div>
 
             {filterOptions && (
-              <div className="case-filters">
+              <div className="flex flex-wrap items-center gap-3">
+                <Filter className="h-4 w-4 text-gray-400" />
+
                 <select
                   value={filters.caseStatus || ''}
                   onChange={(e) =>
                     updateFilter('caseStatus', e.target.value || undefined)
                   }
+                  className="select-field w-auto"
                 >
                   <option value="">All Statuses</option>
                   {filterOptions.caseStatuses.map((s) => (
@@ -650,6 +686,7 @@ export default function CasePage() {
                   onChange={(e) =>
                     updateFilter('caseCategory', e.target.value || undefined)
                   }
+                  className="select-field w-auto"
                 >
                   <option value="">All Categories</option>
                   {filterOptions.caseCategories.map((c) => (
@@ -667,6 +704,7 @@ export default function CasePage() {
                       e.target.value || undefined
                     )
                   }
+                  className="select-field w-auto"
                 >
                   <option value="">All Risk Levels</option>
                   {filterOptions.riskLevels.map((r) => (
@@ -681,6 +719,7 @@ export default function CasePage() {
                   onChange={(e) =>
                     updateFilter('referralSource', e.target.value || undefined)
                   }
+                  className="select-field w-auto"
                 >
                   <option value="">All Referral Sources</option>
                   {filterOptions.referralSources.map((r) => (
@@ -698,6 +737,7 @@ export default function CasePage() {
                       e.target.value || undefined
                     )
                   }
+                  className="select-field w-auto"
                 >
                   <option value="">All Assessments</option>
                   {filterOptions.initialCaseAssessments.map((a) => (
@@ -715,6 +755,7 @@ export default function CasePage() {
                       e.target.value || undefined
                     )
                   }
+                  className="select-field w-auto"
                 >
                   <option value="">All Reintegration Types</option>
                   {filterOptions.reintegrationTypes.map((r) => (
@@ -732,6 +773,7 @@ export default function CasePage() {
                       e.target.value || undefined
                     )
                   }
+                  className="select-field w-auto"
                 >
                   <option value="">All Social Workers</option>
                   {filterOptions.socialWorkers.map((w) => (
@@ -742,7 +784,8 @@ export default function CasePage() {
                 </select>
 
                 {hasActiveFilters && (
-                  <button className="case-clear-filters" onClick={clearFilters}>
+                  <button className="btn-ghost text-red-500 hover:text-red-700" onClick={clearFilters}>
+                    <X className="h-4 w-4" />
                     Clear Filters
                   </button>
                 )}
@@ -750,21 +793,32 @@ export default function CasePage() {
             )}
           </div>
 
-          {loading && <p className="case-status">Loading cases...</p>}
-          {error && <p className="case-status case-error">Error: {error}</p>}
+          {/* Status messages */}
+          {loading && (
+            <p className="py-12 text-center text-sm text-gray-500">Loading cases...</p>
+          )}
+          {error && (
+            <p className="py-12 text-center text-sm text-red-500">Error: {error}</p>
+          )}
 
           {!loading && !error && residents.length === 0 && (
-            <p className="case-status">No cases found.</p>
+            <p className="py-12 text-center text-sm text-gray-500">No cases found.</p>
           )}
 
           {residents.length > 0 && (
             <>
-              <div className="case-table-wrap">
-                <table className="case-table">
+              {/* Table */}
+              <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-md">
+                <table className="table-base">
                   <thead>
                     <tr>
                       {tableColumns.map((col) => (
-                        <th key={col.key}>{col.label}</th>
+                        <th key={col.key}>
+                          <span className="inline-flex items-center gap-1">
+                            {col.label}
+                            <ArrowUpDown className="h-3 w-3 text-gray-400" />
+                          </span>
+                        </th>
                       ))}
                     </tr>
                   </thead>
@@ -773,7 +827,7 @@ export default function CasePage() {
                       <tr
                         key={r.residentId}
                         onClick={() => navigate(`/cases/${r.residentId}`)}
-                        className="case-row-clickable"
+                        className="cursor-pointer"
                       >
                         {tableColumns.map((col) => (
                           <td key={col.key}>{formatCell(r[col.key])}</td>
@@ -784,18 +838,26 @@ export default function CasePage() {
                 </table>
               </div>
 
-              <div className="case-pagination">
-                <button disabled={page <= 1} onClick={() => setPage(page - 1)}>
+              {/* Pagination */}
+              <div className="mt-4 flex items-center justify-between">
+                <button
+                  className="btn-secondary"
+                  disabled={page <= 1}
+                  onClick={() => setPage(page - 1)}
+                >
+                  <ChevronLeft className="h-4 w-4" />
                   Previous
                 </button>
-                <span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
                   Page {page} of {totalPages} ({totalCount} total)
                 </span>
                 <button
+                  className="btn-secondary"
                   disabled={page >= totalPages}
                   onClick={() => setPage(page + 1)}
                 >
                   Next
+                  <ChevronRight className="h-4 w-4" />
                 </button>
               </div>
             </>
@@ -803,56 +865,64 @@ export default function CasePage() {
         </div>
       </div>
 
+      {/* Onboarding Modal */}
       {isOnboarding &&
         createPortal(
-          <div className="resident-modal-overlay" onClick={closeOnboard}>
+          <div className="modal-overlay" onClick={closeOnboard}>
             <div
-              className="resident-modal-body"
+              className="modal-body max-w-4xl"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="resident-modal-top-bar">
+              {/* Modal top bar */}
+              <div className="mb-6 flex items-center gap-4 border-b border-gray-100 dark:border-gray-700 pb-6">
                 <img
                   src="/portrait_resident.png"
                   alt="New Resident"
-                  className="resident-modal-portrait"
+                  className="h-14 w-14 rounded-full border-2 border-gray-100 dark:border-gray-700 object-cover"
                 />
-                <div className="resident-modal-profile-info">
-                  <h2>New Resident</h2>
-                  <p>Onboard a new resident</p>
+                <div className="flex-1">
+                  <h2 className="text-lg font-bold text-gray-900 dark:text-white">New Resident</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Onboard a new resident</p>
                 </div>
-                <div className="resident-modal-actions">
+                <div className="flex items-center gap-2">
                   <button
-                    className="resident-modal-btn resident-modal-btn-save"
+                    className="btn-primary"
                     onClick={handleCreate}
                     disabled={saving}
                   >
                     {saving ? 'Creating...' : 'Create'}
                   </button>
                   <button
-                    className="resident-modal-btn resident-modal-btn-cancel"
+                    className="btn-secondary"
                     onClick={closeOnboard}
                     disabled={saving}
                   >
                     Cancel
                   </button>
                 </div>
-                <button className="resident-modal-close" onClick={closeOnboard}>
-                  &times;
+                <button className="btn-icon" onClick={closeOnboard}>
+                  <X className="h-5 w-5" />
                 </button>
               </div>
 
+              {/* Modal sections */}
               {modalSections.map((section) => (
-                <div className="resident-modal-section" key={section.title}>
-                  <h3 className="resident-modal-section-title">
+                <div className="mb-6" key={section.title}>
+                  <h3 className="mb-4 border-b border-gray-100 dark:border-gray-700 pb-2 text-sm font-bold uppercase tracking-wide text-gray-900 dark:text-white">
                     {section.title}
                   </h3>
-                  <div className="resident-modal-fields">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {section.fields.map((col) => (
-                      <div className="resident-modal-field" key={col.key}>
-                        <label>
+                      <div className="flex flex-col gap-1" key={col.key}>
+                        <label className="flex items-center gap-1 text-xs font-semibold text-gray-700 dark:text-gray-300">
                           {col.label}
                           {fieldTooltips[col.key] && (
-                            <span className="resident-modal-info-icon" data-tip={fieldTooltips[col.key]}>i</span>
+                            <span
+                              className="group relative cursor-help"
+                              title={fieldTooltips[col.key]}
+                            >
+                              <Info className="h-3.5 w-3.5 text-gray-400" />
+                            </span>
                           )}
                         </label>
                         {renderOnboardInput(col)}

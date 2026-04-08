@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import React from 'react';
 import { AuthService } from '../api/AuthService';
+import { Eye, EyeOff, LogIn } from 'lucide-react';
 
 type LoginNavigationState = {
   registered?: boolean;
   returnTo?: string;
 } | null;
 
-const LoginPage: React.FC = () => {
+export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const locationState = location.state as LoginNavigationState;
@@ -28,22 +28,17 @@ const LoginPage: React.FC = () => {
 
     try {
       const response = await AuthService.login(email, password);
-
       if (response.ok) {
         const modalMessage = fromRegistration
-          ? 'Account created and login confirmed. Redirecting you to Hearth Haven...'
+          ? 'Account created and login confirmed. Redirecting you to The Hearth Project...'
           : 'Login successful. Redirecting you now...';
-
         setSuccessMessage(modalMessage);
         AuthService.setAuthenticated(true);
         setShowSuccessModal(true);
-        window.setTimeout(() => {
-          navigate(returnTo, { replace: true });
-        }, 1200);
+        window.setTimeout(() => navigate(returnTo, { replace: true }), 1200);
       } else {
         const data = await response.json();
-        const message = data?.message || data?.Message || 'Invalid email or password.';
-        setError(message);
+        setError(data?.message || data?.Message || 'Invalid email or password.');
       }
     } catch {
       setError('Network error. Is the backend running?');
@@ -51,62 +46,79 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="auth-page">
-      <div className="auth-container">
-        <div className="auth-left">
-          <h1>Welcome Back</h1>
-          <p>Continue your journey of restoring hope and rebuilding lives.</p>
+    <div className="flex min-h-[calc(100vh-57px)] items-center justify-center bg-white dark:bg-gray-900 px-4 py-16">
+      <div className="w-full max-w-4xl overflow-hidden rounded-2xl bg-white dark:bg-gray-900 shadow-md border border-gray-200 dark:border-gray-700 md:flex">
+        {/* Left panel */}
+        <div className="flex flex-col justify-center border-r border-orange-200 dark:border-orange-500/20 bg-orange-50 dark:bg-orange-500/10 px-8 py-12 md:w-5/12 md:px-10">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Welcome Back</h1>
+          <p className="mt-3 text-gray-500 dark:text-gray-400">Continue your journey of <span className="font-medium text-orange-500">restoring hope</span> and rebuilding lives.</p>
         </div>
 
-        <div className="auth-box">
-          <h2>Sign In</h2>
+        {/* Form */}
+        <div className="flex flex-col justify-center px-8 py-12 md:w-7/12 md:px-10">
+          <h2 className="text-2xl font-bold">Sign In</h2>
 
-          {error && <p style={{ color: 'red', marginBottom: '10px' }}>{error}</p>}
+          {error && (
+            <div className="mt-4 rounded-lg bg-red-50 dark:bg-red-500/10 px-4 py-3 text-sm text-red-600 dark:text-red-400">{error}</div>
+          )}
 
-          <form className="auth-form" onSubmit={handleLogin}>
-            <input
-              type="email"
-              placeholder="Email Address"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              required
-            />
-            <div className="auth-password-field">
+          <form onSubmit={handleLogin} className="mt-6 space-y-4">
+            <label className="block">
+              <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Email</span>
               <input
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
                 required
+                className="input-field"
               />
-              <button
-                type="button"
-                className="auth-toggle-password"
-                onClick={() => setShowPassword((current) => !current)}
-              >
-                {showPassword ? 'Hide' : 'Show'}
-              </button>
-            </div>
-            <button className="auth-submit" type="submit">Sign In</button>
+            </label>
+
+            <label className="block">
+              <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Password</span>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Enter password"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  required
+                  className="input-field pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(v => !v)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </label>
+
+            <button type="submit" className="btn-primary w-full">
+              <LogIn className="h-4 w-4" /> Sign In
+            </button>
           </form>
 
-          <p className="auth-switch">
+          <p className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
             Don't have an account?{' '}
-            <span onClick={() => navigate('/register')} style={{ cursor: 'pointer', color: 'blue' }}>Register</span>
+            <button onClick={() => navigate('/register')} className="font-medium text-orange-500 hover:text-orange-600">
+              Register
+            </button>
           </p>
         </div>
       </div>
 
+      {/* Success modal */}
       {showSuccessModal && (
-        <div className="auth-modal-backdrop" role="alertdialog" aria-modal="true" aria-labelledby="auth-success-title">
-          <div className="auth-modal">
-            <h3 id="auth-success-title">Welcome to Hearth Haven</h3>
-            <p>{successMessage}</p>
+        <div className="modal-overlay" role="alertdialog" aria-modal="true">
+          <div className="modal-body max-w-sm text-center">
+            <h3 className="text-lg font-semibold">Welcome to The Hearth Project</h3>
+            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{successMessage}</p>
           </div>
         </div>
       )}
     </div>
   );
-};
-
-export default LoginPage;
+}

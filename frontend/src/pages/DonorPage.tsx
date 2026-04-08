@@ -14,6 +14,19 @@ import {
   updateContribution,
   deleteContribution,
 } from '../api/DonorAPI';
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Check,
+  X,
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  Filter,
+  Users,
+  DollarSign,
+} from 'lucide-react';
 
 const PAGE_SIZE_OPTIONS = [20, 50, 100];
 
@@ -138,37 +151,39 @@ const blankContribution: Contribution = {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function formatCell(value: unknown): string {
-  if (value === null || value === undefined || value === '') return '—';
+  if (value === null || value === undefined || value === '') return '--';
   if (typeof value === 'boolean') return value ? 'Yes' : 'No';
   return String(value);
 }
 
 function formatAmount(amount: number | null): string {
-  if (amount === null || amount === undefined) return '—';
-  return `₱${Number(amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
+  if (amount === null || amount === undefined) return '--';
+  return `PHP ${Number(amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
 }
 
-function typeIcon(type: string): string {
+function TypeIcon({ type }: { type: string }) {
   switch (type) {
-    case 'Monetary':    return '💰';
-    case 'InKind':      return '📦';
-    case 'Volunteer':   return '🤝';
-    case 'Skills':      return '💡';
-    case 'SocialMedia': return '📱';
-    default:            return '🎁';
+    case 'Monetary':    return <DollarSign className="h-4 w-4 text-green-600" />;
+    case 'InKind':      return <Filter className="h-4 w-4 text-blue-600" />;
+    case 'Volunteer':   return <Users className="h-4 w-4 text-purple-600" />;
+    case 'Skills':      return <Pencil className="h-4 w-4 text-amber-600" />;
+    case 'SocialMedia': return <Search className="h-4 w-4 text-pink-600" />;
+    default:            return <DollarSign className="h-4 w-4 text-gray-500" />;
   }
 }
 
-function supporterIcon(type: string): string {
-  return type === 'Corporate' ? '🏢' : type === 'Anonymous' ? '🕊️' : '👤';
+function SupporterIcon({ type }: { type: string }) {
+  if (type === 'Corporate') return <Users className="h-4 w-4 text-blue-600" />;
+  if (type === 'Anonymous') return <Users className="h-4 w-4 text-gray-400" />;
+  return <Users className="h-4 w-4 text-orange-500" />;
 }
 
 function badgeClass(status: string): string {
   const s = status.toLowerCase();
-  if (s === 'active' || s === 'confirmed') return 'donor-badge donor-badge-green';
-  if (s === 'inactive' || s === 'cancelled') return 'donor-badge donor-badge-gray';
-  if (s === 'pending') return 'donor-badge donor-badge-orange';
-  return 'donor-badge';
+  if (s === 'active' || s === 'confirmed') return 'badge bg-green-50 text-green-700';
+  if (s === 'inactive' || s === 'cancelled') return 'badge bg-gray-100 text-gray-600';
+  if (s === 'pending') return 'badge bg-orange-50 text-orange-700';
+  return 'badge bg-gray-100 text-gray-600';
 }
 
 // ── Supporter required fields ─────────────────────────────────────────────────
@@ -386,21 +401,21 @@ export default function DonorPage() {
   ) => {
     const value = data[col.key];
     if (sReadOnly.includes(col.key)) {
-      return <span className="resident-modal-field-value">{isCreate ? 'Auto-generated' : formatCell(value)}</span>;
+      return <span className="text-sm text-gray-500 dark:text-gray-400 italic">{isCreate ? 'Auto-generated' : formatCell(value)}</span>;
     }
     const sel = sSelectMap[col.key];
     if (sel) {
       return (
-        <select value={value === null || value === undefined ? '' : String(value)} onChange={(e) => onChange(col.key, e.target.value || null)}>
-          {sel.nullable && <option value="">— None —</option>}
+        <select className="select-field" value={value === null || value === undefined ? '' : String(value)} onChange={(e) => onChange(col.key, e.target.value || null)}>
+          {sel.nullable && <option value="">-- None --</option>}
           {sel.opts.map((o) => <option key={o} value={o}>{o}</option>)}
         </select>
       );
     }
     if (sTextarea.includes(col.key)) {
-      return <textarea rows={3} value={value === null || value === undefined ? '' : String(value)} onChange={(e) => onChange(col.key, e.target.value || null)} />;
+      return <textarea className="input-field" rows={3} value={value === null || value === undefined ? '' : String(value)} onChange={(e) => onChange(col.key, e.target.value || null)} />;
     }
-    return <input type="text" value={value === null || value === undefined ? '' : String(value)} onChange={(e) => onChange(col.key, e.target.value || null)} />;
+    return <input className="input-field" type="text" value={value === null || value === undefined ? '' : String(value)} onChange={(e) => onChange(col.key, e.target.value || null)} />;
   };
 
   const renderContributionInput = (
@@ -411,31 +426,31 @@ export default function DonorPage() {
   ) => {
     const value = data[col.key];
     if (cReadOnly.includes(col.key)) {
-      return <span className="resident-modal-field-value">{isCreate ? 'Auto-generated' : formatCell(value)}</span>;
+      return <span className="text-sm text-gray-500 dark:text-gray-400 italic">{isCreate ? 'Auto-generated' : formatCell(value)}</span>;
     }
     if (cBoolean.includes(col.key)) {
-      return <input type="checkbox" checked={!!value} onChange={(e) => onChange(col.key, e.target.checked)} />;
+      return <input type="checkbox" className="h-4 w-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500" checked={!!value} onChange={(e) => onChange(col.key, e.target.checked)} />;
     }
     if (cDate.includes(col.key)) {
-      return <input type="date" value={value === null || value === undefined ? '' : String(value).slice(0, 10)} onChange={(e) => onChange(col.key, e.target.value || null)} />;
+      return <input className="input-field" type="date" value={value === null || value === undefined ? '' : String(value).slice(0, 10)} onChange={(e) => onChange(col.key, e.target.value || null)} />;
     }
     const sel = cSelectMap[col.key];
     if (sel) {
       return (
-        <select value={value === null || value === undefined ? '' : String(value)} onChange={(e) => onChange(col.key, e.target.value || null)}>
-          {sel.nullable && <option value="">— None —</option>}
-          {!sel.nullable && !value && <option value="">— Select —</option>}
+        <select className="select-field" value={value === null || value === undefined ? '' : String(value)} onChange={(e) => onChange(col.key, e.target.value || null)}>
+          {sel.nullable && <option value="">-- None --</option>}
+          {!sel.nullable && !value && <option value="">-- Select --</option>}
           {sel.opts.map((o) => <option key={o} value={o}>{o}</option>)}
         </select>
       );
     }
     if (cNumber.includes(col.key)) {
-      return <input type="number" value={value === null || value === undefined ? '' : String(value)} onChange={(e) => onChange(col.key, e.target.value ? Number(e.target.value) : null)} />;
+      return <input className="input-field" type="number" value={value === null || value === undefined ? '' : String(value)} onChange={(e) => onChange(col.key, e.target.value ? Number(e.target.value) : null)} />;
     }
     if (cTextarea.includes(col.key)) {
-      return <textarea rows={3} value={value === null || value === undefined ? '' : String(value)} onChange={(e) => onChange(col.key, e.target.value || null)} />;
+      return <textarea className="input-field" rows={3} value={value === null || value === undefined ? '' : String(value)} onChange={(e) => onChange(col.key, e.target.value || null)} />;
     }
-    return <input type="text" value={value === null || value === undefined ? '' : String(value)} onChange={(e) => onChange(col.key, e.target.value || null)} />;
+    return <input className="input-field" type="text" value={value === null || value === undefined ? '' : String(value)} onChange={(e) => onChange(col.key, e.target.value || null)} />;
   };
 
   // ── Sidebar active type ──────────────────────────────────────────────────
@@ -444,12 +459,14 @@ export default function DonorPage() {
 
   // ── Access denied ────────────────────────────────────────────────────────
   const accessDeniedScreen = (
-    <div className="donor-access-denied">
-      <div className="donor-access-denied-card">
-        <div className="donor-access-denied-icon">🔒</div>
-        <h2>Staff Access Only</h2>
-        <p>This section is restricted to authenticated staff and administrators.</p>
-        <p className="donor-access-denied-sub">Please log in to access the Donors &amp; Contributions portal.</p>
+    <div className="flex min-h-[60vh] items-center justify-center">
+      <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-10 text-center shadow-md">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
+          <X className="h-8 w-8 text-gray-400" />
+        </div>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white">Staff Access Only</h2>
+        <p className="mt-2 text-gray-600 dark:text-gray-400">This section is restricted to authenticated staff and administrators.</p>
+        <p className="mt-1 text-sm text-gray-400 dark:text-gray-500">Please log in to access the Donors &amp; Contributions portal.</p>
       </div>
     </div>
   );
@@ -457,29 +474,32 @@ export default function DonorPage() {
   return (
     <>
       {!isLoggedIn ? accessDeniedScreen : (
-        <div className="case-layout">
+        <div className="flex min-h-screen">
 
           {/* ── SIDEBAR ───────────────────────────────────────────────────── */}
-          <aside className="case-sidebar">
-            <h2>{activeTab === 'supporters' ? 'Supporter Type' : 'Donation Type'}</h2>
-            <ul>
+          <aside className="w-60 shrink-0 border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4">
+            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+              {activeTab === 'supporters' ? 'Supporter Type' : 'Donation Type'}
+            </h2>
+            <ul className="space-y-1">
               {activeTab === 'supporters' ? (
                 <>
                   <li>
                     <button
-                      className={!activeSupporterType ? 'active' : ''}
+                      className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium transition ${!activeSupporterType ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-700' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'}`}
                       onClick={() => updateSupporterFilter('supporterType', undefined)}
                     >
+                      <Filter className="h-4 w-4" />
                       All Types
                     </button>
                   </li>
                   {SUPPORTER_TYPES.map((t) => (
                     <li key={t}>
                       <button
-                        className={activeSupporterType === t ? 'active' : ''}
+                        className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium transition ${activeSupporterType === t ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-700' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'}`}
                         onClick={() => updateSupporterFilter('supporterType', t)}
                       >
-                        {supporterIcon(t)} {t}
+                        <SupporterIcon type={t} /> {t}
                       </button>
                     </li>
                   ))}
@@ -488,19 +508,20 @@ export default function DonorPage() {
                 <>
                   <li>
                     <button
-                      className={!activeDonationType ? 'active' : ''}
+                      className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium transition ${!activeDonationType ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-700' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'}`}
                       onClick={() => updateContributionFilter('donationType', undefined)}
                     >
+                      <Filter className="h-4 w-4" />
                       All Types
                     </button>
                   </li>
                   {DONATION_TYPES.map((t) => (
                     <li key={t}>
                       <button
-                        className={activeDonationType === t ? 'active' : ''}
+                        className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium transition ${activeDonationType === t ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-700' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'}`}
                         onClick={() => updateContributionFilter('donationType', t)}
                       >
-                        {typeIcon(t)} {t}
+                        <TypeIcon type={t} /> {t}
                       </button>
                     </li>
                   ))}
@@ -510,110 +531,122 @@ export default function DonorPage() {
           </aside>
 
           {/* ── MAIN ──────────────────────────────────────────────────────── */}
-          <div className="case-page">
+          <div className="flex-1 p-6">
 
             {/* Header */}
-            <div className="case-header">
-              <h1>{activeTab === 'supporters' ? 'Supporter Profiles' : 'Contribution Activity'}</h1>
-              <div className="case-controls">
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                {activeTab === 'supporters' ? 'Supporter Profiles' : activeTab === 'contributions' ? 'Contribution Activity' : 'Allocations'}
+              </h1>
+              <div className="flex flex-wrap items-center gap-3">
                 {/* Tab toggle */}
-                <div className="donor-tab-toggle">
+                <div className="inline-flex overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
                   <button
-                    className={activeTab === 'supporters' ? 'active' : ''}
+                    className={`inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium transition ${activeTab === 'supporters' ? 'bg-orange-500 text-white' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}
                     onClick={() => switchTab('supporters')}
                   >
-                    👥 Supporters
+                    <Users className="h-4 w-4" /> Supporters
                   </button>
                   <button
-                    className={activeTab === 'contributions' ? 'active' : ''}
+                    className={`inline-flex items-center gap-1.5 border-l border-gray-200 dark:border-gray-700 px-4 py-2 text-sm font-medium transition ${activeTab === 'contributions' ? 'bg-orange-500 text-white' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}
                     onClick={() => switchTab('contributions')}
                   >
-                    🎁 Contributions
+                    <DollarSign className="h-4 w-4" /> Contributions
                   </button>
                   <button
-                    className={activeTab === 'allocations' ? 'active' : ''}
+                    className={`inline-flex items-center gap-1.5 border-l border-gray-200 dark:border-gray-700 px-4 py-2 text-sm font-medium transition ${activeTab === 'allocations' ? 'bg-orange-500 text-white' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}
                     onClick={() => switchTab('allocations')}
                   >
-                    📊 Allocations
+                    <Filter className="h-4 w-4" /> Allocations
                   </button>
                 </div>
 
                 {/* Action button */}
                 {activeTab === 'supporters' ? (
-                  <button className="resident-modal-btn resident-modal-btn-edit" onClick={openAddSupporter}>
-                    + Add Supporter
+                  <button className="btn-primary" onClick={openAddSupporter}>
+                    <Plus className="h-4 w-4" /> Add Supporter
                   </button>
-                ) : (
-                  <button className="resident-modal-btn resident-modal-btn-edit" onClick={openAddContribution}>
-                    + Record Contribution
+                ) : activeTab === 'contributions' ? (
+                  <button className="btn-primary" onClick={openAddContribution}>
+                    <Plus className="h-4 w-4" /> Record Contribution
                   </button>
-                )}
+                ) : null}
 
                 {/* Page size */}
-                <label>
-                  Per page:
-                  <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}>
-                    {PAGE_SIZE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </label>
+                {activeTab !== 'allocations' && (
+                  <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                    Per page:
+                    <select className="select-field w-auto" value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}>
+                      {PAGE_SIZE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </label>
+                )}
               </div>
             </div>
 
             {/* Filter bar */}
-            <div className="case-filter-bar">
-              <div className="case-search">
-                <input
-                  type="text"
-                  placeholder={activeTab === 'supporters' ? 'Search by name, email, organization...' : 'Search by supporter, type, description...'}
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                />
+            {activeTab !== 'allocations' && (
+              <div className="mb-4 flex flex-wrap items-center gap-3">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <input
+                    className="input-field pl-9"
+                    type="text"
+                    placeholder={activeTab === 'supporters' ? 'Search by name, email, organization...' : 'Search by supporter, type, description...'}
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                  />
+                </div>
+
+                {filterOptions && activeTab === 'supporters' && (
+                  <div className="flex items-center gap-2">
+                    <select className="select-field w-auto" value={supporterFilters.status || ''} onChange={(e) => updateSupporterFilter('status', e.target.value || undefined)}>
+                      <option value="">All Statuses</option>
+                      {filterOptions.statuses.map((s) => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                    {hasSupporterFilters && (
+                      <button className="btn-ghost text-orange-600" onClick={clearSupporterFilters}>
+                        <X className="h-4 w-4" /> Clear
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {filterOptions && activeTab === 'contributions' && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <select className="select-field w-auto" value={contributionFilters.status || ''} onChange={(e) => updateContributionFilter('status', e.target.value || undefined)}>
+                      <option value="">All Statuses</option>
+                      {filterOptions.contributionStatuses.map((s) => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                    <select className="select-field w-auto" value={contributionFilters.programArea || ''} onChange={(e) => updateContributionFilter('programArea', e.target.value || undefined)}>
+                      <option value="">All Program Areas</option>
+                      {filterOptions.programAreas.map((p) => <option key={p} value={p}>{p}</option>)}
+                    </select>
+                    <select className="select-field w-auto" value={contributionFilters.safehouseAllocation || ''} onChange={(e) => updateContributionFilter('safehouseAllocation', e.target.value || undefined)}>
+                      <option value="">All Safehouses</option>
+                      {filterOptions.safehouseAllocations.map((a) => <option key={a} value={a}>{a}</option>)}
+                    </select>
+                    {hasContributionFilters && (
+                      <button className="btn-ghost text-orange-600" onClick={clearContributionFilters}>
+                        <X className="h-4 w-4" /> Clear
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
+            )}
 
-              {filterOptions && activeTab === 'supporters' && (
-                <div className="case-filters">
-                  <select value={supporterFilters.status || ''} onChange={(e) => updateSupporterFilter('status', e.target.value || undefined)}>
-                    <option value="">All Statuses</option>
-                    {filterOptions.statuses.map((s) => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                  {hasSupporterFilters && (
-                    <button className="case-clear-filters" onClick={clearSupporterFilters}>Clear Filters</button>
-                  )}
-                </div>
-              )}
-
-              {filterOptions && activeTab === 'contributions' && (
-                <div className="case-filters">
-                  <select value={contributionFilters.status || ''} onChange={(e) => updateContributionFilter('status', e.target.value || undefined)}>
-                    <option value="">All Statuses</option>
-                    {filterOptions.contributionStatuses.map((s) => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                  <select value={contributionFilters.programArea || ''} onChange={(e) => updateContributionFilter('programArea', e.target.value || undefined)}>
-                    <option value="">All Program Areas</option>
-                    {filterOptions.programAreas.map((p) => <option key={p} value={p}>{p}</option>)}
-                  </select>
-                  <select value={contributionFilters.safehouseAllocation || ''} onChange={(e) => updateContributionFilter('safehouseAllocation', e.target.value || undefined)}>
-                    <option value="">All Safehouses</option>
-                    {filterOptions.safehouseAllocations.map((a) => <option key={a} value={a}>{a}</option>)}
-                  </select>
-                  {hasContributionFilters && (
-                    <button className="case-clear-filters" onClick={clearContributionFilters}>Clear Filters</button>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {loading && <p className="case-status">Loading...</p>}
-            {error   && <p className="case-status case-error">Error: {error}</p>}
+            {loading && <p className="py-10 text-center text-sm text-gray-500">Loading...</p>}
+            {error   && <p className="py-10 text-center text-sm text-red-500">Error: {error}</p>}
 
             {/* ── SUPPORTERS TABLE ───────────────────────────────────────── */}
             {activeTab === 'supporters' && !loading && !error && (
               <>
                 {supporters.length === 0
-                  ? <p className="case-status">No supporters found.</p>
+                  ? <p className="py-10 text-center text-sm text-gray-500">No supporters found.</p>
                   : (
-                    <div className="case-table-wrap">
-                      <table className="case-table">
+                    <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-md">
+                      <table className="table-base">
                         <thead>
                           <tr>
                             <th>ID</th>
@@ -627,14 +660,18 @@ export default function DonorPage() {
                         </thead>
                         <tbody>
                           {supporters.map((s) => (
-                            <tr key={s.supporterId} className="case-row-clickable" onClick={() => openSupporter(s)}>
+                            <tr key={s.supporterId} className="cursor-pointer" onClick={() => openSupporter(s)}>
                               <td>{s.supporterId}</td>
-                              <td>{s.firstName} {s.lastName}</td>
-                              <td>{supporterIcon(s.supporterType)} {s.supporterType}</td>
+                              <td className="font-medium text-gray-900 dark:text-white">{s.firstName} {s.lastName}</td>
+                              <td>
+                                <span className="inline-flex items-center gap-1.5">
+                                  <SupporterIcon type={s.supporterType} /> {s.supporterType}
+                                </span>
+                              </td>
                               <td><span className={badgeClass(s.status)}>{s.status}</span></td>
                               <td>{s.email}</td>
                               <td>{formatCell(s.organizationName)}</td>
-                              <td>{s.createdAt ? s.createdAt.slice(0, 10) : '—'}</td>
+                              <td>{s.createdAt ? s.createdAt.slice(0, 10) : '--'}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -649,10 +686,10 @@ export default function DonorPage() {
             {activeTab === 'contributions' && !loading && !error && (
               <>
                 {contributions.length === 0
-                  ? <p className="case-status">No contributions found.</p>
+                  ? <p className="py-10 text-center text-sm text-gray-500">No contributions found.</p>
                   : (
-                    <div className="case-table-wrap">
-                      <table className="case-table">
+                    <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-md">
+                      <table className="table-base">
                         <thead>
                           <tr>
                             <th>ID</th>
@@ -666,12 +703,16 @@ export default function DonorPage() {
                         </thead>
                         <tbody>
                           {contributions.map((c) => (
-                            <tr key={c.donationId} className="case-row-clickable" onClick={() => openContribution(c)}>
+                            <tr key={c.donationId} className="cursor-pointer" onClick={() => openContribution(c)}>
                               <td>{c.donationId}</td>
                               <td>{c.donationDate}</td>
-                              <td>{c.supporterName}</td>
-                              <td>{typeIcon(c.donationType)} {c.donationType}</td>
-                              <td>{c.donationType === 'Monetary' ? formatAmount(c.amount) : (c.estimatedValue ? `~${formatAmount(c.estimatedValue)}` : '—')}</td>
+                              <td className="font-medium text-gray-900 dark:text-white">{c.supporterName}</td>
+                              <td>
+                                <span className="inline-flex items-center gap-1.5">
+                                  <TypeIcon type={c.donationType} /> {c.donationType}
+                                </span>
+                              </td>
+                              <td>{c.donationType === 'Monetary' ? formatAmount(c.amount) : (c.estimatedValue ? `~${formatAmount(c.estimatedValue)}` : '--')}</td>
                               <td>{formatCell(c.programArea)}</td>
                               <td><span className={badgeClass(c.status)}>{c.status}</span></td>
                             </tr>
@@ -689,10 +730,16 @@ export default function DonorPage() {
 
             {/* Pagination */}
             {((activeTab === 'supporters' && supporters.length > 0) || (activeTab === 'contributions' && contributions.length > 0)) && (
-              <div className="case-pagination">
-                <button disabled={page <= 1} onClick={() => setPage(page - 1)}>Previous</button>
-                <span>Page {page} of {totalPages} ({totalCount} total)</span>
-                <button disabled={page >= totalPages} onClick={() => setPage(page + 1)}>Next</button>
+              <div className="mt-4 flex items-center justify-between rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3 shadow-md">
+                <button className="btn-secondary" disabled={page <= 1} onClick={() => setPage(page - 1)}>
+                  <ChevronLeft className="h-4 w-4" /> Previous
+                </button>
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  Page {page} of {totalPages} ({totalCount} total)
+                </span>
+                <button className="btn-secondary" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>
+                  Next <ChevronRight className="h-4 w-4" />
+                </button>
               </div>
             )}
           </div>
@@ -701,49 +748,59 @@ export default function DonorPage() {
 
       {/* ── VIEW / EDIT SUPPORTER MODAL ──────────────────────────────────────── */}
       {selectedSupporter && editSupData && createPortal(
-        <div className="resident-modal-overlay" onClick={closeSupporter}>
-          <div className="resident-modal-body" onClick={(e) => e.stopPropagation()}>
-            <div className="resident-modal-top-bar">
-              <div className="donor-avatar">{supporterIcon(selectedSupporter.supporterType)}</div>
-              <div className="resident-modal-profile-info">
-                <h2>{selectedSupporter.firstName} {selectedSupporter.lastName}</h2>
-                <p>
+        <div className="modal-overlay" onClick={closeSupporter}>
+          <div className="modal-body" onClick={(e) => e.stopPropagation()}>
+            {/* Top bar */}
+            <div className="mb-6 flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-orange-50 dark:bg-orange-500/10">
+                <SupporterIcon type={selectedSupporter.supporterType} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">{selectedSupporter.firstName} {selectedSupporter.lastName}</h2>
+                <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
                   {selectedSupporter.supporterType}
-                  {selectedSupporter.organizationName ? ` · ${selectedSupporter.organizationName}` : ''}
-                  {' · '}
+                  {selectedSupporter.organizationName ? ` / ${selectedSupporter.organizationName}` : ''}
+                  {' '}
                   <span className={badgeClass(selectedSupporter.status)}>{selectedSupporter.status}</span>
                 </p>
               </div>
-              <div className="resident-modal-actions">
+              <div className="flex items-center gap-2">
                 {isEditingSup ? (
                   <>
-                    <button className="resident-modal-btn resident-modal-btn-save" onClick={handleSaveSupporter} disabled={saving}>
-                      {saving ? 'Saving...' : 'Save'}
+                    <button className="btn-primary" onClick={handleSaveSupporter} disabled={saving}>
+                      <Check className="h-4 w-4" /> {saving ? 'Saving...' : 'Save'}
                     </button>
-                    <button className="resident-modal-btn resident-modal-btn-cancel" onClick={() => { setEditSupData({ ...selectedSupporter }); setIsEditingSup(false); }} disabled={saving}>
-                      Cancel
+                    <button className="btn-secondary" onClick={() => { setEditSupData({ ...selectedSupporter }); setIsEditingSup(false); }} disabled={saving}>
+                      <X className="h-4 w-4" /> Cancel
                     </button>
                   </>
                 ) : (
                   <>
-                    <button className="resident-modal-btn resident-modal-btn-edit" onClick={() => setIsEditingSup(true)}>Edit</button>
-                    <button className="resident-modal-btn resident-modal-btn-delete" onClick={handleDeleteSupporter} disabled={saving}>Delete</button>
+                    <button className="btn-secondary" onClick={() => setIsEditingSup(true)}>
+                      <Pencil className="h-4 w-4" /> Edit
+                    </button>
+                    <button className="btn-danger" onClick={handleDeleteSupporter} disabled={saving}>
+                      <Trash2 className="h-4 w-4" /> Delete
+                    </button>
                   </>
                 )}
               </div>
-              <button className="resident-modal-close" onClick={closeSupporter}>&times;</button>
+              <button className="btn-icon" onClick={closeSupporter}>
+                <X className="h-5 w-5" />
+              </button>
             </div>
 
+            {/* Sections */}
             {supporterSections.map((sec) => (
-              <div className="resident-modal-section" key={sec.title}>
-                <h3 className="resident-modal-section-title">{sec.title}</h3>
-                <div className="resident-modal-fields">
+              <div className="mb-6" key={sec.title}>
+                <h3 className="mb-3 border-b border-gray-100 dark:border-gray-700 pb-2 text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{sec.title}</h3>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {sec.fields.map((col) => (
-                    <div className="resident-modal-field" key={col.key}>
-                      <label>{col.label}</label>
+                    <div className="flex flex-col gap-1" key={col.key}>
+                      <label className="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">{col.label}</label>
                       {isEditingSup
                         ? renderSupporterInput(col, editSupData, (k, v) => setEditSupData((p) => ({ ...p!, [k]: v })))
-                        : <span className="resident-modal-field-value">{formatCell(selectedSupporter[col.key])}</span>
+                        : <span className="text-sm text-gray-700 dark:text-gray-300">{formatCell(selectedSupporter[col.key])}</span>
                       }
                     </div>
                   ))}
@@ -757,32 +814,38 @@ export default function DonorPage() {
 
       {/* ── ADD SUPPORTER MODAL ──────────────────────────────────────────────── */}
       {isAddingSup && createPortal(
-        <div className="resident-modal-overlay" onClick={closeAddSupporter}>
-          <div className="resident-modal-body" onClick={(e) => e.stopPropagation()}>
-            <div className="resident-modal-top-bar">
-              <div className="donor-avatar">👤</div>
-              <div className="resident-modal-profile-info">
-                <h2>New Supporter</h2>
-                <p>Add a new supporter profile</p>
+        <div className="modal-overlay" onClick={closeAddSupporter}>
+          <div className="modal-body" onClick={(e) => e.stopPropagation()}>
+            {/* Top bar */}
+            <div className="mb-6 flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-orange-50 dark:bg-orange-500/10">
+                <Users className="h-5 w-5 text-orange-500" />
               </div>
-              <div className="resident-modal-actions">
-                <button className="resident-modal-btn resident-modal-btn-save" onClick={handleCreateSupporter} disabled={saving}>
-                  {saving ? 'Creating...' : 'Create'}
+              <div className="min-w-0 flex-1">
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">New Supporter</h2>
+                <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">Add a new supporter profile</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button className="btn-primary" onClick={handleCreateSupporter} disabled={saving}>
+                  <Check className="h-4 w-4" /> {saving ? 'Creating...' : 'Create'}
                 </button>
-                <button className="resident-modal-btn resident-modal-btn-cancel" onClick={closeAddSupporter} disabled={saving}>
-                  Cancel
+                <button className="btn-secondary" onClick={closeAddSupporter} disabled={saving}>
+                  <X className="h-4 w-4" /> Cancel
                 </button>
               </div>
-              <button className="resident-modal-close" onClick={closeAddSupporter}>&times;</button>
+              <button className="btn-icon" onClick={closeAddSupporter}>
+                <X className="h-5 w-5" />
+              </button>
             </div>
 
+            {/* Sections */}
             {supporterSections.map((sec) => (
-              <div className="resident-modal-section" key={sec.title}>
-                <h3 className="resident-modal-section-title">{sec.title}</h3>
-                <div className="resident-modal-fields">
+              <div className="mb-6" key={sec.title}>
+                <h3 className="mb-3 border-b border-gray-100 dark:border-gray-700 pb-2 text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{sec.title}</h3>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {sec.fields.map((col) => (
-                    <div className="resident-modal-field" key={col.key}>
-                      <label>{col.label}</label>
+                    <div className="flex flex-col gap-1" key={col.key}>
+                      <label className="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">{col.label}</label>
                       {renderSupporterInput(col, newSupData, (k, v) => setNewSupData((p) => ({ ...p, [k]: v })), true)}
                     </div>
                   ))}
@@ -796,48 +859,58 @@ export default function DonorPage() {
 
       {/* ── VIEW / EDIT CONTRIBUTION MODAL ───────────────────────────────────── */}
       {selectedContribution && editConData && createPortal(
-        <div className="resident-modal-overlay" onClick={closeContribution}>
-          <div className="resident-modal-body" onClick={(e) => e.stopPropagation()}>
-            <div className="resident-modal-top-bar">
-              <div className="donor-avatar">{typeIcon(selectedContribution.donationType)}</div>
-              <div className="resident-modal-profile-info">
-                <h2>{selectedContribution.supporterName}</h2>
-                <p>
-                  {selectedContribution.donationType} · {selectedContribution.donationDate}
-                  {' · '}
+        <div className="modal-overlay" onClick={closeContribution}>
+          <div className="modal-body" onClick={(e) => e.stopPropagation()}>
+            {/* Top bar */}
+            <div className="mb-6 flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-orange-50 dark:bg-orange-500/10">
+                <TypeIcon type={selectedContribution.donationType} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">{selectedContribution.supporterName}</h2>
+                <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+                  {selectedContribution.donationType} / {selectedContribution.donationDate}
+                  {' '}
                   <span className={badgeClass(selectedContribution.status)}>{selectedContribution.status}</span>
                 </p>
               </div>
-              <div className="resident-modal-actions">
+              <div className="flex items-center gap-2">
                 {isEditingCon ? (
                   <>
-                    <button className="resident-modal-btn resident-modal-btn-save" onClick={handleSaveContribution} disabled={saving}>
-                      {saving ? 'Saving...' : 'Save'}
+                    <button className="btn-primary" onClick={handleSaveContribution} disabled={saving}>
+                      <Check className="h-4 w-4" /> {saving ? 'Saving...' : 'Save'}
                     </button>
-                    <button className="resident-modal-btn resident-modal-btn-cancel" onClick={() => { setEditConData({ ...selectedContribution }); setIsEditingCon(false); }} disabled={saving}>
-                      Cancel
+                    <button className="btn-secondary" onClick={() => { setEditConData({ ...selectedContribution }); setIsEditingCon(false); }} disabled={saving}>
+                      <X className="h-4 w-4" /> Cancel
                     </button>
                   </>
                 ) : (
                   <>
-                    <button className="resident-modal-btn resident-modal-btn-edit" onClick={() => setIsEditingCon(true)}>Edit</button>
-                    <button className="resident-modal-btn resident-modal-btn-delete" onClick={handleDeleteContribution} disabled={saving}>Delete</button>
+                    <button className="btn-secondary" onClick={() => setIsEditingCon(true)}>
+                      <Pencil className="h-4 w-4" /> Edit
+                    </button>
+                    <button className="btn-danger" onClick={handleDeleteContribution} disabled={saving}>
+                      <Trash2 className="h-4 w-4" /> Delete
+                    </button>
                   </>
                 )}
               </div>
-              <button className="resident-modal-close" onClick={closeContribution}>&times;</button>
+              <button className="btn-icon" onClick={closeContribution}>
+                <X className="h-5 w-5" />
+              </button>
             </div>
 
+            {/* Sections */}
             {contributionSections.map((sec) => (
-              <div className="resident-modal-section" key={sec.title}>
-                <h3 className="resident-modal-section-title">{sec.title}</h3>
-                <div className="resident-modal-fields">
+              <div className="mb-6" key={sec.title}>
+                <h3 className="mb-3 border-b border-gray-100 dark:border-gray-700 pb-2 text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{sec.title}</h3>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {sec.fields.map((col) => (
-                    <div className="resident-modal-field" key={col.key}>
-                      <label>{col.label}</label>
+                    <div className="flex flex-col gap-1" key={col.key}>
+                      <label className="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">{col.label}</label>
                       {isEditingCon
                         ? renderContributionInput(col, editConData, (k, v) => setEditConData((p) => ({ ...p!, [k]: v })))
-                        : <span className="resident-modal-field-value">{formatCell(selectedContribution[col.key])}</span>
+                        : <span className="text-sm text-gray-700 dark:text-gray-300">{formatCell(selectedContribution[col.key])}</span>
                       }
                     </div>
                   ))}
@@ -851,32 +924,38 @@ export default function DonorPage() {
 
       {/* ── ADD CONTRIBUTION MODAL ───────────────────────────────────────────── */}
       {isAddingCon && createPortal(
-        <div className="resident-modal-overlay" onClick={closeAddContribution}>
-          <div className="resident-modal-body" onClick={(e) => e.stopPropagation()}>
-            <div className="resident-modal-top-bar">
-              <div className="donor-avatar">🎁</div>
-              <div className="resident-modal-profile-info">
-                <h2>Record Contribution</h2>
-                <p>Log a new donation or contribution</p>
+        <div className="modal-overlay" onClick={closeAddContribution}>
+          <div className="modal-body" onClick={(e) => e.stopPropagation()}>
+            {/* Top bar */}
+            <div className="mb-6 flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-orange-50 dark:bg-orange-500/10">
+                <DollarSign className="h-5 w-5 text-orange-500" />
               </div>
-              <div className="resident-modal-actions">
-                <button className="resident-modal-btn resident-modal-btn-save" onClick={handleCreateContribution} disabled={saving}>
-                  {saving ? 'Saving...' : 'Record'}
+              <div className="min-w-0 flex-1">
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">Record Contribution</h2>
+                <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">Log a new donation or contribution</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button className="btn-primary" onClick={handleCreateContribution} disabled={saving}>
+                  <Check className="h-4 w-4" /> {saving ? 'Saving...' : 'Record'}
                 </button>
-                <button className="resident-modal-btn resident-modal-btn-cancel" onClick={closeAddContribution} disabled={saving}>
-                  Cancel
+                <button className="btn-secondary" onClick={closeAddContribution} disabled={saving}>
+                  <X className="h-4 w-4" /> Cancel
                 </button>
               </div>
-              <button className="resident-modal-close" onClick={closeAddContribution}>&times;</button>
+              <button className="btn-icon" onClick={closeAddContribution}>
+                <X className="h-5 w-5" />
+              </button>
             </div>
 
+            {/* Sections */}
             {contributionSections.map((sec) => (
-              <div className="resident-modal-section" key={sec.title}>
-                <h3 className="resident-modal-section-title">{sec.title}</h3>
-                <div className="resident-modal-fields">
+              <div className="mb-6" key={sec.title}>
+                <h3 className="mb-3 border-b border-gray-100 dark:border-gray-700 pb-2 text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{sec.title}</h3>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {sec.fields.map((col) => (
-                    <div className="resident-modal-field" key={col.key}>
-                      <label>{col.label}</label>
+                    <div className="flex flex-col gap-1" key={col.key}>
+                      <label className="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">{col.label}</label>
                       {renderContributionInput(col, newConData, (k, v) => setNewConData((p) => ({ ...p, [k]: v })), true)}
                     </div>
                   ))}

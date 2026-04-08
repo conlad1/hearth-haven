@@ -2,10 +2,9 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthService } from '../api/AuthService';
 import { API_BASE_URL } from '../api/config';
-import './DonatePage.css';
+import { Heart, UserX, User, ArrowRight, LogIn } from 'lucide-react';
 
 const AMOUNTS: number[] = [10, 25, 50, 100, 250, 500];
-
 type AuthMode = 'anonymous' | 'loggedin';
 
 function DonatePage() {
@@ -14,16 +13,10 @@ function DonatePage() {
 
   const [authMode, setAuthMode] = useState<AuthMode>('anonymous');
   const [errors, setErrors] = useState<Record<string, string>>({});
-
   const [amount, setAmount] = useState<number | null>(50);
   const [customAmount, setCustomAmount] = useState('');
   const [notes, setNotes] = useState('');
-
-  const [form, setForm] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-  });
+  const [form, setForm] = useState({ firstName: '', lastName: '', email: '' });
 
   const finalAmount = customAmount ? Number(customAmount) : (amount ?? 0);
 
@@ -33,17 +26,12 @@ function DonatePage() {
 
   function validate() {
     const e: Record<string, string> = {};
-
     if (authMode === 'anonymous') {
       if (!form.firstName.trim()) e.firstName = 'First name is required.';
       if (!form.lastName.trim()) e.lastName = 'Last name is required.';
       if (!form.email.trim()) e.email = 'Email is required.';
     }
-
-    if (!finalAmount || finalAmount <= 0) {
-      e.amount = 'Enter a valid amount.';
-    }
-
+    if (!finalAmount || finalAmount <= 0) e.amount = 'Enter a valid amount.';
     setErrors(e);
     return Object.keys(e).length === 0;
   }
@@ -72,13 +60,11 @@ function DonatePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-
       if (!res.ok) {
         const err = await res.text();
         alert(`Donation failed: ${err}`);
         return;
       }
-
       navigate('/donate/thank-you');
     } catch {
       alert('Network error.');
@@ -88,158 +74,138 @@ function DonatePage() {
   const showLoginTeaser = authMode === 'loggedin' && !isLoggedIn;
 
   return (
-    <div className="donate-page">
+    <div>
+      {/* Hero */}
+      <section className="py-16 text-center">
+        <Heart className="mx-auto mb-4 h-10 w-10 text-orange-500" />
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl">Make a <span className="text-orange-500">Difference</span> Today</h1>
+        <p className="mt-3 text-gray-500 dark:text-gray-400">Your generosity helps change lives.</p>
 
-      {/* HERO */}
-      <div className="donate-hero">
-        <div className="donate-hero-inner">
-          <div className="donate-heart-icon">❤️</div>
-          <h1>Make a Difference Today</h1>
-          <p>Your generosity helps change lives.</p>
-
-          {/* TOGGLE */}
-          <div className="donate-hero-toggle">
-            <button
-              className={`donate-hero-tab${authMode === 'anonymous' ? ' active' : ''}`}
-              onClick={() => setAuthMode('anonymous')}
-            >
-              🕊️ Donate Anonymously
-            </button>
-            <button
-              className={`donate-hero-tab${authMode === 'loggedin' ? ' active' : ''}`}
-              onClick={() => setAuthMode('loggedin')}
-            >
-              🌟 Log In to Donate
-            </button>
-          </div>
+        {/* Toggle */}
+        <div className="mx-auto mt-8 inline-flex overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 shadow-sm">
+          <button
+            className={`flex items-center gap-2 px-5 py-2.5 text-sm font-medium transition ${
+              authMode === 'anonymous' ? 'bg-orange-500 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+            }`}
+            onClick={() => setAuthMode('anonymous')}
+          >
+            <UserX className="h-4 w-4" /> Donate Anonymously
+          </button>
+          <button
+            className={`flex items-center gap-2 px-5 py-2.5 text-sm font-medium transition ${
+              authMode === 'loggedin' ? 'bg-orange-500 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+            }`}
+            onClick={() => setAuthMode('loggedin')}
+          >
+            <User className="h-4 w-4" /> Log In to Donate
+          </button>
         </div>
-      </div>
+      </section>
 
-      {/* LOGIN TEASER */}
+      {/* Login Teaser */}
       {showLoginTeaser && (
-        <div className="donate-login-teaser">
-          <div className="donate-login-teaser-inner">
-
-            <div className="donate-teaser-left">
-              <h2>More ways to give when you log in</h2>
-              <p>Track your impact and unlock more features.</p>
+        <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
+          <div className="grid grid-cols-1 items-center gap-8 md:grid-cols-2">
+            <div>
+              <h2 className="text-2xl font-bold">More ways to give when you log in</h2>
+              <p className="mt-2 text-gray-500 dark:text-gray-400">Track your impact and unlock more features.</p>
             </div>
-
-            <div className="donate-teaser-right">
-              <div className="donate-teaser-card">
-                <h3>Get started</h3>
-                <button
-                  className="btn-teaser-login"
-                  onClick={() => navigate('/login')}
-                >
-                  Log In →
-                </button>
-
-                <button
-                  className="btn-teaser-register"
-                  onClick={() => navigate('/register')}
-                >
-                  Create Account
-                </button>
-
-                <button
-                  className="btn-teaser-anonymous"
-                  onClick={() => setAuthMode('anonymous')}
-                >
-                  Continue anonymously →
-                </button>
-              </div>
+            <div className="card space-y-3">
+              <h3 className="text-lg font-semibold">Get started</h3>
+              <button className="btn-primary w-full" onClick={() => navigate('/login')}>
+                <LogIn className="h-4 w-4" /> Log In
+              </button>
+              <button className="btn-secondary w-full" onClick={() => navigate('/register')}>
+                Create Account
+              </button>
+              <button className="btn-ghost w-full text-gray-500" onClick={() => setAuthMode('anonymous')}>
+                Continue anonymously <ArrowRight className="h-4 w-4" />
+              </button>
             </div>
-
           </div>
         </div>
       )}
 
-      {/* FORM */}
+      {/* Form */}
       {!showLoginTeaser && (
-        <div className="donate-form-page">
+        <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-5">
+            {/* Left — Info */}
+            <div className="lg:col-span-3">
+              <h2 className="text-xl font-bold">Your Information</h2>
 
-          {/* LEFT */}
-          <div className="donate-form-left">
-            <h2>Your Information</h2>
-
-            {authMode === 'anonymous' && (
-              <>
-                <div className="donate-form-row two-col">
-                  <div>
-                    <label className="donate-label">First Name</label>
-                    <input name="firstName" value={form.firstName} onChange={handleInput} />
-                    {errors.firstName && <p className="donate-field-error">{errors.firstName}</p>}
+              {authMode === 'anonymous' && (
+                <div className="mt-6 space-y-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <label className="block">
+                      <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">First Name</span>
+                      <input name="firstName" value={form.firstName} onChange={handleInput} className="input-field" />
+                      {errors.firstName && <p className="mt-1 text-xs text-red-500">{errors.firstName}</p>}
+                    </label>
+                    <label className="block">
+                      <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Last Name</span>
+                      <input name="lastName" value={form.lastName} onChange={handleInput} className="input-field" />
+                      {errors.lastName && <p className="mt-1 text-xs text-red-500">{errors.lastName}</p>}
+                    </label>
                   </div>
+                  <label className="block">
+                    <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Email</span>
+                    <input name="email" value={form.email} onChange={handleInput} className="input-field" />
+                    {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
+                  </label>
+                </div>
+              )}
 
-                  <div>
-                    <label className="donate-label">Last Name</label>
-                    <input name="lastName" value={form.lastName} onChange={handleInput} />
-                    {errors.lastName && <p className="donate-field-error">{errors.lastName}</p>}
-                  </div>
+              <label className="mt-6 block">
+                <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Notes</span>
+                <textarea className="input-field resize-none" rows={4} value={notes} onChange={(e) => setNotes(e.target.value)} />
+              </label>
+            </div>
+
+            {/* Right — Amount */}
+            <div className="lg:col-span-2">
+              <div className="card">
+                <h3 className="text-lg font-semibold">Select Amount</h3>
+
+                <div className="mt-4 grid grid-cols-3 gap-2">
+                  {AMOUNTS.map((a) => (
+                    <button
+                      key={a}
+                      className={`rounded-lg border px-3 py-2.5 text-sm font-semibold transition ${
+                        amount === a && !customAmount
+                          ? 'border-orange-500 bg-orange-500 text-white'
+                          : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:border-orange-300'
+                      }`}
+                      onClick={() => { setAmount(a); setCustomAmount(''); }}
+                    >
+                      ${a}
+                    </button>
+                  ))}
                 </div>
 
-                <label className="donate-label">Email</label>
-                <input name="email" value={form.email} onChange={handleInput} />
-                {errors.email && <p className="donate-field-error">{errors.email}</p>}
-              </>
-            )}
+                <div className="relative mt-4">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400 dark:text-gray-500">$</span>
+                  <input
+                    type="number"
+                    placeholder="Custom amount"
+                    value={customAmount}
+                    onChange={(e) => { setCustomAmount(e.target.value); setAmount(null); }}
+                    className="input-field pl-7"
+                  />
+                </div>
 
-            <label className="donate-label" style={{ marginTop: 20 }}>Notes</label>
-            <textarea
-              className="donate-textarea"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-            />
-          </div>
+                {errors.amount && <p className="mt-2 text-xs text-red-500">{errors.amount}</p>}
 
-          {/* RIGHT */}
-          <div className="donate-form-right">
+                <div className="mt-6 flex items-center justify-between border-t border-gray-100 dark:border-gray-700 pt-4">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Total</span>
+                  <span className="text-2xl font-bold text-gray-900 dark:text-white">${finalAmount || 0}</span>
+                </div>
 
-            <div className="donate-summary-box">
-              <h3>Select Amount</h3>
-
-              <div className="donate-amounts">
-                {AMOUNTS.map((a) => (
-                  <button
-                    key={a}
-                    className={`donate-amount-btn${amount === a && !customAmount ? ' active' : ''}`}
-                    onClick={() => {
-                      setAmount(a);
-                      setCustomAmount('');
-                    }}
-                  >
-                    ${a}
-                  </button>
-                ))}
-              </div>
-
-              <div className="donate-custom">
-                <span>$</span>
-                <input
-                  type="number"
-                  placeholder="Custom amount"
-                  value={customAmount}
-                  onChange={(e) => {
-                    setCustomAmount(e.target.value);
-                    setAmount(null);
-                  }}
-                />
-              </div>
-
-              {errors.amount && <p className="donate-field-error">{errors.amount}</p>}
-            </div>
-
-            <div className="donate-order-summary">
-              <div className="donate-summary-row">
-                <span>Total</span>
-                <span className="donate-summary-amount">${finalAmount || 0}</span>
+                <button className="btn-primary mt-4 w-full" onClick={handleSubmit}>
+                  Donate ${finalAmount || '\u2014'} <ArrowRight className="h-4 w-4" />
+                </button>
               </div>
             </div>
-
-            <button className="btn-donate-submit" onClick={handleSubmit}>
-              Donate ${finalAmount || '—'} →
-            </button>
           </div>
         </div>
       )}
