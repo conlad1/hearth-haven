@@ -1,5 +1,11 @@
 /* ================= DONATE PAGE ================= */
 
+.donate-field-error {
+  color: #dc2626;
+  font-size: 12px;
+  margin: 4px 0 0;
+}
+
 .donate-page {
   min-height: 100vh;
   background: #f6f1ee;
@@ -718,4 +724,101 @@
   .donate-pay-toggle { flex-direction: column; }
   .toggle-buttons { flex-wrap: wrap; }
   .donate-form-row { flex-direction: column; }
+}
+
+/* ── CONFIRMATION PAGE ────────────────────────────────────────────────────── */
+.donate-confirm-page {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 60px 20px;
+  background: #f6f1ee;
+  min-height: 60vh;
+}
+
+.donate-confirm-card {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  padding: 48px 44px;
+  max-width: 540px;
+  width: 100%;
+}
+
+.donate-confirm-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.donate-confirm-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.donate-confirm-header h2 {
+  font-size: 24px;
+  color: #1f2937;
+  margin-bottom: 6px;
+}
+
+.donate-confirm-header p {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.donate-confirm-rows {
+  border: 1px solid #f0f0f0;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 28px;
+}
+
+.donate-confirm-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 14px 18px;
+  font-size: 14px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.donate-confirm-row:last-child {
+  border-bottom: none;
+}
+
+.donate-confirm-row span:first-child {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.donate-confirm-row span:last-child {
+  color: #1f2937;
+  font-weight: 600;
+  text-align: right;
+  max-width: 60%;
+}
+
+.donate-confirm-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.donate-confirm-back {
+  flex: 0 0 auto;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 10px;
+  padding: 14px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.donate-confirm-back:hover {
+  background: #e5e7eb;
+}
+
+.donate-confirm-actions .btn-donate-submit {
+  flex: 1;
 }

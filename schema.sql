@@ -419,7 +419,7 @@ CREATE TABLE dbo.intervention_plans (
 
     CONSTRAINT PK_intervention_plans PRIMARY KEY (plan_id),
     CONSTRAINT FK_ip_resident FOREIGN KEY (resident_id) REFERENCES dbo.residents (resident_id),
-    CONSTRAINT CK_ip_category CHECK (plan_category IN (N'Safety', N'Psychosocial', N'Education', N'Physical Health', N'Legal', N'Reintegration')),
+    CONSTRAINT CK_ip_category CHECK (plan_category IN (N'Safety', N'Physical Health', N'Education')),
     CONSTRAINT CK_ip_status CHECK (status IN (N'Open', N'In Progress', N'Achieved', N'On Hold', N'Closed'))
 );
 

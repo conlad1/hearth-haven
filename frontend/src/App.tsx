@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { Routes, Route, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -8,7 +8,21 @@ import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import CasePage from './pages/CasePage';
+import ResidentDetailPage from './pages/ResidentDetailPage';
 import DonatePage from "./pages/DonatePage";
+import DonorsPage from "./pages/DonorPage";
+import AllocationPage from "./pages/AllocationPage";
+import ImpactDashboard from "./pages/ImpactDashboard";
+import { AuthService } from "./api/AuthService";
+import OutreachPage from "./pages/OutreachPage";
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
+import TermsPage from "./pages/TermsPage";
+import TeapotPage from "./pages/TeapotPage";
+import CookieConsentBanner from "./components/CookieConsentBanner";
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  return AuthService.isAuthenticated() ? <>{children}</> : <Navigate to="/login" replace />;
+}
 
 function ScrollToHash() {
   const location = useLocation();
@@ -29,10 +43,25 @@ function ScrollToHash() {
 }
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(AuthService.isAuthenticated());
+
+  useEffect(() => {
+    const syncAuthState = () => setIsAuthenticated(AuthService.isAuthenticated());
+
+    window.addEventListener("auth-change", syncAuthState);
+    window.addEventListener("storage", syncAuthState);
+
+    return () => {
+      window.removeEventListener("auth-change", syncAuthState);
+      window.removeEventListener("storage", syncAuthState);
+    };
+  }, []);
+
   return (
     <>
       <ScrollToHash />
-      <Header />
+      <Header isAuthenticated={isAuthenticated} />
+      <CookieConsentBanner />
 
       <main>
         <Routes>
@@ -40,8 +69,36 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/cases" element={<CasePage />} />
+          <Route path="/cases/:id" element={<ResidentDetailPage />} />
           <Route path="/donate" element={<DonatePage />} />
-
+          <Route path="/impact" element={<ImpactDashboard />} />
+          <Route path="/privacy" element={<PrivacyPolicyPage />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/teapot" element={<TeapotPage />} />
+          <Route
+            path="/outreach"
+            element={(
+              <ProtectedRoute>
+                <OutreachPage />
+              </ProtectedRoute>
+            )}
+          />
+          <Route
+            path="/donors"
+            element={(
+              <ProtectedRoute>
+                <DonorsPage />
+              </ProtectedRoute>
+            )}
+          />
+          <Route
+            path="/allocations"
+            element={(
+              <ProtectedRoute>
+                <AllocationPage />
+              </ProtectedRoute>
+            )}
+          />
         </Routes>
       </main>
 
