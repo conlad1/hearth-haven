@@ -1,0 +1,5 @@
+{
+  "target": "led_to_donation",
+  "model": "RandomForestClassifier",
+  "saved_at": "2026-04-08T14:43:57.387788"
+}
