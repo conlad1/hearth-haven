@@ -11,6 +11,10 @@ import { InterventionPlan } from '../types/InterventionPlan';
 import RecordModal, { RecordFieldDef } from '../components/RecordModal';
 import { SafetyChart, HealthChart, EducationChart } from '../components/ProgressChart';
 import {
+  ArrowLeft, Pencil, Trash2, Plus, Check, X, Save,
+  ChevronLeft, ChevronRight, Filter,
+} from 'lucide-react';
+import {
   fetchResident,
   fetchSafehouses,
   fetchFilterOptions,
@@ -65,7 +69,7 @@ import {
   deleteInterventionPlan,
 } from '../api/CaseAPI';
 
-// ── Resident field config (unchanged) ──
+// -- Resident field config (unchanged) --
 
 type FieldDef = { key: keyof Resident; label: string };
 interface FieldSection { title: string; fields: FieldDef[] }
@@ -181,29 +185,74 @@ function calcAge(birthDate: string, referenceDate: string): string | null {
   return parts.length > 0 ? parts.join(' ') : '0 months';
 }
 
-// ── Pagination component ──
+// -- Severity badge helper --
+
+function severityBadge(severity: string | null | undefined) {
+  if (!severity) return null;
+  const s = severity.toLowerCase();
+  const colors = s === 'low' ? 'bg-green-100 text-green-700'
+    : s === 'medium' ? 'bg-yellow-100 text-yellow-700'
+    : s === 'high' ? 'bg-red-100 text-red-700'
+    : 'bg-gray-100 text-gray-700';
+  return <span className={`badge ${colors}`}>{severity}</span>;
+}
+
+// -- Status badge helper --
+
+function statusBadge(status: string | null | undefined) {
+  if (!status) return null;
+  const s = status.toLowerCase();
+  const colors = s === 'open' ? 'bg-blue-100 text-blue-700'
+    : s === 'in progress' ? 'bg-orange-100 text-orange-700'
+    : s === 'achieved' ? 'bg-green-100 text-green-700'
+    : s === 'on hold' ? 'bg-gray-100 text-gray-600'
+    : s === 'closed' ? 'bg-gray-100 text-gray-600'
+    : 'bg-gray-100 text-gray-700';
+  return <span className={`badge ${colors}`}>{status}</span>;
+}
+
+// -- Pagination component --
 
 function TabPagination({ page, totalPages, totalCount, onPageChange }: {
   page: number; totalPages: number; totalCount: number; onPageChange: (p: number) => void;
 }) {
   if (totalPages <= 1) return null;
   return (
-    <div className="case-pagination">
-      <button disabled={page <= 1} onClick={() => onPageChange(page - 1)}>Previous</button>
-      <span>Page {page} of {totalPages} ({totalCount} total)</span>
-      <button disabled={page >= totalPages} onClick={() => onPageChange(page + 1)}>Next</button>
+    <div className="flex items-center justify-between border-t border-gray-100 dark:border-gray-700 px-2 py-3 mt-2">
+      <button
+        className="btn-ghost"
+        disabled={page <= 1}
+        onClick={() => onPageChange(page - 1)}
+      >
+        <ChevronLeft size={16} />
+        Previous
+      </button>
+      <span className="text-sm text-gray-500">
+        Page {page} of {totalPages} ({totalCount} total)
+      </span>
+      <button
+        className="btn-ghost"
+        disabled={page >= totalPages}
+        onClick={() => onPageChange(page + 1)}
+      >
+        Next
+        <ChevronRight size={16} />
+      </button>
     </div>
   );
 }
 
-// ── Bool filter helper ──
+// -- Bool filter helper --
 
 function BoolSelect({ label, value, onChange }: {
   label: string; value: boolean | undefined; onChange: (v: boolean | undefined) => void;
 }) {
   return (
-    <select value={value === undefined ? '' : String(value)}
-      onChange={(e) => onChange(e.target.value === '' ? undefined : e.target.value === 'true')}>
+    <select
+      className="select-field max-w-[140px]"
+      value={value === undefined ? '' : String(value)}
+      onChange={(e) => onChange(e.target.value === '' ? undefined : e.target.value === 'true')}
+    >
       <option value="">{label}</option>
       <option value="true">Yes</option>
       <option value="false">No</option>
@@ -211,7 +260,7 @@ function BoolSelect({ label, value, onChange }: {
   );
 }
 
-// ── Tabs ──
+// -- Tabs --
 
 type TabKey = 'resident' | 'safety' | 'physicalHealth' | 'education';
 const tabList: { key: TabKey; label: string }[] = [
@@ -221,7 +270,7 @@ const tabList: { key: TabKey; label: string }[] = [
   { key: 'education', label: 'Education' },
 ];
 
-// ── Record field definitions for CRUD modals ──
+// -- Record field definitions for CRUD modals --
 
 const healthFields: RecordFieldDef[] = [
   { key: 'recordDate', label: 'Record Date', type: 'date', required: true },
@@ -418,7 +467,7 @@ export default function ResidentDetailPage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const triggerRefresh = () => setRefreshKey((k) => k + 1);
 
-  // ── Initial loads ──
+  // -- Initial loads --
 
   useEffect(() => {
     fetchSafehouses().then(setSafehouses).catch(console.error);
@@ -438,9 +487,9 @@ export default function ResidentDetailPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  // ── Tab data fetching ──
+  // -- Tab data fetching --
 
-  // Intervention plans — fetch when any non-resident tab is active
+  // Intervention plans -- fetch when any non-resident tab is active
   useEffect(() => {
     if (activeTab === 'resident') return;
     fetchInterventionPlans(residentId).then(setInterventionPlans).catch(console.error);
@@ -496,7 +545,7 @@ export default function ResidentDetailPage() {
       fetchProcessRecordingFilterOptions(residentId).then(setProcFilterOpts).catch(console.error);
   }, [activeTab]);
 
-  // Chart data — fetch all records (unpaginated) for each tab
+  // Chart data -- fetch all records (unpaginated) for each tab
   useEffect(() => {
     if (activeTab === 'safety')
       fetchIncidentReports(residentId, 1, 500, {}).then((res) => setAllIncidents(res.data)).catch(console.error);
@@ -506,7 +555,7 @@ export default function ResidentDetailPage() {
       fetchEducationRecords(residentId, 1, 500, {}).then((res) => setAllEducationRecords(res.data)).catch(console.error);
   }, [activeTab, residentId, refreshKey]);
 
-  // ── Resident edit handlers ──
+  // -- Resident edit handlers --
 
   const handleEditField = (key: keyof Resident, value: unknown) => {
     if (!editData) return;
@@ -541,7 +590,7 @@ export default function ResidentDetailPage() {
     finally { setSaving(false); }
   };
 
-  // ── Record modal handlers ──
+  // -- Record modal handlers --
 
   const openRecordCreate = (entity: EntityKey, defaults: Record<string, unknown>) => {
     setRecordModal({ entity, mode: 'create', data: { ...defaults, residentId } });
@@ -611,15 +660,22 @@ export default function ResidentDetailPage() {
     }
   };
 
-  // ── Resident input renderer ──
+  // -- Resident input renderer --
 
   const renderInput = (col: FieldDef) => {
     if (!editData) return null;
     const value = editData[col.key];
-    if (readOnlyFields.includes(col.key)) return <span className="resident-modal-field-value">{fmt(value)}</span>;
-    if (booleanFields.includes(col.key)) return <input type="checkbox" checked={!!value} onChange={(e) => handleEditField(col.key, e.target.checked)} />;
+    if (readOnlyFields.includes(col.key)) return <span className="text-sm text-gray-900 dark:text-white">{fmt(value)}</span>;
+    if (booleanFields.includes(col.key)) return (
+      <input
+        type="checkbox"
+        className="h-4 w-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500"
+        checked={!!value}
+        onChange={(e) => handleEditField(col.key, e.target.checked)}
+      />
+    );
     if (col.key === 'safehouseId') return (
-      <select value={value as number} onChange={(e) => handleEditField(col.key, Number(e.target.value))}>
+      <select className="select-field" value={value as number} onChange={(e) => handleEditField(col.key, Number(e.target.value))}>
         {safehouses.map((sh) => <option key={sh.safehouseId} value={sh.safehouseId}>{sh.name}</option>)}
       </select>
     );
@@ -627,33 +683,33 @@ export default function ResidentDetailPage() {
     if (sc && filterOptions) {
       const opts = filterOptions[sc.optionsKey];
       return (
-        <select value={value == null ? '' : String(value)} onChange={(e) => handleEditField(col.key, e.target.value || null)}>
+        <select className="select-field" value={value == null ? '' : String(value)} onChange={(e) => handleEditField(col.key, e.target.value || null)}>
           {sc.nullable && <option value="">&mdash; None &mdash;</option>}
           {!sc.nullable && !value && <option value="">&mdash; Select &mdash;</option>}
           {opts.map((o) => <option key={o} value={o}>{o}</option>)}
         </select>
       );
     }
-    if (dateFields.includes(col.key)) return <input type="date" value={value == null ? '' : String(value).slice(0, 10)} onChange={(e) => handleEditField(col.key, e.target.value || null)} />;
-    if (textareaFields.includes(col.key)) return <textarea rows={3} value={value == null ? '' : String(value)} onChange={(e) => handleEditField(col.key, e.target.value || null)} />;
-    if (intFields.includes(col.key)) return <input type="number" value={value == null ? '' : String(value)} onChange={(e) => handleEditField(col.key, e.target.value ? Number(e.target.value) : null)} />;
-    return <input type="text" value={value == null ? '' : String(value)} onChange={(e) => handleEditField(col.key, e.target.value || null)} />;
+    if (dateFields.includes(col.key)) return <input className="input-field" type="date" value={value == null ? '' : String(value).slice(0, 10)} onChange={(e) => handleEditField(col.key, e.target.value || null)} />;
+    if (textareaFields.includes(col.key)) return <textarea className="input-field" rows={3} value={value == null ? '' : String(value)} onChange={(e) => handleEditField(col.key, e.target.value || null)} />;
+    if (intFields.includes(col.key)) return <input className="input-field" type="number" value={value == null ? '' : String(value)} onChange={(e) => handleEditField(col.key, e.target.value ? Number(e.target.value) : null)} />;
+    return <input className="input-field" type="text" value={value == null ? '' : String(value)} onChange={(e) => handleEditField(col.key, e.target.value || null)} />;
   };
 
-  // ── Date range filter helper ──
+  // -- Date range filter helper --
 
   const DateRange = ({ from, to, onChange }: { from?: string; to?: string; onChange: (f: string | undefined, t: string | undefined) => void }) => (
     <>
-      <label className="tab-filter-date">
-        From <input type="date" value={from || ''} onChange={(e) => onChange(e.target.value || undefined, to)} />
+      <label className="flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">
+        From <input className="input-field max-w-[150px]" type="date" value={from || ''} onChange={(e) => onChange(e.target.value || undefined, to)} />
       </label>
-      <label className="tab-filter-date">
-        To <input type="date" value={to || ''} onChange={(e) => onChange(from, e.target.value || undefined)} />
+      <label className="flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">
+        To <input className="input-field max-w-[150px]" type="date" value={to || ''} onChange={(e) => onChange(from, e.target.value || undefined)} />
       </label>
     </>
   );
 
-  // ── Intervention plan inline CRUD ──
+  // -- Intervention plan inline CRUD --
 
   const [editingPlanId, setEditingPlanId] = useState<number | null>(null);
   const [editPlanData, setEditPlanData] = useState<Record<string, unknown>>({});
@@ -690,27 +746,37 @@ export default function ResidentDetailPage() {
   const renderPlanField = (p: InterventionPlan, key: string, label: string, type: 'text' | 'date' | 'number' | 'select' | 'textarea' = 'text', options?: string[]) => {
     const isEditing = editingPlanId === p.planId;
     const val = isEditing ? editPlanData[key] : (p as unknown as Record<string, unknown>)[key];
-    if (!isEditing) return <div className="resident-modal-field"><label>{label}</label><span className="resident-modal-field-value">{fmt(val)}</span></div>;
+    if (!isEditing) return (
+      <div className="flex flex-col gap-1">
+        <label className="text-xs font-medium text-gray-500 dark:text-gray-400">{label}</label>
+        <span className="text-sm text-gray-900 dark:text-white">{fmt(val)}</span>
+      </div>
+    );
     const onChange = (v: unknown) => setEditPlanData((d) => ({ ...d, [key]: v }));
     let input;
     if (type === 'select' && options) {
-      input = <select className="ip-edit-field" value={val == null ? '' : String(val)} onChange={(e) => onChange(e.target.value || null)}>
-        <option value="">— Select —</option>
+      input = <select className="select-field" value={val == null ? '' : String(val)} onChange={(e) => onChange(e.target.value || null)}>
+        <option value="">-- Select --</option>
         {options.map((o) => <option key={o} value={o}>{o}</option>)}
       </select>;
     } else if (type === 'date') {
-      input = <input className="ip-edit-field" type="date" value={val == null ? '' : String(val).slice(0, 10)} onChange={(e) => onChange(e.target.value || null)} />;
+      input = <input className="input-field" type="date" value={val == null ? '' : String(val).slice(0, 10)} onChange={(e) => onChange(e.target.value || null)} />;
     } else if (type === 'number') {
-      input = <input className="ip-edit-field" type="number" value={val == null ? '' : String(val)} onChange={(e) => onChange(e.target.value ? Number(e.target.value) : null)} />;
+      input = <input className="input-field" type="number" value={val == null ? '' : String(val)} onChange={(e) => onChange(e.target.value ? Number(e.target.value) : null)} />;
     } else if (type === 'textarea') {
-      input = <textarea className="ip-edit-field" rows={2} value={val == null ? '' : String(val)} onChange={(e) => onChange(e.target.value || null)} />;
+      input = <textarea className="input-field" rows={2} value={val == null ? '' : String(val)} onChange={(e) => onChange(e.target.value || null)} />;
     } else {
-      input = <input className="ip-edit-field" type="text" value={val == null ? '' : String(val)} onChange={(e) => onChange(e.target.value || null)} />;
+      input = <input className="input-field" type="text" value={val == null ? '' : String(val)} onChange={(e) => onChange(e.target.value || null)} />;
     }
-    return <div className="resident-modal-field"><label>{label}</label>{input}</div>;
+    return (
+      <div className="flex flex-col gap-1">
+        <label className="text-xs font-medium text-gray-500 dark:text-gray-400">{label}</label>
+        {input}
+      </div>
+    );
   };
 
-  // ── Intervention plans renderer ──
+  // -- Intervention plans renderer --
 
   const renderInterventionPlans = (categories: string[]) => {
     const plans = interventionPlans.filter((p) => categories.includes(p.planCategory));
@@ -718,49 +784,53 @@ export default function ResidentDetailPage() {
     const missingCategories = categories.filter((c) => !existingCategories.includes(c));
 
     return (
-      <div className="ip-section">
-        <div className="ip-header">
-          <h3>Intervention Plans</h3>
-          <div className="ip-add-btns">
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white">Intervention Plans</h3>
+          <div className="flex gap-2">
             {missingCategories.map((cat) => (
-              <button key={cat} className="resident-modal-btn resident-modal-btn-edit"
+              <button key={cat} className="btn-primary"
                 onClick={() => openRecordCreate('interventionPlan', {
                   planCategory: cat, status: 'Open', targetDate: new Date().toISOString().slice(0, 10),
                 })}>
-                + {cat} Plan
+                <Plus size={16} />
+                {cat} Plan
               </button>
             ))}
           </div>
         </div>
         {plans.length === 0 ? (
-          <p style={{ color: '#9ca3af', fontSize: 13 }}>No intervention plans for this category yet.</p>
+          <p className="text-sm text-gray-400">No intervention plans for this category yet.</p>
         ) : plans.map((p) => {
           const isEditing = editingPlanId === p.planId;
-          const statusClass = `ip-status ip-status-${p.status.toLowerCase().replace(/ /g, '-')}`;
           return (
-            <div className="ip-card" key={p.planId}>
-              <div className="ip-card-title-row">
-                <strong style={{ flex: 1 }}>{p.planCategory}</strong>
-                <span className={statusClass}>{p.status}</span>
-                <div className="ip-card-actions">
+            <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-5 shadow-md mb-4" key={p.planId}>
+              <div className="flex items-center gap-3 mb-3">
+                <strong className="flex-1 text-sm font-semibold text-gray-900 dark:text-white">{p.planCategory}</strong>
+                {statusBadge(p.status)}
+                <div className="flex items-center gap-1">
                   {isEditing ? (
                     <>
-                      <button className="ip-icon-btn ip-icon-save" onClick={savePlan} disabled={planSaving}
-                        title="Save"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>
-                      <button className="ip-icon-btn ip-icon-cancel" onClick={cancelEditPlan} disabled={planSaving}
-                        title="Cancel"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                      <button className="btn-icon text-green-600 hover:bg-green-50 hover:text-green-700" onClick={savePlan} disabled={planSaving} title="Save">
+                        <Check size={16} />
+                      </button>
+                      <button className="btn-icon text-gray-500 hover:bg-gray-100 hover:text-gray-700" onClick={cancelEditPlan} disabled={planSaving} title="Cancel">
+                        <X size={16} />
+                      </button>
                     </>
                   ) : (
                     <>
-                      <button className="ip-icon-btn ip-icon-edit" onClick={() => startEditPlan(p)}
-                        title="Edit"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg></button>
-                      <button className="ip-icon-btn ip-icon-delete" onClick={() => setShowPlanDeleteConfirm(p.planId)}
-                        title="Delete"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
+                      <button className="btn-icon" onClick={() => startEditPlan(p)} title="Edit">
+                        <Pencil size={15} />
+                      </button>
+                      <button className="btn-icon text-red-500 hover:bg-red-50 hover:text-red-700" onClick={() => setShowPlanDeleteConfirm(p.planId)} title="Delete">
+                        <Trash2 size={15} />
+                      </button>
                     </>
                   )}
                 </div>
               </div>
-              <div className="resident-modal-fields" style={{ marginTop: 8 }}>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {renderPlanField(p, 'planDescription', 'Description', 'textarea')}
                 {renderPlanField(p, 'servicesProvided', 'Services Provided', 'textarea')}
                 {renderPlanField(p, 'targetValue', 'Target Value', 'number')}
@@ -773,17 +843,17 @@ export default function ResidentDetailPage() {
         })}
 
         {showPlanDeleteConfirm != null && createPortal(
-          <div className="resident-modal-overlay" onClick={() => setShowPlanDeleteConfirm(null)}>
-            <div className="delete-confirm-modal" onClick={(e) => e.stopPropagation()}>
-              <h3>Delete Intervention Plan</h3>
-              <p>Are you sure you want to delete this plan? This action cannot be undone.</p>
-              <div className="delete-confirm-actions">
-                <button className="resident-modal-btn resident-modal-btn-delete"
+          <div className="modal-overlay" onClick={() => setShowPlanDeleteConfirm(null)}>
+            <div className="modal-body max-w-md" onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Delete Intervention Plan</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">Are you sure you want to delete this plan? This action cannot be undone.</p>
+              <div className="flex items-center justify-end gap-3">
+                <button className="btn-secondary"
+                  onClick={() => setShowPlanDeleteConfirm(null)} disabled={planSaving}>Cancel</button>
+                <button className="btn-danger"
                   onClick={() => confirmDeletePlan(showPlanDeleteConfirm)} disabled={planSaving}>
                   {planSaving ? 'Deleting...' : 'Delete'}
                 </button>
-                <button className="resident-modal-btn resident-modal-btn-cancel"
-                  onClick={() => setShowPlanDeleteConfirm(null)} disabled={planSaving}>Cancel</button>
               </div>
             </div>
           </div>,
@@ -793,21 +863,26 @@ export default function ResidentDetailPage() {
     );
   };
 
-  // ── Tab renderers ──
+  // -- Tab renderers --
 
   const renderResidentTab = () => {
     if (!resident || !editData) return null;
     return modalSections.map((section) => (
-      <div className="resident-modal-section" key={section.title}>
-        <h3 className="resident-modal-section-title">{section.title}</h3>
-        <div className="resident-modal-fields">
+      <div className="border-b border-gray-100 dark:border-gray-700 py-5 last:border-b-0" key={section.title}>
+        <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-gray-900 dark:text-white">{section.title}</h3>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {section.fields.map((col) => (
-            <div className="resident-modal-field" key={col.key}>
-              <label>
+            <div className="flex flex-col gap-1" key={col.key}>
+              <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">
                 {col.label}
-                {fieldTooltips[col.key] && <span className="resident-modal-info-icon" data-tip={fieldTooltips[col.key]}>i</span>}
+                {fieldTooltips[col.key] && (
+                  <span
+                    className="ml-1 inline-flex h-4 w-4 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700 text-[10px] font-bold text-gray-500 dark:text-gray-400 cursor-help"
+                    title={fieldTooltips[col.key]}
+                  >i</span>
+                )}
               </label>
-              {isEditing ? renderInput(col) : <span className="resident-modal-field-value">{fmt(resident[col.key])}</span>}
+              {isEditing ? renderInput(col) : <span className="text-sm text-gray-900 dark:text-white">{fmt(resident[col.key])}</span>}
             </div>
           ))}
         </div>
@@ -817,7 +892,8 @@ export default function ResidentDetailPage() {
 
   const renderHealthTab = () => (
     <>
-      <div className="tab-filter-bar">
+      <div className="flex flex-wrap items-center gap-3 rounded-lg bg-gray-50 dark:bg-gray-800 p-3 mb-4">
+        <Filter size={16} className="text-gray-400" />
         <DateRange from={healthFilters.dateFrom} to={healthFilters.dateTo}
           onChange={(f, t) => { setHealthFilters((p) => ({ ...p, dateFrom: f, dateTo: t })); setHealthPage(1); }} />
         <BoolSelect label="Medical" value={healthFilters.medicalCheckupDone}
@@ -826,22 +902,23 @@ export default function ResidentDetailPage() {
           onChange={(v) => { setHealthFilters((p) => ({ ...p, dentalCheckupDone: v })); setHealthPage(1); }} />
         <BoolSelect label="Psychological" value={healthFilters.psychologicalCheckupDone}
           onChange={(v) => { setHealthFilters((p) => ({ ...p, psychologicalCheckupDone: v })); setHealthPage(1); }} />
-        <button className="resident-modal-btn resident-modal-btn-edit tab-add-btn"
+        <button className="btn-primary ml-auto"
           onClick={() => openRecordCreate('health', { recordDate: new Date().toISOString().slice(0, 10), medicalCheckupDone: false, dentalCheckupDone: false, psychologicalCheckupDone: false })}>
-          + Add Health Record
+          <Plus size={16} />
+          Add Health Record
         </button>
       </div>
-      {healthRecords.length === 0 ? <p className="tab-empty">No health & wellbeing records found.</p> : (
+      {healthRecords.length === 0 ? <p className="py-8 text-center text-sm text-gray-400">No health & wellbeing records found.</p> : (
         <>
-          <div className="tab-table-wrap">
-            <table className="case-table">
+          <div className="overflow-x-auto rounded-lg border border-gray-100 dark:border-gray-700">
+            <table className="table-base">
               <thead><tr>
                 <th>Date</th><th>Health</th><th>Nutrition</th><th>Sleep</th><th>Energy</th>
                 <th>Height</th><th>Weight</th><th>BMI</th><th>Medical</th><th>Dental</th><th>Psych</th><th>Notes</th>
               </tr></thead>
               <tbody>
                 {healthRecords.map((r) => (
-                  <tr key={r.healthRecordId} className="case-row-clickable" onClick={() => openRecordView('health', r as unknown as Record<string, unknown>)}>
+                  <tr key={r.healthRecordId} className="cursor-pointer" onClick={() => openRecordView('health', r as unknown as Record<string, unknown>)}>
                     <td>{r.recordDate}</td><td>{fmt(r.generalHealthScore)}</td><td>{fmt(r.nutritionScore)}</td>
                     <td>{fmt(r.sleepQualityScore)}</td><td>{fmt(r.energyLevelScore)}</td>
                     <td>{fmt(r.heightCm)}</td><td>{fmt(r.weightKg)}</td><td>{fmt(r.bmi)}</td>
@@ -860,39 +937,41 @@ export default function ResidentDetailPage() {
 
   const renderEducationTab = () => (
     <>
-      <div className="tab-filter-bar">
+      <div className="flex flex-wrap items-center gap-3 rounded-lg bg-gray-50 dark:bg-gray-800 p-3 mb-4">
+        <Filter size={16} className="text-gray-400" />
         <DateRange from={eduFilters.dateFrom} to={eduFilters.dateTo}
           onChange={(f, t) => { setEduFilters((p) => ({ ...p, dateFrom: f, dateTo: t })); setEduPage(1); }} />
         {eduFilterOpts && <>
-          <select value={eduFilters.educationLevel || ''} onChange={(e) => { setEduFilters((p) => ({ ...p, educationLevel: e.target.value || undefined })); setEduPage(1); }}>
+          <select className="select-field max-w-[160px]" value={eduFilters.educationLevel || ''} onChange={(e) => { setEduFilters((p) => ({ ...p, educationLevel: e.target.value || undefined })); setEduPage(1); }}>
             <option value="">All Levels</option>
             {eduFilterOpts.educationLevels.map((o) => <option key={o} value={o}>{o}</option>)}
           </select>
-          <select value={eduFilters.enrollmentStatus || ''} onChange={(e) => { setEduFilters((p) => ({ ...p, enrollmentStatus: e.target.value || undefined })); setEduPage(1); }}>
+          <select className="select-field max-w-[160px]" value={eduFilters.enrollmentStatus || ''} onChange={(e) => { setEduFilters((p) => ({ ...p, enrollmentStatus: e.target.value || undefined })); setEduPage(1); }}>
             <option value="">All Enrollment</option>
             {eduFilterOpts.enrollmentStatuses.map((o) => <option key={o} value={o}>{o}</option>)}
           </select>
-          <select value={eduFilters.completionStatus || ''} onChange={(e) => { setEduFilters((p) => ({ ...p, completionStatus: e.target.value || undefined })); setEduPage(1); }}>
+          <select className="select-field max-w-[160px]" value={eduFilters.completionStatus || ''} onChange={(e) => { setEduFilters((p) => ({ ...p, completionStatus: e.target.value || undefined })); setEduPage(1); }}>
             <option value="">All Completion</option>
             {eduFilterOpts.completionStatuses.map((o) => <option key={o} value={o}>{o}</option>)}
           </select>
         </>}
-        <button className="resident-modal-btn resident-modal-btn-edit tab-add-btn"
+        <button className="btn-primary ml-auto"
           onClick={() => openRecordCreate('education', { recordDate: new Date().toISOString().slice(0, 10), attendanceRate: 0, progressPercent: 0 })}>
-          + Add Education Record
+          <Plus size={16} />
+          Add Education Record
         </button>
       </div>
-      {educationRecords.length === 0 ? <p className="tab-empty">No education records found.</p> : (
+      {educationRecords.length === 0 ? <p className="py-8 text-center text-sm text-gray-400">No education records found.</p> : (
         <>
-          <div className="tab-table-wrap">
-            <table className="case-table">
+          <div className="overflow-x-auto rounded-lg border border-gray-100 dark:border-gray-700">
+            <table className="table-base">
               <thead><tr>
                 <th>Date</th><th>Level</th><th>School</th><th>Enrollment</th>
                 <th>Attendance</th><th>Progress</th><th>Completion</th><th>Notes</th>
               </tr></thead>
               <tbody>
                 {educationRecords.map((r) => (
-                  <tr key={r.educationRecordId} className="case-row-clickable" onClick={() => openRecordView('education', r as unknown as Record<string, unknown>)}>
+                  <tr key={r.educationRecordId} className="cursor-pointer" onClick={() => openRecordView('education', r as unknown as Record<string, unknown>)}>
                     <td>{r.recordDate}</td><td>{r.educationLevel}</td><td>{fmt(r.schoolName)}</td>
                     <td>{r.enrollmentStatus}</td><td>{(r.attendanceRate * 100).toFixed(1)}%</td>
                     <td>{r.progressPercent.toFixed(1)}%</td><td>{r.completionStatus}</td><td>{fmt(r.notes)}</td>
@@ -909,39 +988,45 @@ export default function ResidentDetailPage() {
 
   const renderIncidentsTab = () => (
     <>
-      <div className="tab-filter-bar">
+      <div className="flex flex-wrap items-center gap-3 rounded-lg bg-gray-50 dark:bg-gray-800 p-3 mb-4">
+        <Filter size={16} className="text-gray-400" />
         <DateRange from={incFilters.dateFrom} to={incFilters.dateTo}
           onChange={(f, t) => { setIncFilters((p) => ({ ...p, dateFrom: f, dateTo: t })); setIncPage(1); }} />
         {incFilterOpts && <>
-          <select value={incFilters.incidentType || ''} onChange={(e) => { setIncFilters((p) => ({ ...p, incidentType: e.target.value || undefined })); setIncPage(1); }}>
+          <select className="select-field max-w-[160px]" value={incFilters.incidentType || ''} onChange={(e) => { setIncFilters((p) => ({ ...p, incidentType: e.target.value || undefined })); setIncPage(1); }}>
             <option value="">All Types</option>
             {incFilterOpts.incidentTypes.map((o) => <option key={o} value={o}>{o}</option>)}
           </select>
-          <select value={incFilters.severity || ''} onChange={(e) => { setIncFilters((p) => ({ ...p, severity: e.target.value || undefined })); setIncPage(1); }}>
+          <select className="select-field max-w-[160px]" value={incFilters.severity || ''} onChange={(e) => { setIncFilters((p) => ({ ...p, severity: e.target.value || undefined })); setIncPage(1); }}>
             <option value="">All Severities</option>
             {incFilterOpts.severities.map((o) => <option key={o} value={o}>{o}</option>)}
           </select>
         </>}
         <BoolSelect label="Resolved" value={incFilters.resolved}
           onChange={(v) => { setIncFilters((p) => ({ ...p, resolved: v })); setIncPage(1); }} />
-        <button className="resident-modal-btn resident-modal-btn-edit tab-add-btn"
-          onClick={() => openRecordCreate('incidents', { incidentDate: new Date().toISOString().slice(0, 10), resolved: false, followUpRequired: false })}>
-          + Report Incident
+        <button className="btn-primary ml-auto"
+          onClick={() => openRecordCreate('incidents', { incidentDate: new Date().toISOString().slice(0, 10), safehouseId: resident?.safehouseId, resolved: false, followUpRequired: false })}>
+          <Plus size={16} />
+          Report Incident
         </button>
       </div>
-      {incidentReports.length === 0 ? <p className="tab-empty">No incident reports found.</p> : (
+      {incidentReports.length === 0 ? <p className="py-8 text-center text-sm text-gray-400">No incident reports found.</p> : (
         <>
-          <div className="tab-table-wrap">
-            <table className="case-table">
+          <div className="overflow-x-auto rounded-lg border border-gray-100 dark:border-gray-700">
+            <table className="table-base">
               <thead><tr>
                 <th>Date</th><th>Type</th><th>Severity</th><th>Description</th><th>Response</th>
                 <th>Resolved</th><th>Resolution Date</th><th>Reported By</th><th>Follow-up</th>
               </tr></thead>
               <tbody>
                 {incidentReports.map((r) => (
-                  <tr key={r.incidentId} className={`case-row-clickable ${r.severity === 'High' ? 'incident-row-high' : ''}`} onClick={() => openRecordView('incidents', r as unknown as Record<string, unknown>)}>
+                  <tr
+                    key={r.incidentId}
+                    className={`cursor-pointer ${r.severity === 'High' ? 'bg-red-50 dark:bg-red-500/10' : ''}`}
+                    onClick={() => openRecordView('incidents', r as unknown as Record<string, unknown>)}
+                  >
                     <td>{r.incidentDate}</td><td>{r.incidentType}</td>
-                    <td><span className={`severity-badge severity-${r.severity?.toLowerCase()}`}>{r.severity}</span></td>
+                    <td>{severityBadge(r.severity)}</td>
                     <td>{fmt(r.description)}</td><td>{fmt(r.responseTaken)}</td>
                     <td>{fmt(r.resolved)}</td><td>{fmt(r.resolutionDate)}</td>
                     <td>{r.reportedBy}</td><td>{fmt(r.followUpRequired)}</td>
@@ -958,41 +1043,43 @@ export default function ResidentDetailPage() {
 
   const renderVisitationsTab = () => (
     <>
-      <div className="tab-filter-bar">
+      <div className="flex flex-wrap items-center gap-3 rounded-lg bg-gray-50 dark:bg-gray-800 p-3 mb-4">
+        <Filter size={16} className="text-gray-400" />
         <DateRange from={visFilters.dateFrom} to={visFilters.dateTo}
           onChange={(f, t) => { setVisFilters((p) => ({ ...p, dateFrom: f, dateTo: t })); setVisPage(1); }} />
         {visFilterOpts && <>
-          <select value={visFilters.visitType || ''} onChange={(e) => { setVisFilters((p) => ({ ...p, visitType: e.target.value || undefined })); setVisPage(1); }}>
+          <select className="select-field max-w-[160px]" value={visFilters.visitType || ''} onChange={(e) => { setVisFilters((p) => ({ ...p, visitType: e.target.value || undefined })); setVisPage(1); }}>
             <option value="">All Types</option>
             {visFilterOpts.visitTypes.map((o) => <option key={o} value={o}>{o}</option>)}
           </select>
-          <select value={visFilters.familyCooperationLevel || ''} onChange={(e) => { setVisFilters((p) => ({ ...p, familyCooperationLevel: e.target.value || undefined })); setVisPage(1); }}>
+          <select className="select-field max-w-[160px]" value={visFilters.familyCooperationLevel || ''} onChange={(e) => { setVisFilters((p) => ({ ...p, familyCooperationLevel: e.target.value || undefined })); setVisPage(1); }}>
             <option value="">All Cooperation</option>
             {visFilterOpts.cooperationLevels.map((o) => <option key={o} value={o}>{o}</option>)}
           </select>
-          <select value={visFilters.socialWorker || ''} onChange={(e) => { setVisFilters((p) => ({ ...p, socialWorker: e.target.value || undefined })); setVisPage(1); }}>
+          <select className="select-field max-w-[160px]" value={visFilters.socialWorker || ''} onChange={(e) => { setVisFilters((p) => ({ ...p, socialWorker: e.target.value || undefined })); setVisPage(1); }}>
             <option value="">All Workers</option>
             {visFilterOpts.socialWorkers.map((o) => <option key={o} value={o}>{o}</option>)}
           </select>
         </>}
         <BoolSelect label="Safety Concerns" value={visFilters.safetyConcernsNoted}
           onChange={(v) => { setVisFilters((p) => ({ ...p, safetyConcernsNoted: v })); setVisPage(1); }} />
-        <button className="resident-modal-btn resident-modal-btn-edit tab-add-btn"
+        <button className="btn-primary ml-auto"
           onClick={() => openRecordCreate('visitations', { visitDate: new Date().toISOString().slice(0, 10), safetyConcernsNoted: false, followUpNeeded: false })}>
-          + Add Visitation
+          <Plus size={16} />
+          Add Visitation
         </button>
       </div>
-      {visitations.length === 0 ? <p className="tab-empty">No visitation records found.</p> : (
+      {visitations.length === 0 ? <p className="py-8 text-center text-sm text-gray-400">No visitation records found.</p> : (
         <>
-          <div className="tab-table-wrap">
-            <table className="case-table">
+          <div className="overflow-x-auto rounded-lg border border-gray-100 dark:border-gray-700">
+            <table className="table-base">
               <thead><tr>
                 <th>Date</th><th>Social Worker</th><th>Type</th><th>Location</th><th>Purpose</th>
                 <th>Cooperation</th><th>Safety Concerns</th><th>Follow-up</th><th>Outcome</th>
               </tr></thead>
               <tbody>
                 {visitations.map((r) => (
-                  <tr key={r.visitationId} className="case-row-clickable" onClick={() => openRecordView('visitations', r as unknown as Record<string, unknown>)}>
+                  <tr key={r.visitationId} className="cursor-pointer" onClick={() => openRecordView('visitations', r as unknown as Record<string, unknown>)}>
                     <td>{r.visitDate}</td><td>{r.socialWorker}</td><td>{r.visitType}</td>
                     <td>{fmt(r.locationVisited)}</td><td>{fmt(r.purpose)}</td>
                     <td>{r.familyCooperationLevel}</td><td>{fmt(r.safetyConcernsNoted)}</td>
@@ -1010,37 +1097,39 @@ export default function ResidentDetailPage() {
 
   const renderProcessRecordingsTab = () => (
     <>
-      <div className="tab-filter-bar">
+      <div className="flex flex-wrap items-center gap-3 rounded-lg bg-gray-50 dark:bg-gray-800 p-3 mb-4">
+        <Filter size={16} className="text-gray-400" />
         <DateRange from={procFilters.dateFrom} to={procFilters.dateTo}
           onChange={(f, t) => { setProcFilters((p) => ({ ...p, dateFrom: f, dateTo: t })); setProcPage(1); }} />
         {procFilterOpts && <>
-          <select value={procFilters.sessionType || ''} onChange={(e) => { setProcFilters((p) => ({ ...p, sessionType: e.target.value || undefined })); setProcPage(1); }}>
+          <select className="select-field max-w-[160px]" value={procFilters.sessionType || ''} onChange={(e) => { setProcFilters((p) => ({ ...p, sessionType: e.target.value || undefined })); setProcPage(1); }}>
             <option value="">All Types</option>
             {procFilterOpts.sessionTypes.map((o) => <option key={o} value={o}>{o}</option>)}
           </select>
-          <select value={procFilters.socialWorker || ''} onChange={(e) => { setProcFilters((p) => ({ ...p, socialWorker: e.target.value || undefined })); setProcPage(1); }}>
+          <select className="select-field max-w-[160px]" value={procFilters.socialWorker || ''} onChange={(e) => { setProcFilters((p) => ({ ...p, socialWorker: e.target.value || undefined })); setProcPage(1); }}>
             <option value="">All Workers</option>
             {procFilterOpts.socialWorkers.map((o) => <option key={o} value={o}>{o}</option>)}
           </select>
         </>}
         <BoolSelect label="Concerns" value={procFilters.concernsFlagged}
           onChange={(v) => { setProcFilters((p) => ({ ...p, concernsFlagged: v })); setProcPage(1); }} />
-        <button className="resident-modal-btn resident-modal-btn-edit tab-add-btn"
+        <button className="btn-primary ml-auto"
           onClick={() => openRecordCreate('processRecordings', { sessionDate: new Date().toISOString().slice(0, 10), progressNoted: false, concernsFlagged: false, referralMade: false })}>
-          + Add Session
+          <Plus size={16} />
+          Add Session
         </button>
       </div>
-      {procRecordings.length === 0 ? <p className="tab-empty">No counseling sessions found.</p> : (
+      {procRecordings.length === 0 ? <p className="py-8 text-center text-sm text-gray-400">No counseling sessions found.</p> : (
         <>
-          <div className="tab-table-wrap">
-            <table className="case-table">
+          <div className="overflow-x-auto rounded-lg border border-gray-100 dark:border-gray-700">
+            <table className="table-base">
               <thead><tr>
                 <th>Date</th><th>Worker</th><th>Type</th><th>Duration</th><th>State (Start)</th>
                 <th>State (End)</th><th>Progress</th><th>Concerns</th><th>Referral</th>
               </tr></thead>
               <tbody>
                 {procRecordings.map((r) => (
-                  <tr key={r.recordingId} className="case-row-clickable" onClick={() => openRecordView('processRecordings', r as unknown as Record<string, unknown>)}>
+                  <tr key={r.recordingId} className="cursor-pointer" onClick={() => openRecordView('processRecordings', r as unknown as Record<string, unknown>)}>
                     <td>{r.sessionDate}</td><td>{r.socialWorker}</td><td>{r.sessionType}</td>
                     <td>{r.sessionDurationMinutes}m</td><td>{r.emotionalStateObserved}</td>
                     <td>{r.emotionalStateEnd}</td><td>{fmt(r.progressNoted)}</td>
@@ -1056,17 +1145,19 @@ export default function ResidentDetailPage() {
     </>
   );
 
-  // ── Composite tab renderers ──
+  // -- Composite tab renderers --
 
   const renderSafetyTab = () => {
     const plan = interventionPlans.find((p) => p.planCategory === 'Safety') ?? null;
     return (
       <>
         {renderInterventionPlans(tabPlanCategories.safety)}
-        <SafetyChart plan={plan} incidents={allIncidents} />
-        <h3 className="tab-sub-heading">Incidents</h3>
+        <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-6 shadow-md mb-6">
+          <SafetyChart plan={plan} incidents={allIncidents} />
+        </div>
+        <h3 className="mb-3 mt-6 text-base font-bold text-gray-900 dark:text-white">Incidents</h3>
         {renderIncidentsTab()}
-        <h3 className="tab-sub-heading">Visitations</h3>
+        <h3 className="mb-3 mt-8 text-base font-bold text-gray-900 dark:text-white">Visitations</h3>
         {renderVisitationsTab()}
       </>
     );
@@ -1077,10 +1168,12 @@ export default function ResidentDetailPage() {
     return (
       <>
         {renderInterventionPlans(tabPlanCategories.physicalHealth)}
-        <HealthChart plan={plan} records={allHealthRecords} />
-        <h3 className="tab-sub-heading">Health & Wellbeing</h3>
+        <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-6 shadow-md mb-6">
+          <HealthChart plan={plan} records={allHealthRecords} />
+        </div>
+        <h3 className="mb-3 mt-6 text-base font-bold text-gray-900 dark:text-white">Health & Wellbeing</h3>
         {renderHealthTab()}
-        <h3 className="tab-sub-heading">Counseling Sessions</h3>
+        <h3 className="mb-3 mt-8 text-base font-bold text-gray-900 dark:text-white">Counseling Sessions</h3>
         {renderProcessRecordingsTab()}
       </>
     );
@@ -1091,8 +1184,10 @@ export default function ResidentDetailPage() {
     return (
       <>
         {renderInterventionPlans(tabPlanCategories.education)}
-        <EducationChart plan={plan} records={allEducationRecords} />
-        <h3 className="tab-sub-heading">Education Records</h3>
+        <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-6 shadow-md mb-6">
+          <EducationChart plan={plan} records={allEducationRecords} />
+        </div>
+        <h3 className="mb-3 mt-6 text-base font-bold text-gray-900 dark:text-white">Education Records</h3>
         {renderEducationTab()}
       </>
     );
@@ -1107,57 +1202,73 @@ export default function ResidentDetailPage() {
     }
   };
 
-  // ── Render ──
+  // -- Render --
 
-  if (loading) return <div className="resident-detail-page"><p className="case-status">Loading...</p></div>;
-  if (error) return <div className="resident-detail-page"><p className="case-status case-error">Error: {error}</p></div>;
-  if (!resident || !editData) return <div className="resident-detail-page"><p className="case-status">Resident not found.</p></div>;
+  if (loading) return <div className="mx-auto max-w-6xl px-4 py-10"><p className="text-center text-sm text-gray-500">Loading...</p></div>;
+  if (error) return <div className="mx-auto max-w-6xl px-4 py-10"><p className="text-center text-sm text-red-500">Error: {error}</p></div>;
+  if (!resident || !editData) return <div className="mx-auto max-w-6xl px-4 py-10"><p className="text-center text-sm text-gray-500">Resident not found.</p></div>;
 
   return (
     <>
-      <div className="resident-detail-page">
-        <button className="resident-detail-back" onClick={() => navigate('/cases')}>&larr; Back to Cases</button>
+      <div className="mx-auto max-w-6xl px-4 py-6">
+        <button className="btn-ghost mb-4" onClick={() => navigate('/cases')}>
+          <ArrowLeft size={16} />
+          Back to Cases
+        </button>
 
-        <div className="resident-detail-card">
-          <div className="resident-modal-top-bar">
-            <img src="/portrait_resident.png" alt="Resident" className="resident-modal-portrait" />
-            <div className="resident-modal-profile-info">
-              <h2>{resident.caseControlNo}</h2>
-              <p>{resident.internalCode} &middot; {resident.caseStatus}</p>
+        <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-md">
+          {/* Top bar */}
+          <div className="flex items-center gap-4 border-b border-gray-100 dark:border-gray-700 p-6">
+            <img src="/portrait_resident.png" alt="Resident" className="h-14 w-14 rounded-full border border-gray-200 dark:border-gray-700 object-cover" />
+            <div className="flex-1 min-w-0">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white truncate">{resident.caseControlNo}</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{resident.internalCode} &middot; {resident.caseStatus}</p>
             </div>
-            <div className="resident-modal-actions">
+            <div className="flex items-center gap-2">
               {activeTab === 'resident' && (
                 isEditing ? (
                   <>
-                    <button className="resident-modal-btn resident-modal-btn-save" onClick={handleSave} disabled={saving} title="Save">
-                      {saving ? 'Saving...' : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+                    <button className="btn-primary" onClick={handleSave} disabled={saving} title="Save">
+                      {saving ? 'Saving...' : <><Save size={16} /> Save</>}
                     </button>
-                    <button className="resident-modal-btn resident-modal-btn-cancel"
+                    <button className="btn-secondary"
                       onClick={() => { setEditData({ ...resident }); setIsEditing(false); }} disabled={saving} title="Cancel">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                      <X size={16} /> Cancel
                     </button>
                   </>
                 ) : (
                   <>
-                    <button className="resident-modal-btn resident-modal-btn-edit" onClick={() => setIsEditing(true)} title="Edit"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg></button>
-                    <button className="resident-modal-btn resident-modal-btn-delete" onClick={handleDelete} disabled={saving} title="Delete"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
+                    <button className="btn-secondary" onClick={() => setIsEditing(true)} title="Edit">
+                      <Pencil size={16} /> Edit
+                    </button>
+                    <button className="btn-danger" onClick={handleDelete} disabled={saving} title="Delete">
+                      <Trash2 size={16} /> Delete
+                    </button>
                   </>
                 )
               )}
             </div>
           </div>
 
-          <div className="resident-detail-tabs">
+          {/* Tabs */}
+          <div className="flex border-b border-gray-100 dark:border-gray-700">
             {tabList.map((tab) => (
               <button key={tab.key}
-                className={`resident-detail-tab ${activeTab === tab.key ? 'active' : ''}`}
+                className={`relative px-5 py-3 text-sm font-medium transition ${
+                  activeTab === tab.key
+                    ? 'text-orange-500 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-orange-500'
+                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                }`}
                 onClick={() => { setActiveTab(tab.key); setIsEditing(false); }}>
                 {tab.label}
               </button>
             ))}
           </div>
 
-          {renderTabContent()}
+          {/* Tab content */}
+          <div className="p-6">
+            {renderTabContent()}
+          </div>
         </div>
       </div>
 
@@ -1194,16 +1305,16 @@ export default function ResidentDetailPage() {
       )}
 
       {showDeleteConfirm && createPortal(
-        <div className="resident-modal-overlay" onClick={() => setShowDeleteConfirm(false)}>
-          <div className="delete-confirm-modal" onClick={(e) => e.stopPropagation()}>
-            <h3>Delete Resident</h3>
-            <p>Are you sure you want to delete this resident record? This action cannot be undone.</p>
-            <div className="delete-confirm-actions">
-              <button className="resident-modal-btn resident-modal-btn-delete" onClick={confirmDelete} disabled={saving}>
-                {saving ? 'Deleting...' : 'Delete'}
-              </button>
-              <button className="resident-modal-btn resident-modal-btn-cancel" onClick={() => setShowDeleteConfirm(false)} disabled={saving}>
+        <div className="modal-overlay" onClick={() => setShowDeleteConfirm(false)}>
+          <div className="modal-body max-w-md" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Delete Resident</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">Are you sure you want to delete this resident record? This action cannot be undone.</p>
+            <div className="flex items-center justify-end gap-3">
+              <button className="btn-secondary" onClick={() => setShowDeleteConfirm(false)} disabled={saving}>
                 Cancel
+              </button>
+              <button className="btn-danger" onClick={confirmDelete} disabled={saving}>
+                {saving ? 'Deleting...' : 'Delete'}
               </button>
             </div>
           </div>

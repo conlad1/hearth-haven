@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import './AllocationPage.css';
+import { Plus, Pencil, Trash2, Save, Check, X } from 'lucide-react';
 
 import { API_BASE_URL as API } from '../api/config';
 
@@ -132,21 +132,24 @@ export default function AllocationPage() {
   }
 
   return (
-    <div className="alloc-page">
-      <div className="alloc-header">
+    <div className="mx-auto max-w-7xl px-6 py-8">
+      <div className="mb-7 flex items-start justify-between">
         <div>
-          <h1>Donation Allocations</h1>
-          <p>Manage how donations are distributed across safehouses and program areas.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Donation Allocations</h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Manage how donations are distributed across safehouses and program areas.</p>
         </div>
-        <button className="alloc-btn-primary" onClick={openCreate}>+ New Allocation</button>
+        <button className="btn-primary" onClick={openCreate}>
+          <Plus className="h-4 w-4" />
+          New Allocation
+        </button>
       </div>
 
-      {loading && <p className="alloc-status">Loading…</p>}
-      {error   && <p className="alloc-status error">{error}</p>}
+      {loading && <p className="py-10 text-center text-gray-500 dark:text-gray-400">Loading...</p>}
+      {error   && <p className="py-10 text-center text-red-600">{error}</p>}
 
       {!loading && !error && (
-        <div className="alloc-table-wrap">
-          <table className="alloc-table">
+        <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-md overflow-x-auto">
+          <table className="table-base">
             <thead>
               <tr>
                 <th>Donation&nbsp;ID</th>
@@ -161,20 +164,28 @@ export default function AllocationPage() {
             </thead>
             <tbody>
               {allocations.length === 0 && (
-                <tr><td colSpan={8} className="alloc-empty">No allocations yet.</td></tr>
+                <tr><td colSpan={8} className="py-10 text-center text-gray-400 dark:text-gray-500">No allocations yet.</td></tr>
               )}
               {allocations.map(a => (
                 <tr key={a.allocationId}>
                   <td>#{a.donationId}</td>
-                  <td><span className="alloc-badge">{a.donationType}</span></td>
+                  <td><span className="badge bg-purple-100 text-purple-700">{a.donationType}</span></td>
                   <td>{a.safehouseName}</td>
                   <td>{a.programArea}</td>
-                  <td>₱{Number(a.amountAllocated).toLocaleString()}</td>
+                  <td>{'\u20B1'}{Number(a.amountAllocated).toLocaleString()}</td>
                   <td>{a.allocationDate}</td>
-                  <td className="alloc-notes">{a.notes || '—'}</td>
-                  <td className="alloc-actions">
-                    <button className="alloc-btn-edit"   onClick={() => openEdit(a)}>Edit</button>
-                    <button className="alloc-btn-delete" onClick={() => handleDelete(a.allocationId)}>Delete</button>
+                  <td className="max-w-[200px] text-xs text-gray-500 dark:text-gray-400">{a.notes || '\u2014'}</td>
+                  <td>
+                    <div className="flex items-center gap-2">
+                      <button className="btn-ghost" onClick={() => openEdit(a)}>
+                        <Pencil className="h-4 w-4" />
+                        Edit
+                      </button>
+                      <button className="btn-ghost text-red-500 hover:bg-red-50 hover:text-red-700" onClick={() => handleDelete(a.allocationId)}>
+                        <Trash2 className="h-4 w-4" />
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -184,67 +195,83 @@ export default function AllocationPage() {
       )}
 
       {modalOpen && (
-        <div className="alloc-overlay" onClick={() => setModalOpen(false)}>
-          <div className="alloc-modal" onClick={e => e.stopPropagation()}>
-            <h2>{editing ? 'Edit Allocation' : 'New Allocation'}</h2>
+        <div className="modal-overlay" onClick={() => setModalOpen(false)}>
+          <div className="modal-body max-w-lg flex flex-col gap-2" onClick={e => e.stopPropagation()}>
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">{editing ? 'Edit Allocation' : 'New Allocation'}</h2>
+              <button className="btn-icon" onClick={() => setModalOpen(false)}>
+                <X className="h-5 w-5" />
+              </button>
+            </div>
 
-            <label>Donation</label>
+            <label className="mt-2 text-xs font-medium text-gray-700 dark:text-gray-300">Donation</label>
             <select
+              className="select-field"
               value={form.donationId}
               onChange={e => setForm({ ...form, donationId: Number(e.target.value) })}
               disabled={!!editing}
             >
-              <option value={0}>— Select donation —</option>
+              <option value={0}>-- Select donation --</option>
               {donations.map(d => (
                 <option key={d.donationId} value={d.donationId}>{d.label}</option>
               ))}
             </select>
 
-            <label>Safehouse</label>
+            <label className="mt-2 text-xs font-medium text-gray-700 dark:text-gray-300">Safehouse</label>
             <select
+              className="select-field"
               value={form.safeHouseId}
               onChange={e => setForm({ ...form, safeHouseId: Number(e.target.value) })}
             >
-              <option value={0}>— Select safehouse —</option>
+              <option value={0}>-- Select safehouse --</option>
               {safehouses.map(s => (
-                <option key={s.safehouseId} value={s.safehouseId}>{s.name} — {s.city}</option>
+                <option key={s.safehouseId} value={s.safehouseId}>{s.name} -- {s.city}</option>
               ))}
             </select>
 
-            <label>Program Area</label>
+            <label className="mt-2 text-xs font-medium text-gray-700 dark:text-gray-300">Program Area</label>
             <select
+              className="select-field"
               value={form.programArea}
               onChange={e => setForm({ ...form, programArea: e.target.value })}
             >
               {PROGRAM_AREAS.map(p => <option key={p} value={p}>{p}</option>)}
             </select>
 
-            <label>Amount Allocated (₱)</label>
+            <label className="mt-2 text-xs font-medium text-gray-700 dark:text-gray-300">Amount Allocated ({'\u20B1'})</label>
             <input
+              className="input-field"
               type="number" min={0} value={form.amountAllocated}
               onChange={e => setForm({ ...form, amountAllocated: Number(e.target.value) })}
             />
 
-            <label>Allocation Date</label>
+            <label className="mt-2 text-xs font-medium text-gray-700 dark:text-gray-300">Allocation Date</label>
             <input
+              className="input-field"
               type="date" value={form.allocationDate}
               onChange={e => setForm({ ...form, allocationDate: e.target.value })}
             />
 
-            <label>Notes (optional)</label>
+            <label className="mt-2 text-xs font-medium text-gray-700 dark:text-gray-300">Notes (optional)</label>
             <textarea
+              className="input-field resize-y"
               value={form.notes ?? ''}
               onChange={e => setForm({ ...form, notes: e.target.value })}
               rows={3}
             />
 
-            {formError && <p className="alloc-form-error">{formError}</p>}
+            {formError && <p className="my-1 text-xs text-red-600">{formError}</p>}
 
-            <div className="alloc-modal-actions">
-              <button className="alloc-btn-primary" onClick={handleSave} disabled={saving}>
-                {saving ? 'Saving…' : editing ? 'Save Changes' : 'Create'}
+            <div className="mt-4 flex gap-3">
+              <button className="btn-primary" onClick={handleSave} disabled={saving}>
+                {saving ? 'Saving...' : (
+                  <>
+                    {editing ? <Save className="h-4 w-4" /> : <Check className="h-4 w-4" />}
+                    {editing ? 'Save Changes' : 'Create'}
+                  </>
+                )}
               </button>
-              <button className="alloc-btn-cancel" onClick={() => setModalOpen(false)}>Cancel</button>
+              <button className="btn-secondary" onClick={() => setModalOpen(false)}>Cancel</button>
             </div>
           </div>
         </div>

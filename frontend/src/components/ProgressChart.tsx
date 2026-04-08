@@ -47,7 +47,7 @@ const baseLineOpts: ChartOptions<'line'> = {
   },
   scales: {
     x: { grid: { display: false }, ticks: { font: { size: 11 } } },
-    y: { grid: { color: '#f0f0f0' }, ticks: { font: { size: 11 } } },
+    y: { grid: { display: false }, ticks: { font: { size: 11 } } },
   },
 };
 
@@ -60,7 +60,7 @@ const baseBarOpts: ChartOptions<'bar'> = {
   },
   scales: {
     x: { grid: { display: false }, ticks: { font: { size: 11 } } },
-    y: { grid: { color: '#f0f0f0' }, ticks: { font: { size: 11 }, stepSize: 1 }, beginAtZero: true },
+    y: { grid: { display: false }, ticks: { font: { size: 11 }, stepSize: 1 }, beginAtZero: true },
   },
 };
 
@@ -72,7 +72,7 @@ interface SafetyChartProps {
 }
 
 export function SafetyChart({ plan, incidents }: SafetyChartProps) {
-  if (incidents.length === 0) return <p className="chart-empty">No incident data available to chart.</p>;
+  if (incidents.length === 0) return <p className="py-6 text-center text-sm text-gray-400">No incident data available to chart.</p>;
 
   const sorted = [...incidents].sort((a, b) => a.incidentDate.localeCompare(b.incidentDate));
   const buckets: Record<string, { total: number; high: number }> = {};
@@ -120,9 +120,9 @@ export function SafetyChart({ plan, incidents }: SafetyChartProps) {
   }
 
   return (
-    <div className="progress-chart-wrap">
-      <h4 className="progress-chart-title">Monthly Incident Trend</h4>
-      <div className="progress-chart-canvas">
+    <div className="mt-4">
+      <h4 className="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Monthly Incident Trend</h4>
+      <div className="h-64">
         <Bar data={{ labels, datasets }} options={baseBarOpts} />
       </div>
     </div>
@@ -137,7 +137,7 @@ interface HealthChartProps {
 }
 
 export function HealthChart({ plan, records }: HealthChartProps) {
-  if (records.length === 0) return <p className="chart-empty">No health data available to chart.</p>;
+  if (records.length === 0) return <p className="py-6 text-center text-sm text-gray-400">No health data available to chart.</p>;
 
   const sorted = [...records].sort((a, b) => a.recordDate.localeCompare(b.recordDate));
   const labels = sorted.map((r) => formatDate(r.recordDate));
@@ -178,14 +178,14 @@ export function HealthChart({ plan, records }: HealthChartProps) {
     ...baseLineOpts,
     scales: {
       ...baseLineOpts.scales,
-      y: { ...baseLineOpts.scales!.y, min: 0, max: 5, ticks: { font: { size: 11 }, stepSize: 1 } },
+      y: { ...baseLineOpts.scales!.y, min: 0, max: 5, grid: { display: false }, ticks: { font: { size: 11 }, stepSize: 1 } },
     },
   };
 
   return (
-    <div className="progress-chart-wrap">
-      <h4 className="progress-chart-title">Health Scores Over Time</h4>
-      <div className="progress-chart-canvas">
+    <div className="mt-4">
+      <h4 className="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Health Scores Over Time</h4>
+      <div className="h-64">
         <Line data={{ labels, datasets }} options={opts} />
       </div>
     </div>
@@ -200,9 +200,8 @@ interface EducationChartProps {
 }
 
 export function EducationChart({ plan, records }: EducationChartProps) {
-  if (records.length === 0) return <p className="chart-empty">No education data available to chart.</p>;
+  if (records.length === 0) return <p className="py-6 text-center text-sm text-gray-400">No education data available to chart.</p>;
 
-  // Average progress and attendance across schools per date
   const byDate: Record<string, { progress: number[]; attendance: number[] }> = {};
   records.forEach((r) => {
     if (!byDate[r.recordDate]) byDate[r.recordDate] = { progress: [], attendance: [] };
@@ -255,14 +254,14 @@ export function EducationChart({ plan, records }: EducationChartProps) {
     ...baseLineOpts,
     scales: {
       ...baseLineOpts.scales,
-      y: { ...baseLineOpts.scales!.y, min: 0, max: 100, ticks: { font: { size: 11 }, callback: (v) => `${v}%` } },
+      y: { ...baseLineOpts.scales!.y, min: 0, max: 100, grid: { display: false }, ticks: { font: { size: 11 }, callback: (v) => `${v}%` } },
     },
   };
 
   return (
-    <div className="progress-chart-wrap">
-      <h4 className="progress-chart-title">Education Progress Over Time</h4>
-      <div className="progress-chart-canvas">
+    <div className="mt-4">
+      <h4 className="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Education Progress Over Time</h4>
+      <div className="h-64">
         <Line data={{ labels, datasets }} options={opts} />
       </div>
     </div>

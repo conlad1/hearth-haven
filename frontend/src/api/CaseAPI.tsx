@@ -410,7 +410,10 @@ export const createIncidentReport = async (data: Partial<IncidentReport>): Promi
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(cleanPayload(data as Record<string, unknown>, 'incidentId')),
   });
-  if (!response.ok) throw new Error(`Failed to create incident report: ${response.status}`);
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`Failed to create incident report: ${response.status} — ${body}`);
+  }
   return await response.json();
 };
 export const updateIncidentReport = async (id: number, data: IncidentReport): Promise<IncidentReport> => {
