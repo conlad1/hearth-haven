@@ -1210,7 +1210,7 @@ export default function ResidentDetailPage() {
 
   return (
     <>
-      <div className="mx-auto max-w-6xl px-4 py-6">
+      <div className="mx-auto max-w-6xl px-4 py-4 sm:py-6">
         <button className="btn-ghost mb-4" onClick={() => navigate('/cases')}>
           <ArrowLeft size={16} />
           Back to Cases
@@ -1218,30 +1218,30 @@ export default function ResidentDetailPage() {
 
         <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-md">
           {/* Top bar */}
-          <div className="flex items-center gap-4 border-b border-gray-100 dark:border-gray-700 p-6">
+          <div className="flex flex-wrap items-start gap-4 border-b border-gray-100 p-4 sm:items-center sm:p-6 dark:border-gray-700">
             <img src="/portrait_resident.png" alt="Resident" className="h-14 w-14 rounded-full border border-gray-200 dark:border-gray-700 object-cover" />
             <div className="flex-1 min-w-0">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white truncate">{resident.caseControlNo}</h2>
               <p className="text-sm text-gray-500 dark:text-gray-400">{resident.internalCode} &middot; {resident.caseStatus}</p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
               {activeTab === 'resident' && (
                 isEditing ? (
                   <>
-                    <button className="btn-primary" onClick={handleSave} disabled={saving} title="Save">
+                    <button className="btn-primary w-full sm:w-auto" onClick={handleSave} disabled={saving} title="Save">
                       {saving ? 'Saving...' : <><Save size={16} /> Save</>}
                     </button>
-                    <button className="btn-secondary"
+                    <button className="btn-secondary w-full sm:w-auto"
                       onClick={() => { setEditData({ ...resident }); setIsEditing(false); }} disabled={saving} title="Cancel">
                       <X size={16} /> Cancel
                     </button>
                   </>
                 ) : (
                   <>
-                    <button className="btn-secondary" onClick={() => setIsEditing(true)} title="Edit">
+                    <button className="btn-secondary w-full sm:w-auto" onClick={() => setIsEditing(true)} title="Edit">
                       <Pencil size={16} /> Edit
                     </button>
-                    <button className="btn-danger" onClick={handleDelete} disabled={saving} title="Delete">
+                    <button className="btn-danger w-full sm:w-auto" onClick={handleDelete} disabled={saving} title="Delete">
                       <Trash2 size={16} /> Delete
                     </button>
                   </>
@@ -1251,10 +1251,11 @@ export default function ResidentDetailPage() {
           </div>
 
           {/* Tabs */}
-          <div className="flex border-b border-gray-100 dark:border-gray-700">
+          <div className="overflow-x-auto border-b border-gray-100 dark:border-gray-700">
+            <div className="flex min-w-max">
             {tabList.map((tab) => (
               <button key={tab.key}
-                className={`relative px-5 py-3 text-sm font-medium transition ${
+                className={`relative whitespace-nowrap px-4 py-3 text-sm font-medium transition sm:px-5 ${
                   activeTab === tab.key
                     ? 'text-orange-500 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-orange-500'
                     : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
@@ -1263,10 +1264,11 @@ export default function ResidentDetailPage() {
                 {tab.label}
               </button>
             ))}
+            </div>
           </div>
 
           {/* Tab content */}
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             {renderTabContent()}
           </div>
         </div>

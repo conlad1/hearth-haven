@@ -583,17 +583,17 @@ export default function CasePage() {
 
   return (
     <>
-      <div className="flex min-h-screen bg-white dark:bg-gray-900">
+      <div className="flex min-h-screen flex-col bg-white dark:bg-gray-900 lg:flex-row">
         {/* Sidebar */}
-        <aside className="w-60 shrink-0 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+        <aside className="w-full shrink-0 border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900 lg:w-60 lg:border-b-0 lg:border-r">
           <div className="px-5 py-6">
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
               Locations
             </h2>
-            <ul className="space-y-1">
+            <ul className="flex gap-2 overflow-x-auto pb-1 lg:block lg:space-y-1 lg:pb-0">
               <li>
                 <button
-                  className={`w-full rounded-lg px-3 py-2 text-left text-sm font-medium transition ${
+                  className={`w-full min-w-max whitespace-nowrap rounded-lg px-3 py-2 text-left text-sm font-medium transition lg:min-w-0 ${
                     filters.safehouseId === undefined
                       ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-700'
                       : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
@@ -606,7 +606,7 @@ export default function CasePage() {
               {safehouses.map((sh) => (
                 <li key={sh.safehouseId}>
                   <button
-                    className={`w-full rounded-lg px-3 py-2 text-left text-sm font-medium transition ${
+                    className={`w-full min-w-max whitespace-nowrap rounded-lg px-3 py-2 text-left text-sm font-medium transition lg:min-w-0 ${
                       filters.safehouseId === sh.safehouseId
                         ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-700'
                         : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
@@ -622,21 +622,22 @@ export default function CasePage() {
         </aside>
 
         {/* Main content */}
-        <div className="flex-1 p-8">
+        <div className="flex-1 p-4 sm:p-6 lg:p-8">
           {/* Header */}
-          <div className="mb-6 flex items-center justify-between">
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Resident Cases</h1>
-            <div className="flex items-center gap-4">
-              <button className="btn-primary" onClick={openOnboard}>
+            <div className="flex w-full flex-wrap items-center gap-4 lg:w-auto lg:justify-end">
+              <button className="btn-primary w-full sm:w-auto" onClick={openOnboard}>
                 <Plus className="h-4 w-4" />
                 Onboard New Resident
               </button>
-              <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+              <label className="flex w-full items-center gap-2 text-sm text-gray-600 dark:text-gray-400 sm:w-auto">
                 Residents per page:
                 <select
                   value={pageSize}
                   onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-                  className="select-field w-auto"
+                  className="select-field w-full sm:w-auto"
+                  aria-label="Residents per page"
                 >
                   {PAGE_SIZE_OPTIONS.map((size) => (
                     <option key={size} value={size}>
@@ -659,6 +660,7 @@ export default function CasePage() {
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 className="input-field pl-10"
+                aria-label="Search resident cases"
               />
             </div>
 
@@ -672,6 +674,7 @@ export default function CasePage() {
                     updateFilter('caseStatus', e.target.value || undefined)
                   }
                   className="select-field w-auto"
+                  aria-label="Filter by case status"
                 >
                   <option value="">All Statuses</option>
                   {filterOptions.caseStatuses.map((s) => (
@@ -687,6 +690,7 @@ export default function CasePage() {
                     updateFilter('caseCategory', e.target.value || undefined)
                   }
                   className="select-field w-auto"
+                  aria-label="Filter by case category"
                 >
                   <option value="">All Categories</option>
                   {filterOptions.caseCategories.map((c) => (
@@ -705,6 +709,7 @@ export default function CasePage() {
                     )
                   }
                   className="select-field w-auto"
+                  aria-label="Filter by risk level"
                 >
                   <option value="">All Risk Levels</option>
                   {filterOptions.riskLevels.map((r) => (
@@ -720,6 +725,7 @@ export default function CasePage() {
                     updateFilter('referralSource', e.target.value || undefined)
                   }
                   className="select-field w-auto"
+                  aria-label="Filter by referral source"
                 >
                   <option value="">All Referral Sources</option>
                   {filterOptions.referralSources.map((r) => (
@@ -738,6 +744,7 @@ export default function CasePage() {
                     )
                   }
                   className="select-field w-auto"
+                  aria-label="Filter by reintegration type"
                 >
                   <option value="">All Assessments</option>
                   {filterOptions.initialCaseAssessments.map((a) => (
@@ -756,6 +763,7 @@ export default function CasePage() {
                     )
                   }
                   className="select-field w-auto"
+                  aria-label="Filter by social worker"
                 >
                   <option value="">All Reintegration Types</option>
                   {filterOptions.reintegrationTypes.map((r) => (
@@ -774,6 +782,7 @@ export default function CasePage() {
                     )
                   }
                   className="select-field w-auto"
+                  aria-label="Sort resident cases"
                 >
                   <option value="">All Social Workers</option>
                   {filterOptions.socialWorkers.map((w) => (
@@ -868,7 +877,7 @@ export default function CasePage() {
       {/* Onboarding Modal */}
       {isOnboarding &&
         createPortal(
-          <div className="modal-overlay" onClick={closeOnboard}>
+          <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="new-resident-title" onClick={closeOnboard}>
             <div
               className="modal-body max-w-4xl"
               onClick={(e) => e.stopPropagation()}
@@ -881,7 +890,7 @@ export default function CasePage() {
                   className="h-14 w-14 rounded-full border-2 border-gray-100 dark:border-gray-700 object-cover"
                 />
                 <div className="flex-1">
-                  <h2 className="text-lg font-bold text-gray-900 dark:text-white">New Resident</h2>
+                  <h2 id="new-resident-title" className="text-lg font-bold text-gray-900 dark:text-white">New Resident</h2>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Onboard a new resident</p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -900,7 +909,7 @@ export default function CasePage() {
                     Cancel
                   </button>
                 </div>
-                <button className="btn-icon" onClick={closeOnboard}>
+                <button className="btn-icon" onClick={closeOnboard} aria-label="Close dialog">
                   <X className="h-5 w-5" />
                 </button>
               </div>

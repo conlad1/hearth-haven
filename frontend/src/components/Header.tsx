@@ -22,6 +22,8 @@ function ThemeToggle() {
         <button
           key={value}
           onClick={() => setPreference(value)}
+          aria-label={`Use ${label.toLowerCase()} theme`}
+          aria-pressed={preference === value}
           title={label}
           className={`inline-flex items-center justify-center rounded-md p-1.5 transition cursor-pointer ${
             preference === value
@@ -88,20 +90,14 @@ function Header({ isAuthenticated }: HeaderProps) {
 
           {/* Desktop actions */}
           <div className="hidden items-center gap-2 md:flex">
-            <Link to="/donate">
-              <button className="btn-primary">
-                <Heart className="h-4 w-4" />
-                Donate
-              </button>
+            <Link to="/donate" className="btn-primary no-underline">
+              <Heart className="h-4 w-4" />
+              Donate
             </Link>
             {!isAuthenticated ? (
               <>
-                <Link to="/login">
-                  <button className="btn-ghost">Sign in</button>
-                </Link>
-                <Link to="/register">
-                  <button className="btn-secondary">Register</button>
-                </Link>
+                <Link to="/login" className="btn-ghost no-underline">Sign in</Link>
+                <Link to="/register" className="btn-secondary no-underline">Register</Link>
               </>
             ) : (
               <button className="btn-ghost" onClick={handleLogout}>Logout</button>
@@ -147,20 +143,14 @@ function Header({ isAuthenticated }: HeaderProps) {
               <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Theme</span>
               <ThemeToggle />
             </div>
-            <Link to="/donate" onClick={() => setMenuOpen(false)}>
-              <button className="btn-primary w-full">
-                <Heart className="h-4 w-4" />
-                Donate
-              </button>
+            <Link to="/donate" onClick={() => setMenuOpen(false)} className="btn-primary w-full no-underline">
+              <Heart className="h-4 w-4" />
+              Donate
             </Link>
             {!isAuthenticated ? (
               <>
-                <Link to="/login" onClick={() => setMenuOpen(false)}>
-                  <button className="btn-secondary w-full">Sign in</button>
-                </Link>
-                <Link to="/register" onClick={() => setMenuOpen(false)}>
-                  <button className="btn-secondary w-full">Register</button>
-                </Link>
+                <Link to="/login" onClick={() => setMenuOpen(false)} className="btn-secondary w-full no-underline">Sign in</Link>
+                <Link to="/register" onClick={() => setMenuOpen(false)} className="btn-secondary w-full no-underline">Register</Link>
               </>
             ) : (
               <button className="btn-secondary w-full" onClick={handleLogout}>Logout</button>
