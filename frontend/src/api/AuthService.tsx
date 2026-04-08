@@ -1,4 +1,5 @@
-const API_URL = (import.meta.env.VITE_API_BASE_URL || "https://hearth-haven-backend-eqbyhhc4h8htajhv.westus3-01.azurewebsites.net") + "/api/Auth";
+import { API_BASE_URL } from './config';
+const API_URL = API_BASE_URL + "/api/Auth";
 const AUTH_STORAGE_KEY = "hearthHavenAuthenticated";
 
 export const AuthService = {

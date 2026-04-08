@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import './ImpactDashboard.css';
 
-const API = 'https://localhost:7052';
+import { API_BASE_URL as API } from '../api/config';
 
 interface Stats {
   totalDonations:   number;
