@@ -14,10 +14,6 @@ import DonorsPage from "./pages/DonorPage";
 import AllocationPage from "./pages/AllocationPage";
 import ImpactDashboard from "./pages/ImpactDashboard";
 import { AuthService } from "./api/AuthService";
-import OutreachPage from "./pages/OutreachPage";
-import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
-import TermsPage from "./pages/TermsPage";
-import TeapotPage from "./pages/TeapotPage";
 import CookieConsentBanner from "./components/CookieConsentBanner";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {

@@ -1,0 +1,4 @@
+{
+    "appService.defaultWebAppToDeploy": "/subscriptions/39eca686-23bc-47c6-9767-1d68a9bdc465/resourceGroups/appsvc_windows_malaysiawest/providers/Microsoft.Web/sites/hearth-haven-backend",
+    "appService.deploySubpath": "backend/HearthHaven.API/publish"
+}

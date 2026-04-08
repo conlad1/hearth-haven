@@ -54,7 +54,9 @@ function Header({ isAuthenticated }: HeaderProps) {
             )}
 
             {isAuthenticated && (
-              <button className="btn-light" onClick={handleLogout}>Logout</button>
+              <button className="btn-light" onClick={handleLogout}>
+                Logout
+              </button>
             )}
           </div>
 
@@ -72,19 +74,29 @@ function Header({ isAuthenticated }: HeaderProps) {
       </nav>
 
       {/* MOBILE MENU */}
-      <div className={`mobile-menu ${menuOpen ? "open" : ""}`}>
-        <Link to="/" onClick={() => setMenuOpen(false)}>Home</Link>
-        <Link to="/impact" onClick={() => setMenuOpen(false)}>Impact</Link>
-        <Link to="/cases" onClick={() => setMenuOpen(false)}>Case Management</Link>
-        <Link to="/donors" onClick={() => setMenuOpen(false)}>Donors</Link>
-        <Link to="/outreach" onClick={() => setMenuOpen(false)}>Outreach</Link>
+      <div className={`mobile-menu ${menuOpen ? 'open' : ''}`}>
+        <Link to="/" onClick={() => setMenuOpen(false)}>
+          Home
+        </Link>
+        <Link to="/impact" onClick={() => setMenuOpen(false)}>
+          Impact
+        </Link>
+        <Link to="/cases" onClick={() => setMenuOpen(false)}>
+          Case Management
+        </Link>
+        <Link to="/donors" onClick={() => setMenuOpen(false)}>
+          Donors
+        </Link>
+        <Link to="/outreach" onClick={() => setMenuOpen(false)}>
+          Outreach
+        </Link>
 
         <hr className="mobile-menu-divider" />
 
         <div className="mobile-menu-actions">
-            <Link to="/donate" onClick={() => setMenuOpen(false)}>
-              <button className="btn-donate">Donate</button>
-            </Link>
+          <Link to="/donate" onClick={() => setMenuOpen(false)}>
+            <button className="btn-donate">Donate</button>
+          </Link>
 
           {!isAuthenticated && (
             <>
@@ -99,7 +111,9 @@ function Header({ isAuthenticated }: HeaderProps) {
           )}
 
           {isAuthenticated && (
-            <button className="btn-light" onClick={handleLogout}>Logout</button>
+            <button className="btn-light" onClick={handleLogout}>
+              Logout
+            </button>
           )}
         </div>
       </div>
