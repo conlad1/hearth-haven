@@ -1,6 +1,0 @@
-{
-  "navigationFallback": {
-    "rewrite": "/index.html",
-    "exclude": ["/assets/*", "/Logo.svg", "/portrait_resident.png", "/sitemap.xml", "/robots.txt"]
-  }
-}

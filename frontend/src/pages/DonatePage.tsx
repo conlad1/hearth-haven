@@ -66,14 +66,11 @@ function DonatePage() {
     };
 
     try {
-      const res = await fetch(
-        'https://localhost:7052/Donation/CreateDonation',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        }
-      );
+      const res = await fetch('https://localhost:7052/Donation/CreateDonation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
 
       if (!res.ok) {
         const err = await res.text();
@@ -91,6 +88,7 @@ function DonatePage() {
 
   return (
     <div className="donate-page">
+
       {/* HERO */}
       <div className="donate-hero">
         <div className="donate-hero-inner">
@@ -120,6 +118,7 @@ function DonatePage() {
       {showLoginTeaser && (
         <div className="donate-login-teaser">
           <div className="donate-login-teaser-inner">
+
             <div className="donate-teaser-left">
               <h2>More ways to give when you log in</h2>
               <p>Track your impact and unlock more features.</p>
@@ -150,6 +149,7 @@ function DonatePage() {
                 </button>
               </div>
             </div>
+
           </div>
         </div>
       )}
@@ -157,6 +157,7 @@ function DonatePage() {
       {/* FORM */}
       {!showLoginTeaser && (
         <div className="donate-form-page">
+
           {/* LEFT */}
           <div className="donate-form-left">
             <h2>Your Information</h2>
@@ -166,40 +167,24 @@ function DonatePage() {
                 <div className="donate-form-row two-col">
                   <div>
                     <label className="donate-label">First Name</label>
-                    <input
-                      name="firstName"
-                      value={form.firstName}
-                      onChange={handleInput}
-                    />
-                    {errors.firstName && (
-                      <p className="donate-field-error">{errors.firstName}</p>
-                    )}
+                    <input name="firstName" value={form.firstName} onChange={handleInput} />
+                    {errors.firstName && <p className="donate-field-error">{errors.firstName}</p>}
                   </div>
 
                   <div>
                     <label className="donate-label">Last Name</label>
-                    <input
-                      name="lastName"
-                      value={form.lastName}
-                      onChange={handleInput}
-                    />
-                    {errors.lastName && (
-                      <p className="donate-field-error">{errors.lastName}</p>
-                    )}
+                    <input name="lastName" value={form.lastName} onChange={handleInput} />
+                    {errors.lastName && <p className="donate-field-error">{errors.lastName}</p>}
                   </div>
                 </div>
 
                 <label className="donate-label">Email</label>
                 <input name="email" value={form.email} onChange={handleInput} />
-                {errors.email && (
-                  <p className="donate-field-error">{errors.email}</p>
-                )}
+                {errors.email && <p className="donate-field-error">{errors.email}</p>}
               </>
             )}
 
-            <label className="donate-label" style={{ marginTop: 20 }}>
-              Notes
-            </label>
+            <label className="donate-label" style={{ marginTop: 20 }}>Notes</label>
             <textarea
               className="donate-textarea"
               value={notes}
@@ -209,6 +194,7 @@ function DonatePage() {
 
           {/* RIGHT */}
           <div className="donate-form-right">
+
             <div className="donate-summary-box">
               <h3>Select Amount</h3>
 
@@ -240,17 +226,13 @@ function DonatePage() {
                 />
               </div>
 
-              {errors.amount && (
-                <p className="donate-field-error">{errors.amount}</p>
-              )}
+              {errors.amount && <p className="donate-field-error">{errors.amount}</p>}
             </div>
 
             <div className="donate-order-summary">
               <div className="donate-summary-row">
                 <span>Total</span>
-                <span className="donate-summary-amount">
-                  ${finalAmount || 0}
-                </span>
+                <span className="donate-summary-amount">${finalAmount || 0}</span>
               </div>
             </div>
 

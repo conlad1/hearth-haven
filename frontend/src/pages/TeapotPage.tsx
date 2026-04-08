@@ -2,9 +2,7 @@ import { useEffect, useState } from 'react';
 
 function TeapotPage() {
   const [status, setStatus] = useState<number | null>(null);
-  const [message, setMessage] = useState(
-    'Brewing response from the Hearth Haven teapot...'
-  );
+  const [message, setMessage] = useState('Brewing response from the Hearth Haven teapot...');
 
   useEffect(() => {
     const checkTeapot = async () => {
@@ -15,9 +13,7 @@ function TeapotPage() {
         const payload = await response.json();
         setMessage(payload?.message || "I'm a teapot.");
       } catch {
-        setMessage(
-          'The teapot endpoint is unavailable right now. Please check the backend server.'
-        );
+        setMessage('The teapot endpoint is unavailable right now. Please check the backend server.');
       }
     };
 
@@ -34,8 +30,7 @@ function TeapotPage() {
 
         <h1>Hearth Haven Teapot Endpoint</h1>
         <p className="muted teapot-lead">
-          This route honors HTTP 418: the server refuses to brew coffee because
-          it is, permanently, a teapot.
+          This route honors HTTP 418: the server refuses to brew coffee because it is, permanently, a teapot.
         </p>
         <p className="muted">Status check: {status ?? 'checking...'}</p>
       </section>
@@ -45,21 +40,15 @@ function TeapotPage() {
 
         <div className="teapot-song">
           <p>
-            I'm a little teapot short and stout.
-            <br />
-            Here is my handle, here is my spout.
-            <br />
-            When the water's boiling, hear me shout,
-            <br />
+            I'm a little teapot short and stout.<br />
+            Here is my handle, here is my spout.<br />
+            When the water's boiling, hear me shout,<br />
             "Tip me over, pour me out!"
           </p>
           <p>
-            In Hearth Haven's stack this route has clout.
-            <br />
-            It keeps our HTTP easter eggs throughout.
-            <br />
-            If coffee is requested, we politely flout,
-            <br />
+            In Hearth Haven's stack this route has clout.<br />
+            It keeps our HTTP easter eggs throughout.<br />
+            If coffee is requested, we politely flout,<br />
             "Tip me over, pour some tea out!"
           </p>
         </div>
@@ -79,9 +68,7 @@ function TeapotPage() {
       </section>
 
       <footer className="teapot-footer">
-        <a className="btn-primary" href="/">
-          Return to home
-        </a>
+        <a className="btn-primary" href="/">Return to home</a>
       </footer>
     </main>
   );

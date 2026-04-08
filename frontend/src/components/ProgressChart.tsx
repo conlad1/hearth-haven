@@ -17,17 +17,7 @@ import { IncidentReport } from '../types/IncidentReport';
 import { HealthWellbeingRecord } from '../types/HealthWellbeingRecord';
 import { EducationRecord } from '../types/EducationRecord';
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler);
 
 // ── Helpers ──
 
@@ -38,39 +28,13 @@ function monthKey(dateStr: string) {
 
 function formatMonth(key: string) {
   const [y, m] = key.split('-');
-  const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   return `${months[parseInt(m, 10) - 1]} ${y}`;
 }
 
 function formatDate(dateStr: string) {
   const d = new Date(dateStr);
-  const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   return `${months[d.getMonth()]} ${d.getDate()}`;
 }
 
@@ -78,10 +42,7 @@ const baseLineOpts: ChartOptions<'line'> = {
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
-    legend: {
-      position: 'bottom',
-      labels: { usePointStyle: true, padding: 16, font: { size: 12 } },
-    },
+    legend: { position: 'bottom', labels: { usePointStyle: true, padding: 16, font: { size: 12 } } },
     tooltip: { mode: 'index', intersect: false },
   },
   scales: {
@@ -94,19 +55,12 @@ const baseBarOpts: ChartOptions<'bar'> = {
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
-    legend: {
-      position: 'bottom',
-      labels: { usePointStyle: true, padding: 16, font: { size: 12 } },
-    },
+    legend: { position: 'bottom', labels: { usePointStyle: true, padding: 16, font: { size: 12 } } },
     tooltip: { mode: 'index', intersect: false },
   },
   scales: {
     x: { grid: { display: false }, ticks: { font: { size: 11 } } },
-    y: {
-      grid: { color: '#f0f0f0' },
-      ticks: { font: { size: 11 }, stepSize: 1 },
-      beginAtZero: true,
-    },
+    y: { grid: { color: '#f0f0f0' }, ticks: { font: { size: 11 }, stepSize: 1 }, beginAtZero: true },
   },
 };
 
@@ -118,12 +72,9 @@ interface SafetyChartProps {
 }
 
 export function SafetyChart({ plan, incidents }: SafetyChartProps) {
-  if (incidents.length === 0)
-    return <p className="chart-empty">No incident data available to chart.</p>;
+  if (incidents.length === 0) return <p className="chart-empty">No incident data available to chart.</p>;
 
-  const sorted = [...incidents].sort((a, b) =>
-    a.incidentDate.localeCompare(b.incidentDate)
-  );
+  const sorted = [...incidents].sort((a, b) => a.incidentDate.localeCompare(b.incidentDate));
   const buckets: Record<string, { total: number; high: number }> = {};
   sorted.forEach((r) => {
     const k = monthKey(r.incidentDate);
@@ -186,12 +137,9 @@ interface HealthChartProps {
 }
 
 export function HealthChart({ plan, records }: HealthChartProps) {
-  if (records.length === 0)
-    return <p className="chart-empty">No health data available to chart.</p>;
+  if (records.length === 0) return <p className="chart-empty">No health data available to chart.</p>;
 
-  const sorted = [...records].sort((a, b) =>
-    a.recordDate.localeCompare(b.recordDate)
-  );
+  const sorted = [...records].sort((a, b) => a.recordDate.localeCompare(b.recordDate));
   const labels = sorted.map((r) => formatDate(r.recordDate));
 
   const mkLine = (label: string, data: (number | null)[], color: string) => ({
@@ -206,26 +154,10 @@ export function HealthChart({ plan, records }: HealthChartProps) {
   });
 
   const datasets = [
-    mkLine(
-      'General Health',
-      sorted.map((r) => r.generalHealthScore),
-      'rgba(59, 130, 246, 1)'
-    ),
-    mkLine(
-      'Nutrition',
-      sorted.map((r) => r.nutritionScore),
-      'rgba(16, 185, 129, 1)'
-    ),
-    mkLine(
-      'Sleep Quality',
-      sorted.map((r) => r.sleepQualityScore),
-      'rgba(139, 92, 246, 1)'
-    ),
-    mkLine(
-      'Energy Level',
-      sorted.map((r) => r.energyLevelScore),
-      'rgba(245, 158, 11, 1)'
-    ),
+    mkLine('General Health', sorted.map((r) => r.generalHealthScore), 'rgba(59, 130, 246, 1)'),
+    mkLine('Nutrition', sorted.map((r) => r.nutritionScore), 'rgba(16, 185, 129, 1)'),
+    mkLine('Sleep Quality', sorted.map((r) => r.sleepQualityScore), 'rgba(139, 92, 246, 1)'),
+    mkLine('Energy Level', sorted.map((r) => r.energyLevelScore), 'rgba(245, 158, 11, 1)'),
   ];
 
   if (plan?.targetValue != null) {
@@ -246,12 +178,7 @@ export function HealthChart({ plan, records }: HealthChartProps) {
     ...baseLineOpts,
     scales: {
       ...baseLineOpts.scales,
-      y: {
-        ...baseLineOpts.scales!.y,
-        min: 0,
-        max: 5,
-        ticks: { font: { size: 11 }, stepSize: 1 },
-      },
+      y: { ...baseLineOpts.scales!.y, min: 0, max: 5, ticks: { font: { size: 11 }, stepSize: 1 } },
     },
   };
 
@@ -273,21 +200,17 @@ interface EducationChartProps {
 }
 
 export function EducationChart({ plan, records }: EducationChartProps) {
-  if (records.length === 0)
-    return <p className="chart-empty">No education data available to chart.</p>;
+  if (records.length === 0) return <p className="chart-empty">No education data available to chart.</p>;
 
   // Average progress and attendance across schools per date
-  const byDate: Record<string, { progress: number[]; attendance: number[] }> =
-    {};
+  const byDate: Record<string, { progress: number[]; attendance: number[] }> = {};
   records.forEach((r) => {
-    if (!byDate[r.recordDate])
-      byDate[r.recordDate] = { progress: [], attendance: [] };
+    if (!byDate[r.recordDate]) byDate[r.recordDate] = { progress: [], attendance: [] };
     byDate[r.recordDate].progress.push(r.progressPercent);
     byDate[r.recordDate].attendance.push(r.attendanceRate * 100);
   });
   const dates = Object.keys(byDate).sort();
-  const avg = (arr: number[]) =>
-    +(arr.reduce((s, v) => s + v, 0) / arr.length).toFixed(1);
+  const avg = (arr: number[]) => +(arr.reduce((s, v) => s + v, 0) / arr.length).toFixed(1);
   const labels = dates.map(formatDate);
 
   const datasets = [
@@ -332,12 +255,7 @@ export function EducationChart({ plan, records }: EducationChartProps) {
     ...baseLineOpts,
     scales: {
       ...baseLineOpts.scales,
-      y: {
-        ...baseLineOpts.scales!.y,
-        min: 0,
-        max: 100,
-        ticks: { font: { size: 11 }, callback: (v) => `${v}%` },
-      },
+      y: { ...baseLineOpts.scales!.y, min: 0, max: 100, ticks: { font: { size: 11 }, callback: (v) => `${v}%` } },
     },
   };
 

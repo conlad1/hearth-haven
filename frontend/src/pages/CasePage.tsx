@@ -156,20 +156,14 @@ const intFields: (keyof Resident)[] = ['safehouseId'];
 
 const textareaFields: (keyof Resident)[] = ['notesRestricted'];
 
-const selectFieldMap: Record<
-  string,
-  { optionsKey: keyof FilterOptions; nullable: boolean }
-> = {
+const selectFieldMap: Record<string, { optionsKey: keyof FilterOptions; nullable: boolean }> = {
   caseStatus: { optionsKey: 'caseStatuses', nullable: false },
   caseCategory: { optionsKey: 'caseCategories', nullable: false },
   sex: { optionsKey: 'sexes', nullable: false },
   currentRiskLevel: { optionsKey: 'riskLevels', nullable: false },
   initialRiskLevel: { optionsKey: 'riskLevels', nullable: false },
   referralSource: { optionsKey: 'referralSources', nullable: false },
-  initialCaseAssessment: {
-    optionsKey: 'initialCaseAssessments',
-    nullable: true,
-  },
+  initialCaseAssessment: { optionsKey: 'initialCaseAssessments', nullable: true },
   reintegrationType: { optionsKey: 'reintegrationTypes', nullable: true },
   reintegrationStatus: { optionsKey: 'reintegrationStatuses', nullable: true },
   assignedSocialWorker: { optionsKey: 'socialWorkers', nullable: true },
@@ -264,21 +258,16 @@ const fieldTooltips: Partial<Record<keyof Resident, string>> = {
   subCatCicl: 'Children in Conflict with the Law',
   isPwd: 'Person with Disability',
   pwdType: 'Specific type or classification of disability',
-  familyIs4Ps:
-    'Pantawid Pamilyang Pilipino Program — government conditional cash transfer program',
+  familyIs4Ps: 'Pantawid Pamilyang Pilipino Program — government conditional cash transfer program',
   familyParentPwd: 'Parent is a Person with Disability',
-  familyInformalSettler:
-    'Family resides in an informal or unauthorized settlement',
+  familyInformalSettler: 'Family resides in an informal or unauthorized settlement',
   dateColbRegistered: 'Date the Certificate of Live Birth was registered',
   dateColbObtained: 'Date the Certificate of Live Birth was obtained',
-  initialCaseAssessment:
-    'Assessment classification assigned when the case was first opened',
-  reintegrationType:
-    'Type of reintegration plan (e.g., family, community, independent living)',
+  initialCaseAssessment: 'Assessment classification assigned when the case was first opened',
+  reintegrationType: 'Type of reintegration plan (e.g., family, community, independent living)',
   reintegrationStatus: 'Current status of the reintegration process',
   birthStatus: 'Birth classification (e.g., legitimate, illegitimate)',
-  notesRestricted:
-    'Confidential notes — access may be restricted to authorized personnel',
+  notesRestricted: 'Confidential notes — access may be restricted to authorized personnel',
   lengthOfStay: 'Duration the resident has stayed at the safehouse',
 };
 
@@ -306,9 +295,7 @@ export default function CasePage() {
 
   // onboard modal state
   const [isOnboarding, setIsOnboarding] = useState(false);
-  const [onboardData, setOnboardData] = useState<Resident>({
-    ...blankResident,
-  });
+  const [onboardData, setOnboardData] = useState<Resident>({ ...blankResident });
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchInput), 300);
@@ -401,9 +388,7 @@ export default function CasePage() {
   // onboard handlers
   const openOnboard = () => {
     if (filters.safehouseId === undefined) {
-      alert(
-        'Please select a location from the sidebar before onboarding a resident.'
-      );
+      alert('Please select a location from the sidebar before onboarding a resident.');
       return;
     }
     const today = new Date().toISOString().slice(0, 10);
@@ -454,9 +439,7 @@ export default function CasePage() {
   const handleCreate = async () => {
     const missing = requiredFields.filter((f) => !onboardData[f.key]);
     if (missing.length > 0) {
-      alert(
-        `Please fill in required fields:\n${missing.map((f) => f.label).join(', ')}`
-      );
+      alert(`Please fill in required fields:\n${missing.map((f) => f.label).join(', ')}`);
       return;
     }
     setSaving(true);
@@ -482,13 +465,9 @@ export default function CasePage() {
     // read-only / auto-generated
     if (readOnlyFields.includes(col.key)) {
       if (isCreate) {
-        return (
-          <span className="resident-modal-field-value">Auto-generated</span>
-        );
+        return <span className="resident-modal-field-value">Auto-generated</span>;
       }
-      return (
-        <span className="resident-modal-field-value">{formatCell(value)}</span>
-      );
+      return <span className="resident-modal-field-value">{formatCell(value)}</span>;
     }
 
     // booleans -> checkbox
@@ -528,9 +507,7 @@ export default function CasePage() {
           onChange={(e) => onChange(col.key, e.target.value || null)}
         >
           {selectConfig.nullable && <option value="">— None —</option>}
-          {!selectConfig.nullable && !value && (
-            <option value="">— Select —</option>
-          )}
+          {!selectConfig.nullable && !value && <option value="">— Select —</option>}
           {options.map((opt) => (
             <option key={opt} value={opt}>
               {opt}
@@ -545,11 +522,7 @@ export default function CasePage() {
       return (
         <input
           type="date"
-          value={
-            value === null || value === undefined
-              ? ''
-              : String(value).slice(0, 10)
-          }
+          value={value === null || value === undefined ? '' : String(value).slice(0, 10)}
           onChange={(e) => onChange(col.key, e.target.value || null)}
         />
       );
@@ -572,9 +545,7 @@ export default function CasePage() {
         <input
           type="number"
           value={value === null || value === undefined ? '' : String(value)}
-          onChange={(e) =>
-            onChange(col.key, e.target.value ? Number(e.target.value) : null)
-          }
+          onChange={(e) => onChange(col.key, e.target.value ? Number(e.target.value) : null)}
         />
       );
     }
@@ -881,12 +852,7 @@ export default function CasePage() {
                         <label>
                           {col.label}
                           {fieldTooltips[col.key] && (
-                            <span
-                              className="resident-modal-info-icon"
-                              data-tip={fieldTooltips[col.key]}
-                            >
-                              i
-                            </span>
+                            <span className="resident-modal-info-icon" data-tip={fieldTooltips[col.key]}>i</span>
                           )}
                         </label>
                         {renderOnboardInput(col)}
