@@ -139,6 +139,9 @@ function Header({ isAuthenticated }: HeaderProps) {
 
           {/* Desktop actions */}
           <div className="hidden items-center gap-2 md:flex">
+            {isAuthenticated && userName && (
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Hi, {userName.split(' ')[0]}</span>
+            )}
             <Link to="/donate" className="btn-primary no-underline">
               <Heart className="h-4 w-4" />
               Donate
@@ -146,13 +149,10 @@ function Header({ isAuthenticated }: HeaderProps) {
             {!isAuthenticated ? (
               <>
                 <Link to="/login" className="btn-ghost no-underline">Sign in</Link>
-                <Link to="/register" className="btn-secondary no-underline">Register</Link>
               </>
             ) : (
               <>
-                <Link to="/profile" className="btn-ghost no-underline">
-                  {userName ? `Hi, ${userName}` : 'My Giving'}
-                </Link>
+                <Link to="/profile" className="btn-secondary no-underline">My Donations</Link>
                 <button className="btn-ghost" onClick={handleLogout}>Logout</button>
               </>
             )}
@@ -204,13 +204,13 @@ function Header({ isAuthenticated }: HeaderProps) {
             {!isAuthenticated ? (
               <>
                 <Link to="/login" onClick={() => setMenuOpen(false)} className="btn-secondary w-full no-underline">Sign in</Link>
-                <Link to="/register" onClick={() => setMenuOpen(false)} className="btn-secondary w-full no-underline">Register</Link>
               </>
             ) : (
               <>
-                <Link to="/profile" onClick={() => setMenuOpen(false)} className="btn-secondary w-full no-underline">
-                  {userName ? `Hi, ${userName}` : 'My Giving'}
-                </Link>
+                {userName && (
+                  <p className="px-1 text-sm font-medium text-gray-700 dark:text-gray-300">Hi, {userName.split(' ')[0]}</p>
+                )}
+                <Link to="/profile" onClick={() => setMenuOpen(false)} className="btn-secondary w-full no-underline">My Donations</Link>
                 <button className="btn-secondary w-full" onClick={handleLogout}>Logout</button>
               </>
             )}

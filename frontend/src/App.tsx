@@ -147,6 +147,31 @@ function App() {
           <Route path="/privacy" element={<PrivacyPolicyPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/teapot" element={<TeapotPage />} />
+          <Route path="/resources" element={<ResourcesPage />} />
+          <Route
+            path="/donor-portal"
+            element={(
+              <ProtectedRoute>
+                <Navigate to="/profile" replace />
+              </ProtectedRoute>
+            )}
+          />
+          <Route
+            path="/profile"
+            element={(
+              <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
+            )}
+          />
+          <Route
+            path="/donor-analytics"
+            element={(
+              <ProtectedRoute>
+                <DonorAnalytics />
+              </ProtectedRoute>
+            )}
+          />
         </Routes>
       </main>
 
