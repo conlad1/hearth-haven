@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   ArrowLeft, Pencil, Trash2, X, Save, Plus,
   ChevronLeft, ChevronRight, Filter,
@@ -90,6 +90,9 @@ const tabList: { key: TabKey; label: string }[] = [
 export default function SafehouseDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const backTo = (location.state as { from?: string })?.from || '/safehouse-management';
+  const backLabel = backTo === '/admin' ? 'Back to Dashboard' : 'Back to Safehouse Management';
   const safehouseId = Number(id);
 
   // -- Safehouse state --
@@ -287,8 +290,8 @@ export default function SafehouseDetailPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
       {/* Back button */}
-      <button className="btn-ghost mb-4" onClick={() => navigate('/safehouse-management')}>
-        <ArrowLeft className="h-4 w-4" /> Back to Safehouse Management
+      <button className="btn-ghost mb-4" onClick={() => navigate(backTo)}>
+        <ArrowLeft className="h-4 w-4" /> {backLabel}
       </button>
 
       <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-md">

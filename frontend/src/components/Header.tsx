@@ -54,6 +54,7 @@ function Header({ isAuthenticated }: HeaderProps) {
   const navLinks = [
     { to: '/', label: 'Home' },
     { to: '/impact', label: 'Impact' },
+    { to: '/admin', label: 'Dashboard' },
     { to: '/cases', label: 'Case Management' },
     { to: '/safehouse-management', label: 'Safehouse Management' },
     { to: '/donors', label: 'Donors' },
