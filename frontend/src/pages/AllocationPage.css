@@ -11,29 +11,13 @@
   margin-bottom: 28px;
 }
 
-.alloc-header h1 {
-  margin: 0 0 6px;
-  font-size: 26px;
-}
-.alloc-header p {
-  margin: 0;
-  color: #6b7280;
-}
+.alloc-header h1 { margin: 0 0 6px; font-size: 26px; }
+.alloc-header p  { margin: 0; color: #6b7280; }
 
-.alloc-status {
-  text-align: center;
-  padding: 40px;
-  color: #6b7280;
-}
-.alloc-status.error {
-  color: #dc2626;
-}
+.alloc-status       { text-align: center; padding: 40px; color: #6b7280; }
+.alloc-status.error { color: #dc2626; }
 
-.alloc-table-wrap {
-  overflow-x: auto;
-  border-radius: 12px;
-  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.08);
-}
+.alloc-table-wrap { overflow-x: auto; border-radius: 12px; box-shadow: 0 1px 8px rgba(0,0,0,0.08); }
 
 .alloc-table {
   width: 100%;
@@ -47,7 +31,7 @@
   text-align: left;
   font-size: 12px;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: .05em;
   color: #6b7280;
   border-bottom: 1px solid #e5e7eb;
 }
@@ -59,9 +43,7 @@
   vertical-align: middle;
 }
 
-.alloc-table tr:last-child td {
-  border-bottom: none;
-}
+.alloc-table tr:last-child td { border-bottom: none; }
 
 .alloc-badge {
   background: #ede9fe;
@@ -72,21 +54,10 @@
   white-space: nowrap;
 }
 
-.alloc-notes {
-  max-width: 200px;
-  color: #6b7280;
-  font-size: 13px;
-}
-.alloc-empty {
-  text-align: center;
-  padding: 40px;
-  color: #9ca3af;
-}
+.alloc-notes    { max-width: 200px; color: #6b7280; font-size: 13px; }
+.alloc-empty    { text-align: center; padding: 40px; color: #9ca3af; }
 
-.alloc-actions {
-  display: flex;
-  gap: 8px;
-}
+.alloc-actions  { display: flex; gap: 8px; }
 
 .alloc-btn-primary {
   background: #7c3aed;
@@ -98,13 +69,8 @@
   font-size: 14px;
   font-weight: 500;
 }
-.alloc-btn-primary:hover {
-  background: #6d28d9;
-}
-.alloc-btn-primary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
+.alloc-btn-primary:hover   { background: #6d28d9; }
+.alloc-btn-primary:disabled { opacity: .6; cursor: not-allowed; }
 
 .alloc-btn-edit {
   background: #dbeafe;
@@ -115,9 +81,7 @@
   cursor: pointer;
   font-size: 13px;
 }
-.alloc-btn-edit:hover {
-  background: #bfdbfe;
-}
+.alloc-btn-edit:hover { background: #bfdbfe; }
 
 .alloc-btn-delete {
   background: #fee2e2;
@@ -128,9 +92,7 @@
   cursor: pointer;
   font-size: 13px;
 }
-.alloc-btn-delete:hover {
-  background: #fecaca;
-}
+.alloc-btn-delete:hover { background: #fecaca; }
 
 .alloc-btn-cancel {
   background: #f3f4f6;
@@ -141,15 +103,13 @@
   cursor: pointer;
   font-size: 14px;
 }
-.alloc-btn-cancel:hover {
-  background: #e5e7eb;
-}
+.alloc-btn-cancel:hover { background: #e5e7eb; }
 
 /* ── Modal ── */
 .alloc-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0,0,0,.4);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -169,9 +129,7 @@
   gap: 8px;
 }
 
-.alloc-modal h2 {
-  margin: 0 0 12px;
-}
+.alloc-modal h2 { margin: 0 0 12px; }
 
 .alloc-modal label {
   font-size: 13px;
@@ -191,9 +149,7 @@
   box-sizing: border-box;
 }
 
-.alloc-modal textarea {
-  resize: vertical;
-}
+.alloc-modal textarea { resize: vertical; }
 
 .alloc-form-error {
   color: #dc2626;

@@ -20,9 +20,7 @@ const LoginPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [successMessage, setSuccessMessage] = useState(
-    'Login successful. Redirecting...'
-  );
+  const [successMessage, setSuccessMessage] = useState('Login successful. Redirecting...');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,8 +42,7 @@ const LoginPage: React.FC = () => {
         }, 1200);
       } else {
         const data = await response.json();
-        const message =
-          data?.message || data?.Message || 'Invalid email or password.';
+        const message = data?.message || data?.Message || 'Invalid email or password.';
         setError(message);
       }
     } catch {
@@ -64,16 +61,14 @@ const LoginPage: React.FC = () => {
         <div className="auth-box">
           <h2>Sign In</h2>
 
-          {error && (
-            <p style={{ color: 'red', marginBottom: '10px' }}>{error}</p>
-          )}
+          {error && <p style={{ color: 'red', marginBottom: '10px' }}>{error}</p>}
 
           <form className="auth-form" onSubmit={handleLogin}>
             <input
               type="email"
               placeholder="Email Address"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={e => setEmail(e.target.value)}
               required
             />
             <div className="auth-password-field">
@@ -81,7 +76,7 @@ const LoginPage: React.FC = () => {
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={e => setPassword(e.target.value)}
                 required
               />
               <button
@@ -92,30 +87,18 @@ const LoginPage: React.FC = () => {
                 {showPassword ? 'Hide' : 'Show'}
               </button>
             </div>
-            <button className="auth-submit" type="submit">
-              Sign In
-            </button>
+            <button className="auth-submit" type="submit">Sign In</button>
           </form>
 
           <p className="auth-switch">
             Don't have an account?{' '}
-            <span
-              onClick={() => navigate('/register')}
-              style={{ cursor: 'pointer', color: 'blue' }}
-            >
-              Register
-            </span>
+            <span onClick={() => navigate('/register')} style={{ cursor: 'pointer', color: 'blue' }}>Register</span>
           </p>
         </div>
       </div>
 
       {showSuccessModal && (
-        <div
-          className="auth-modal-backdrop"
-          role="alertdialog"
-          aria-modal="true"
-          aria-labelledby="auth-success-title"
-        >
+        <div className="auth-modal-backdrop" role="alertdialog" aria-modal="true" aria-labelledby="auth-success-title">
           <div className="auth-modal">
             <h3 id="auth-success-title">Welcome to Hearth Haven</h3>
             <p>{successMessage}</p>

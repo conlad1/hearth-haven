@@ -47,23 +47,16 @@ function CookieConsentBanner() {
   }
 
   return (
-    <div
-      className="cookie-banner"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="cookie-title"
-    >
+    <div className="cookie-banner" role="dialog" aria-modal="true" aria-labelledby="cookie-title">
       <div className="cookie-banner-card">
         <h3 id="cookie-title">Cookie Preferences</h3>
         <p>
-          Hearth Haven uses essential cookies to keep the site working and
-          optional analytics cookies to understand usage trends.
+          Hearth Haven uses essential cookies to keep the site working and optional analytics cookies to understand usage trends.
         </p>
 
         <div className="cookie-option-row">
           <label>
-            <input type="checkbox" checked disabled /> Essential cookies (always
-            on)
+            <input type="checkbox" checked disabled /> Essential cookies (always on)
           </label>
         </div>
 
@@ -79,15 +72,9 @@ function CookieConsentBanner() {
         </div>
 
         <div className="cookie-banner-actions">
-          <button className="btn-light" onClick={() => saveAndClose(false)}>
-            Essential Only
-          </button>
-          <button className="btn-light" onClick={() => saveAndClose(analytics)}>
-            Save Preferences
-          </button>
-          <button className="btn-dark" onClick={() => saveAndClose(true)}>
-            Accept All
-          </button>
+          <button className="btn-light" onClick={() => saveAndClose(false)}>Essential Only</button>
+          <button className="btn-light" onClick={() => saveAndClose(analytics)}>Save Preferences</button>
+          <button className="btn-dark" onClick={() => saveAndClose(true)}>Accept All</button>
         </div>
       </div>
     </div>
