@@ -32,7 +32,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
     {
-        policy.WithOrigins("http://localhost:3000", "http://localhost:5173") // Included 5173 just in case you switch to standard Vite ports
+        policy.WithOrigins("http://localhost:3000", "http://localhost:5173", "https://purple-water-0992e8f1e.6.azurestaticapps.net")
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials(); // Required if you pass authentication cookies/tokens

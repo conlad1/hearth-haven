@@ -1,12 +1,12 @@
-import { useEffect, useState } from "react";
-import type { FormEvent } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from 'react';
+import type { FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 
 function LandingPage() {
-  const [statusMessage, setStatusMessage] = useState("");
+  const [statusMessage, setStatusMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
-  const [successModalMessage, setSuccessModalMessage] = useState("");
+  const [successModalMessage, setSuccessModalMessage] = useState('');
 
   useEffect(() => {
     if (!isSuccessModalOpen) {
@@ -14,13 +14,13 @@ function LandingPage() {
     }
 
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
+      if (event.key === 'Escape') {
         setIsSuccessModalOpen(false);
       }
     };
 
-    window.addEventListener("keydown", handleEscape);
-    return () => window.removeEventListener("keydown", handleEscape);
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
   }, [isSuccessModalOpen]);
 
   async function handleContactSubmit(event: FormEvent<HTMLFormElement>) {
@@ -31,14 +31,14 @@ function LandingPage() {
     const payload = Object.fromEntries(formData.entries());
 
     setIsSubmitting(true);
-    setStatusMessage("Sending your message...");
+    setStatusMessage('Sending your message...');
 
     try {
-      const response = await fetch("https://api.web3forms.com/submit", {
-        method: "POST",
+      const response = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
         },
         body: JSON.stringify(payload),
       });
@@ -46,15 +46,19 @@ function LandingPage() {
       const result = await response.json();
 
       if (response.ok) {
-        setStatusMessage("");
-        setSuccessModalMessage(result.message || "Message sent. We will get back to you soon.");
+        setStatusMessage('');
+        setSuccessModalMessage(
+          result.message || 'Message sent. We will get back to you soon.'
+        );
         setIsSuccessModalOpen(true);
         form.reset();
       } else {
-        setStatusMessage(result.message || "Something went wrong. Please try again.");
+        setStatusMessage(
+          result.message || 'Something went wrong. Please try again.'
+        );
       }
     } catch {
-      setStatusMessage("Something went wrong. Please try again.");
+      setStatusMessage('Something went wrong. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -79,7 +83,9 @@ function LandingPage() {
 
           <div className="hero-buttons">
             <button className="btn-primary">See Our Impact</button>
-            <Link className="btn-secondary" to="/#contact">Get Help Now</Link>
+            <Link className="btn-secondary" to="/#contact">
+              Get Help Now
+            </Link>
           </div>
         </div>
       </section>
@@ -194,7 +200,10 @@ function LandingPage() {
 
           <div className="cta-buttons">
             <button className="cta-primary">
-              <Link to="/donate" style={{ color: 'inherit', textDecoration: 'none' }}>
+              <Link
+                to="/donate"
+                style={{ color: 'inherit', textDecoration: 'none' }}
+              >
                 Donate Now →
               </Link>
             </button>
@@ -239,18 +248,33 @@ function LandingPage() {
               <div className="contact-grid">
                 <label className="contact-field">
                   <span>Name</span>
-                  <input type="text" name="name" placeholder="Your name" required />
+                  <input
+                    type="text"
+                    name="name"
+                    placeholder="Your name"
+                    required
+                  />
                 </label>
 
                 <label className="contact-field">
                   <span>Email</span>
-                  <input type="email" name="email" placeholder="you@example.com" required />
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="you@example.com"
+                    required
+                  />
                 </label>
               </div>
 
               <label className="contact-field">
                 <span>Subject</span>
-                <input type="text" name="user_subject" placeholder="How can we help?" required />
+                <input
+                  type="text"
+                  name="user_subject"
+                  placeholder="How can we help?"
+                  required
+                />
               </label>
 
               <label className="contact-field">
@@ -267,8 +291,12 @@ function LandingPage() {
                 {statusMessage}
               </p>
 
-              <button className="contact-submit" type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Sending..." : "Send Message"}
+              <button
+                className="contact-submit"
+                type="submit"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Sending...' : 'Send Message'}
               </button>
             </form>
           </div>
@@ -283,17 +311,22 @@ function LandingPage() {
           aria-labelledby="contact-success-title"
           onClick={() => setIsSuccessModalOpen(false)}
         >
-          <div className="contact-success-modal" onClick={(event) => event.stopPropagation()}>
+          <div
+            className="contact-success-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
             <div className="contact-success-icon">✓</div>
             <h3 id="contact-success-title">Message Sent</h3>
             <p>{successModalMessage}</p>
-            <button className="contact-success-close" onClick={() => setIsSuccessModalOpen(false)}>
+            <button
+              className="contact-success-close"
+              onClick={() => setIsSuccessModalOpen(false)}
+            >
               Close
             </button>
           </div>
         </div>
       )}
-
     </div>
   );
 }

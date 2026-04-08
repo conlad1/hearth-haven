@@ -34,23 +34,47 @@ function OutreachPage() {
   }, [navigate]);
 
   if (loading) {
-    return <section className="simple-page"><h1>Loading outreach insights...</h1></section>;
+    return (
+      <section className="simple-page">
+        <h1>Loading outreach insights...</h1>
+      </section>
+    );
   }
 
   if (error || !data) {
-    return <section className="simple-page"><h1>Outreach</h1><p>{error || 'No outreach data found.'}</p></section>;
+    return (
+      <section className="simple-page">
+        <h1>Outreach</h1>
+        <p>{error || 'No outreach data found.'}</p>
+      </section>
+    );
   }
 
   return (
     <section className="simple-page outreach-page">
       <h1>Outreach Insights</h1>
-      <p className="page-subtitle">Built for social media managers to prioritize what drives engagement and referrals.</p>
+      <p className="page-subtitle">
+        Built for social media managers to prioritize what drives engagement and
+        referrals.
+      </p>
 
       <div className="outreach-kpis">
-        <div className="outreach-card"><h3>Total Posts</h3><p>{data.kpis.totalPosts}</p></div>
-        <div className="outreach-card"><h3>Total Reach</h3><p>{data.kpis.totalReach.toLocaleString()}</p></div>
-        <div className="outreach-card"><h3>Avg Engagement</h3><p>{formatPercent(data.kpis.avgEngagementRate)}</p></div>
-        <div className="outreach-card"><h3>CTR</h3><p>{data.kpis.clickThroughRate.toFixed(2)}%</p></div>
+        <div className="outreach-card">
+          <h3>Total Posts</h3>
+          <p>{data.kpis.totalPosts}</p>
+        </div>
+        <div className="outreach-card">
+          <h3>Total Reach</h3>
+          <p>{data.kpis.totalReach.toLocaleString()}</p>
+        </div>
+        <div className="outreach-card">
+          <h3>Avg Engagement</h3>
+          <p>{formatPercent(data.kpis.avgEngagementRate)}</p>
+        </div>
+        <div className="outreach-card">
+          <h3>CTR</h3>
+          <p>{data.kpis.clickThroughRate.toFixed(2)}%</p>
+        </div>
       </div>
 
       <div className="outreach-grid">
@@ -67,7 +91,10 @@ function OutreachPage() {
             </thead>
             <tbody>
               {data.channelBreakdown.map((channel) => {
-                const ctr = channel.impressions === 0 ? 0 : (channel.clickThroughs / channel.impressions) * 100;
+                const ctr =
+                  channel.impressions === 0
+                    ? 0
+                    : (channel.clickThroughs / channel.impressions) * 100;
                 return (
                   <tr key={channel.platform}>
                     <td>{channel.platform}</td>
@@ -86,8 +113,12 @@ function OutreachPage() {
           <ul className="outreach-list">
             {data.topContent.map((post) => (
               <li key={post.postId}>
-                <strong>{post.platform}</strong> - {post.postType} ({post.contentTopic})
-                <span>Reach: {post.reach.toLocaleString()} | Engagement: {formatPercent(post.engagementRate)}</span>
+                <strong>{post.platform}</strong> - {post.postType} (
+                {post.contentTopic})
+                <span>
+                  Reach: {post.reach.toLocaleString()} | Engagement:{' '}
+                  {formatPercent(post.engagementRate)}
+                </span>
               </li>
             ))}
           </ul>
@@ -108,13 +139,22 @@ function OutreachPage() {
           <h2>Reach by Channel</h2>
           <div className="outreach-chart">
             {data.channelBreakdown.map((channel) => {
-              const maxReach = Math.max(...data.channelBreakdown.map((x) => x.reach), 1);
+              const maxReach = Math.max(
+                ...data.channelBreakdown.map((x) => x.reach),
+                1
+              );
               const width = Math.max((channel.reach / maxReach) * 100, 6);
               return (
-                <div className="outreach-chart-row" key={`${channel.platform}-reach`}>
+                <div
+                  className="outreach-chart-row"
+                  key={`${channel.platform}-reach`}
+                >
                   <span>{channel.platform}</span>
                   <div className="outreach-chart-track">
-                    <div className="outreach-chart-bar" style={{ width: `${width}%` }}></div>
+                    <div
+                      className="outreach-chart-bar"
+                      style={{ width: `${width}%` }}
+                    ></div>
                   </div>
                   <strong>{channel.reach.toLocaleString()}</strong>
                 </div>
@@ -129,9 +169,16 @@ function OutreachPage() {
           <h2>Latest Published Impact Snapshot</h2>
           {data.latestPublishedSnapshot ? (
             <div>
-              <p><strong>{data.latestPublishedSnapshot.headline}</strong></p>
-              <p>{data.latestPublishedSnapshot.summaryText || 'No summary text available yet.'}</p>
-              <p className="muted-small">Published on {data.latestPublishedSnapshot.snapshotDate}</p>
+              <p>
+                <strong>{data.latestPublishedSnapshot.headline}</strong>
+              </p>
+              <p>
+                {data.latestPublishedSnapshot.summaryText ||
+                  'No summary text available yet.'}
+              </p>
+              <p className="muted-small">
+                Published on {data.latestPublishedSnapshot.snapshotDate}
+              </p>
             </div>
           ) : (
             <p>No published snapshot available yet.</p>
@@ -141,8 +188,9 @@ function OutreachPage() {
         <div className="outreach-panel">
           <h2>Refresh Guidance</h2>
           <p>
-            This dashboard combines live API metrics with lightweight visual placeholders. As your strategy matures,
-            swap the placeholder bars with a chart library and track trends week-over-week.
+            This dashboard combines live API metrics with lightweight visual
+            placeholders. As your strategy matures, swap the placeholder bars
+            with a chart library and track trends week-over-week.
           </p>
         </div>
       </div>
