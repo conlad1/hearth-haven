@@ -7,7 +7,6 @@ import {
   PaginatedResponse,
 } from '../types/Donor';
 
-const USE_MOCK = false;
 import { API_BASE_URL } from './config';
 
 // ── FETCH FILTER OPTIONS ─────────────────────────────────────
