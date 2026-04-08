@@ -1,4 +1,4 @@
-const OUTREACH_API_BASE_URL = 'https://localhost:7052';
+const OUTREACH_API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://hearth-haven-backend-eqbyhhc4h8htajhv.westus3-01.azurewebsites.net';
 
 export type OutreachSummary = {
   generatedAt: string;
