@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthService } from '../api/AuthService';
+import { API_BASE_URL } from '../api/config';
 import './DonatePage.css';
 
 const AMOUNTS: number[] = [10, 25, 50, 100, 250, 500];
@@ -66,7 +67,7 @@ function DonatePage() {
     };
 
     try {
-      const res = await fetch('https://localhost:7052/Donation/CreateDonation', {
+      const res = await fetch(`${API_BASE_URL}/Donation/CreateDonation`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

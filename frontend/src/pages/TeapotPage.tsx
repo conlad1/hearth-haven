@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { API_BASE_URL } from '../api/config';
 
 function TeapotPage() {
   const [status, setStatus] = useState<number | null>(null);
@@ -7,7 +8,7 @@ function TeapotPage() {
   useEffect(() => {
     const checkTeapot = async () => {
       try {
-        const response = await fetch('https://localhost:7052/teapot');
+        const response = await fetch(`${API_BASE_URL}/teapot`);
         setStatus(response.status);
 
         const payload = await response.json();
