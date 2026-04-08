@@ -55,6 +55,7 @@ function Header({ isAuthenticated }: HeaderProps) {
     { to: '/', label: 'Home' },
     { to: '/impact', label: 'Impact' },
     { to: '/cases', label: 'Case Management' },
+    { to: '/safehouse-management', label: 'Safehouse Management' },
     { to: '/donors', label: 'Donors' },
     { to: '/outreach', label: 'Outreach' },
   ];
