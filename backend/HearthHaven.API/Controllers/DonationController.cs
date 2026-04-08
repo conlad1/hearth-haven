@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using HearthHaven.API.Data;
 using HearthHaven.API.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace HearthHaven.API.Controllers;
 
@@ -53,22 +54,42 @@ public class DonationController : ControllerBase
             var displayName = payload.Supporter.organization_name
                 ?? $"{payload.Supporter.first_name} {payload.Supporter.last_name}".Trim();
 
-            var supporter = new Supporter
+            var normalizedEmail = payload.Supporter.email?.Trim().ToLowerInvariant();
+            var supporter = string.IsNullOrWhiteSpace(normalizedEmail)
+                ? null
+                : await _hearthHavenContext.Supporters
+                    .FirstOrDefaultAsync(s => s.Email != null && s.Email.ToLower() == normalizedEmail);
+
+            if (supporter != null)
             {
-                SupporterType    = payload.Supporter.supporter_type,
-                DisplayName      = string.IsNullOrEmpty(displayName) ? "Anonymous" : displayName,
-                RelationshipType = "Local",
-                FirstName        = payload.Supporter.first_name,
-                LastName         = payload.Supporter.last_name,
-                Email            = payload.Supporter.email,
-                OrganizationName = payload.Supporter.organization_name,
-                Status           = payload.Supporter.status,
-                CreatedAt        = DateTime.UtcNow,
-            };
+                supporter.SupporterType = payload.Supporter.supporter_type;
+                supporter.DisplayName = string.IsNullOrEmpty(displayName) ? supporter.DisplayName : displayName;
+                supporter.FirstName = payload.Supporter.first_name;
+                supporter.LastName = payload.Supporter.last_name;
+                supporter.Email = payload.Supporter.email;
+                supporter.OrganizationName = payload.Supporter.organization_name;
+                supporter.Status = payload.Supporter.status;
+            }
+            else
+            {
+                supporter = new Supporter
+                {
+                    SupporterType    = payload.Supporter.supporter_type,
+                    DisplayName      = string.IsNullOrEmpty(displayName) ? "Anonymous" : displayName,
+                    RelationshipType = "Local",
+                    FirstName        = payload.Supporter.first_name,
+                    LastName         = payload.Supporter.last_name,
+                    Email            = payload.Supporter.email,
+                    OrganizationName = payload.Supporter.organization_name,
+                    Status           = payload.Supporter.status,
+                    CreatedAt        = DateTime.UtcNow,
+                };
+
+                _hearthHavenContext.Supporters.Add(supporter);
+            }
 
             try
             {
-                _hearthHavenContext.Supporters.Add(supporter);
                 await _hearthHavenContext.SaveChangesAsync();
             }
             catch (Exception ex)

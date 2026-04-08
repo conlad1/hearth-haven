@@ -26,6 +26,9 @@ import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import TermsPage from "./pages/TermsPage";
 import TeapotPage from "./pages/TeapotPage";
 import CookieConsentBanner from "./components/CookieConsentBanner";
+import ResourcesPage from "./pages/ResourcePage";
+import DonorAnalytics from "./pages/DonorAnalytics";
+import ProfilePage from "./pages/ProfilePage";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return AuthService.isAuthenticated() ? <>{children}</> : <Navigate to="/login" replace />;
@@ -49,6 +52,18 @@ function ScrollToHash() {
   return null;
 }
 
+function ScrollToTop() {
+  const { pathname, hash } = useLocation();
+
+  useEffect(() => {
+    if (!hash) {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    }
+  }, [pathname, hash]);
+
+  return null;
+}
+
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(AuthService.isAuthenticated());
 
@@ -66,6 +81,7 @@ function App() {
 
   return (
     <>
+      <ScrollToTop />
       <ScrollToHash />
       <Header isAuthenticated={isAuthenticated} />
       <CookieConsentBanner />

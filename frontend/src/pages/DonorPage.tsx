@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { createPortal } from 'react-dom';
+import { Link } from 'react-router-dom';
 import { AuthService } from '../api/AuthService';
 import AllocationPage, { type AllocationPageHandle } from './AllocationPage';
 import { Supporter, Contribution, DonorFilterOptions, SupporterFilters, ContributionFilters } from '../types/Donor';
@@ -34,6 +35,7 @@ import {
   Share2,
   PanelLeftClose,
   PanelLeftOpen,
+  BarChart3,
 } from 'lucide-react';
 
 const PAGE_SIZE_OPTIONS = [20, 50, 100];
@@ -142,14 +144,14 @@ const cSelectMap:  Partial<Record<keyof Contribution, { opts: string[]; nullable
 // ── Blank templates ───────────────────────────────────────────────────────────
 
 const blankSupporter: Supporter = {
-  supporterId: 0, supporterType: 'Individual', status: 'Active',
+  supporterId: 0, supporterType: 'MonetaryDonor', status: 'Active',
   firstName: '', lastName: '', email: '', phone: null,
   organizationName: null, address: null, notes: null, createdAt: '',
 };
 
 const blankContribution: Contribution = {
   donationId: 0, supporterId: 0, supporterName: '',
-  donationType: 'Monetary', amount: null, currencyCode: 'PHP',
+  donationType: 'Monetary', amount: null, currencyCode: 'USD',
   isRecurring: false, frequency: 'Once', channelSource: null,
   description: null, estimatedValue: null,
   donationDate: new Date().toISOString().slice(0, 10),
@@ -634,6 +636,10 @@ export default function DonorPage() {
                 {activeTab === 'supporters' ? 'Supporter Profiles' : activeTab === 'contributions' ? 'Contribution Activity' : 'Allocations'}
               </h1>
               <div className="flex w-full flex-wrap items-center gap-3 lg:w-auto lg:justify-end">
+                <Link to="/donor-analytics" className="btn-secondary w-full no-underline sm:w-auto">
+                  <BarChart3 className="h-4 w-4" /> Analytics
+                </Link>
+
                 {/* Tab toggle */}
                 <div className="w-full overflow-x-auto lg:w-auto">
                   <div className="inline-flex min-w-max overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">

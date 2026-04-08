@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthService } from '../api/AuthService';
 import { Menu, X, Heart, Sun, Moon, Monitor } from 'lucide-react';
 import { useTheme } from '../ThemeContext';
+import { API_BASE_URL } from '../api/config';
 
 type HeaderProps = {
   isAuthenticated: boolean;
@@ -40,6 +41,7 @@ function ThemeToggle() {
 
 function Header({ isAuthenticated }: HeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [userName, setUserName] = useState(AuthService.getUserName());
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { theme } = useTheme();
@@ -72,6 +74,41 @@ function Header({ isAuthenticated }: HeaderProps) {
   const isOnAdminPage = adminPrefixes.some(p => pathname === p || pathname.startsWith(p + '/'));
 
   const navLinks = isOnAdminPage ? publicNavLinks : [...publicNavLinks, ...adminNavLinks];
+  useEffect(() => {
+    const syncName = () => setUserName(AuthService.getUserName());
+    window.addEventListener('auth-change', syncName);
+
+    return () => window.removeEventListener('auth-change', syncName);
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setUserName(null);
+      return;
+    }
+
+    const email = AuthService.getUserEmail();
+    if (!email) {
+      return;
+    }
+
+    fetch(`${API_BASE_URL}/Donor/Portal?email=${encodeURIComponent(email)}`, { credentials: 'include' })
+      .then(async (res) => {
+        if (!res.ok) {
+          return null;
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (data?.displayName) {
+          AuthService.setUserName(data.displayName);
+          setUserName(data.displayName);
+        }
+      })
+      .catch(() => {
+        // Ignore header lookup failures so nav/header work remains stable.
+      });
+  }, [isAuthenticated]);
 
   return (
     <>
@@ -112,7 +149,12 @@ function Header({ isAuthenticated }: HeaderProps) {
                 <Link to="/register" className="btn-secondary no-underline">Register</Link>
               </>
             ) : (
-              <button className="btn-ghost" onClick={handleLogout}>Logout</button>
+              <>
+                <Link to="/profile" className="btn-ghost no-underline">
+                  {userName ? `Hi, ${userName}` : 'My Giving'}
+                </Link>
+                <button className="btn-ghost" onClick={handleLogout}>Logout</button>
+              </>
             )}
           </div>
 
@@ -165,7 +207,12 @@ function Header({ isAuthenticated }: HeaderProps) {
                 <Link to="/register" onClick={() => setMenuOpen(false)} className="btn-secondary w-full no-underline">Register</Link>
               </>
             ) : (
-              <button className="btn-secondary w-full" onClick={handleLogout}>Logout</button>
+              <>
+                <Link to="/profile" onClick={() => setMenuOpen(false)} className="btn-secondary w-full no-underline">
+                  {userName ? `Hi, ${userName}` : 'My Giving'}
+                </Link>
+                <button className="btn-secondary w-full" onClick={handleLogout}>Logout</button>
+              </>
             )}
           </div>
         </div>

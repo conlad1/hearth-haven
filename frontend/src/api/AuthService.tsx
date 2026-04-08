@@ -4,6 +4,10 @@ const AUTH_STORAGE_KEY = "hearthHavenAuthenticated";
 const AUTH_EMAIL_KEY = "hearthHavenEmail";
 const AUTH_NAME_KEY = "hearthHavenName";
 
+function notifyAuthChange() {
+    window.dispatchEvent(new Event("auth-change"));
+}
+
 export const AuthService = {
     register: async (email: string, password: string) => {
         const response = await fetch(`${API_URL}/register`, {
@@ -35,7 +39,7 @@ export const AuthService = {
             localStorage.removeItem(AUTH_STORAGE_KEY);
             localStorage.removeItem(AUTH_EMAIL_KEY);
             localStorage.removeItem(AUTH_NAME_KEY);
-            window.dispatchEvent(new Event("auth-change"));
+            notifyAuthChange();
         }
     },
 
@@ -46,7 +50,7 @@ export const AuthService = {
             localStorage.removeItem(AUTH_STORAGE_KEY);
         }
 
-        window.dispatchEvent(new Event("auth-change"));
+        notifyAuthChange();
     },
 
     isAuthenticated: () => {
@@ -55,6 +59,7 @@ export const AuthService = {
 
     setUserEmail: (email: string) => {
         localStorage.setItem(AUTH_EMAIL_KEY, email);
+        notifyAuthChange();
     },
 
     getUserEmail: (): string | null => {
@@ -63,6 +68,7 @@ export const AuthService = {
 
     setUserName: (name: string) => {
         localStorage.setItem(AUTH_NAME_KEY, name);
+        notifyAuthChange();
     },
 
     getUserName: (): string | null => {
