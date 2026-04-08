@@ -1,1 +1,40 @@
+# Repo hygiene
 DEPLOYMENT.md
+
+# Build output
+backend/HearthHaven.API/bin/
+backend/HearthHaven.API/obj/
+frontend/dist/
+frontend/dist-ssr/
+frontend/node_modules/
+backend/HearthHaven.API/node_modules/
+
+# IDE and OS files
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.sw?
+**/.DS_Store
+
+# Local environment and secret overrides
+**/.env
+**/.env.local
+**/.env.development.local
+**/.env.test.local
+**/.env.production.local
+**/*.local.json
+
+# Ignore generated or ad-hoc solution files while keeping the canonical repo solution tracked
+*.sln
+!hearth-haven.sln
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*

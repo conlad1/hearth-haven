@@ -2,7 +2,7 @@ export default function PrivacyPolicyPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
       <h1 className="text-3xl font-bold">Privacy Policy</h1>
-      <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Effective date: April 7, 2026</p>
+      <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Effective date: April 8, 2026</p>
 
       <div className="mt-8 space-y-8 text-sm leading-relaxed text-gray-600 dark:text-gray-400 [&_h2]:mb-2 [&_h2]:mt-0 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:text-gray-900 dark:[&_h2]:text-white [&_ul]:ml-5 [&_ul]:list-disc [&_ul]:space-y-1">
         <p>
@@ -27,7 +27,7 @@ export default function PrivacyPolicyPage() {
         <section>
           <h2>Why We Process Data (GDPR Legal Bases)</h2>
           <ul>
-            <li>Consent: when you choose to submit optional information or enable optional analytics cookies.</li>
+            <li>Consent: when you choose to submit optional information through our forms.</li>
             <li>Contract: to provide requested account and donation features.</li>
             <li>Legal obligation: where recordkeeping or compliance obligations apply.</li>
             <li>Legitimate interests: to operate, secure, and improve service delivery.</li>
@@ -41,7 +41,7 @@ export default function PrivacyPolicyPage() {
 
         <section>
           <h2>Cookies and Tracking</h2>
-          <p>Essential cookies are always enabled for core site operation. Analytics cookies are optional and disabled by default until you opt in through our cookie preferences banner.</p>
+          <p>The Hearth Project uses essential cookies to keep the site working. No analytics cookies are ever gathered on The Hearth Project website.</p>
         </section>
 
         <section>
@@ -67,7 +67,7 @@ export default function PrivacyPolicyPage() {
 
         <section>
           <h2>Project Domain Notice</h2>
-          <p>Current project domain references may use thehearthproject.tylermitton.com as a temporary placeholder until the production domain is finalized.</p>
+          <p>The canonical public site domain is https://the-hearth-project.org.</p>
         </section>
       </div>
     </div>

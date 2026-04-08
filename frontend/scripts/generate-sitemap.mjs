@@ -8,11 +8,12 @@ const projectRoot = path.resolve(__dirname, '..');
 const publicDir = path.join(projectRoot, 'public');
 const outputPath = path.join(publicDir, 'sitemap.xml');
 
-const baseUrl = 'https://hearthhaven.tylermitton.com';
+const baseUrl = 'https://the-hearth-project.org';
 const today = new Date().toISOString().split('T')[0];
 
 const routes = [
   '/',
+  '/impact',
   '/login',
   '/register',
   '/cases',

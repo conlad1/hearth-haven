@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://hearthhaven.tylermitton.com/sitemap.xml
+Sitemap: https://the-hearth-project.org/sitemap.xml

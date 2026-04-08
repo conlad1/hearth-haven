@@ -10,6 +10,7 @@ function LandingPage() {
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [successModalMessage, setSuccessModalMessage] = useState("");
   const { theme } = useTheme();
+  const web3FormsAccessKey = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY ?? "";
 
   useEffect(() => {
     if (!isSuccessModalOpen) return;
@@ -25,6 +26,11 @@ function LandingPage() {
     const form = event.currentTarget;
     const formData = new FormData(form);
     const payload = Object.fromEntries(formData.entries());
+
+    if (!web3FormsAccessKey) {
+      setStatusMessage("The contact form is not configured. Add VITE_WEB3FORMS_ACCESS_KEY to the frontend environment.");
+      return;
+    }
 
     setIsSubmitting(true);
     setStatusMessage("Sending your message...");
@@ -201,7 +207,7 @@ function LandingPage() {
 
           <div className="card">
             <form onSubmit={handleContactSubmit} className="space-y-5">
-              <input type="hidden" name="access_key" value="83d97da9-fc41-414d-9528-45394bc1976a" />
+              <input type="hidden" name="access_key" value={web3FormsAccessKey} />
               <input type="hidden" name="from_name" value="The Hearth Project" />
               <input type="hidden" name="subject" value="New contact form submission from The Hearth Project" />
               <input type="checkbox" name="botcheck" className="hidden" tabIndex={-1} aria-hidden="true" />
