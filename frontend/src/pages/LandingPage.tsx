@@ -87,7 +87,7 @@ function LandingPage() {
       </section>
 
       {/* Features */}
-      <section className="py-20">
+      <section className="py-14">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
             {[
@@ -108,7 +108,7 @@ function LandingPage() {
       </section>
 
       {/* Stories */}
-      <section className="py-20">
+      <section className="py-14">
         <div className="mx-auto max-w-4xl px-4 text-center sm:px-6">
           <h2 className="text-3xl font-bold">Stories of Hope</h2>
           <p className="mt-2 text-gray-500 dark:text-gray-400">Real impact, real change. Read how your support transforms lives.</p>
@@ -138,7 +138,7 @@ function LandingPage() {
       </section>
 
       {/* Help Section */}
-      <section className="py-20">
+      <section className="py-14">
         <div className="mx-auto max-w-3xl px-4 sm:px-6">
           <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-8 shadow-md sm:p-12">
             <div className="mb-8 text-center">
@@ -150,18 +150,31 @@ function LandingPage() {
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="rounded-xl bg-orange-50 dark:bg-orange-500/10 p-6 text-center">
-                <Phone className="mx-auto mb-3 h-6 w-6 text-orange-500" />
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">24/7 Crisis Hotline</h3>
-                <div className="mt-2 text-xl font-bold text-orange-600">1-800-HOPE-123</div>
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Free and confidential. Your call is private.</p>
+              <div className="rounded-2xl border border-orange-100 bg-gradient-to-br from-orange-50 to-white p-6 text-center shadow-sm dark:border-orange-500/20 dark:from-orange-500/10 dark:to-gray-900">
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-white/80 shadow-sm dark:bg-gray-900/80">
+                  <Phone className="h-6 w-6 text-orange-500" />
+                </div>
+                <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-orange-600">Emergency (General)</h3>
+                <p className="mt-4 text-sm text-gray-700 dark:text-gray-300">
+                  USA: <a href="tel:911" className="font-medium text-orange-500 hover:text-orange-600">911</a>
+                </p>
+                <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
+                  Malaysia: <a href="tel:999" className="font-medium text-orange-500 hover:text-orange-600">999</a>
+                </p>
               </div>
 
-              <div className="rounded-xl bg-gray-50 dark:bg-gray-800 p-6 text-center">
-                <Mail className="mx-auto mb-3 h-6 w-6 text-gray-600 dark:text-gray-400" />
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Secure Email</h3>
-                <div className="mt-2 text-xl font-bold text-gray-900 dark:text-white">help@thehearthproject.org</div>
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Encrypted communication. We respond within 24 hours.</p>
+              <div className="rounded-2xl border border-gray-100 bg-gradient-to-br from-gray-50 to-white p-6 text-center shadow-sm dark:border-gray-700 dark:from-gray-800 dark:to-gray-900">
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-white/80 shadow-sm dark:bg-gray-900/80">
+                  <Phone className="h-6 w-6 text-gray-600 dark:text-gray-400" />
+                </div>
+                <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-orange-600">Support (Sexual Assault / Abuse)</h3>
+                <p className="mt-4 text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+                  USA (RAINN National Sexual Assault Hotline):{' '}
+                  <a href="tel:18006564673" className="font-medium text-orange-500 hover:text-orange-600">1-800-656-4673</a>
+                </p>
+                <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
+                  Malaysia (Talian Kasih): <a href="tel:15999" className="font-medium text-orange-500 hover:text-orange-600">15999</a>
+                </p>
               </div>
             </div>
 
@@ -178,7 +191,7 @@ function LandingPage() {
       </section>
 
       {/* CTA */}
-      <section className="py-20">
+      <section className="py-14">
         <div className="mx-auto max-w-3xl px-4 sm:px-6">
           <div className="rounded-2xl border border-orange-200 dark:border-orange-500/20 bg-orange-50/50 dark:bg-orange-500/5 px-6 py-14 text-center shadow-sm">
             <Heart className="mx-auto mb-4 h-10 w-10 text-orange-500" />
@@ -200,7 +213,7 @@ function LandingPage() {
       </section>
 
       {/* Contact */}
-      <section className="py-20" id="contact">
+      <section className="py-14" id="contact">
         <div className="mx-auto max-w-2xl px-4 sm:px-6">
           <div className="mb-10 text-center">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-orange-50 dark:bg-orange-500/10">

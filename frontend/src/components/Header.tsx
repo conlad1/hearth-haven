@@ -141,7 +141,7 @@ function Header({ isAuthenticated }: HeaderProps) {
               </>
             ) : (
               <>
-                <Link to="/donor-portal" className="btn-ghost no-underline">
+                <Link to="/profile" className="btn-ghost no-underline">
                   {userName ? `Hi, ${userName}` : 'My Giving'}
                 </Link>
                 <button className="btn-ghost" onClick={handleLogout}>Logout</button>
@@ -199,7 +199,7 @@ function Header({ isAuthenticated }: HeaderProps) {
               </>
             ) : (
               <>
-                <Link to="/donor-portal" onClick={() => setMenuOpen(false)} className="btn-secondary w-full no-underline">
+                <Link to="/profile" onClick={() => setMenuOpen(false)} className="btn-secondary w-full no-underline">
                   {userName ? `Hi, ${userName}` : 'My Giving'}
                 </Link>
                 <button className="btn-secondary w-full" onClick={handleLogout}>Logout</button>

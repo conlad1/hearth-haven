@@ -26,7 +26,7 @@ import TeapotPage from "./pages/TeapotPage";
 import CookieConsentBanner from "./components/CookieConsentBanner";
 import ResourcesPage from "./pages/ResourcePage";
 import DonorAnalytics from "./pages/DonorAnalytics";
-import DonorPortalPage from "./pages/DonorPortalPage";
+import ProfilePage from "./pages/ProfilePage";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return AuthService.isAuthenticated() ? <>{children}</> : <Navigate to="/login" replace />;
@@ -129,7 +129,15 @@ function App() {
             path="/donor-portal"
             element={(
               <ProtectedRoute>
-                <DonorPortalPage />
+                <Navigate to="/profile" replace />
+              </ProtectedRoute>
+            )}
+          />
+          <Route
+            path="/profile"
+            element={(
+              <ProtectedRoute>
+                <ProfilePage />
               </ProtectedRoute>
             )}
           />

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using HearthHaven.API.Models; 
 
@@ -15,6 +16,12 @@ namespace HearthHaven.API.Controllers
         {
             _userManager = userManager;
             _signInManager = signInManager;
+        }
+
+        public sealed class ChangePasswordDto
+        {
+            public string? CurrentPassword { get; set; }
+            public string? NewPassword { get; set; }
         }
 
         [HttpPost("register")]
@@ -59,6 +66,25 @@ namespace HearthHaven.API.Controllers
         {
             await _signInManager.SignOutAsync();
             return Ok(new { Message = "Logout successful." });
+        }
+
+        [HttpPost("change-password")]
+        [Authorize]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto model)
+        {
+            if (string.IsNullOrWhiteSpace(model.CurrentPassword) || string.IsNullOrWhiteSpace(model.NewPassword))
+                return BadRequest(new { Message = "Current password and new password are required." });
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+                return Unauthorized(new { Message = "User not found." });
+
+            var result = await _userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
+            if (!result.Succeeded)
+                return BadRequest(result.Errors.Select(e => e.Description));
+
+            await _signInManager.RefreshSignInAsync(user);
+            return Ok(new { Message = "Password changed successfully." });
         }
     }
 }
