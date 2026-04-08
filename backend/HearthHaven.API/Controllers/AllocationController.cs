@@ -14,7 +14,7 @@ public class AllocationController : ControllerBase
 
     // GET /Allocation
     [HttpGet]
-    public IActionResult GetAll([FromQuery] int? donationId = null)
+    public IActionResult GetAll([FromQuery] int? donationId = null, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {
         var query = _db.DonationAllocations
             .Join(_db.Donations,
@@ -29,8 +29,13 @@ public class AllocationController : ControllerBase
         if (donationId.HasValue)
             query = query.Where(x => x.a.DonationId == donationId.Value);
 
-        var results = query
+        var totalCount = query.Count();
+        var totalPages = Math.Max(1, (int)Math.Ceiling(totalCount / (double)pageSize));
+
+        var data = query
             .OrderByDescending(x => x.a.AllocationDate)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .Select(x => new
             {
                 allocationId    = x.a.AllocationId,
@@ -46,7 +51,7 @@ public class AllocationController : ControllerBase
             })
             .ToList();
 
-        return Ok(results);
+        return Ok(new { data, totalCount, page, pageSize, totalPages });
     }
 
     // GET /Allocation/Safehouses  — dropdown data

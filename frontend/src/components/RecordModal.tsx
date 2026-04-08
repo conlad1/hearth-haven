@@ -7,6 +7,7 @@ export interface RecordFieldDef {
   label: string;
   type: 'text' | 'number' | 'date' | 'checkbox' | 'textarea' | 'select';
   options?: string[];
+  selectOptions?: { value: string; label: string }[];
   required?: boolean;
   readOnly?: boolean;
 }
@@ -83,7 +84,9 @@ export default function RecordModal({
           className="select-field"
         >
           <option value="">-- Select --</option>
-          {(f.options || []).map((o) => <option key={o} value={o}>{o}</option>)}
+          {f.selectOptions
+            ? f.selectOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)
+            : (f.options || []).map((o) => <option key={o} value={o}>{o}</option>)}
         </select>
       );
     }

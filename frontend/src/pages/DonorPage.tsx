@@ -31,6 +31,7 @@ import {
 const PAGE_SIZE_OPTIONS = [20, 50, 100];
 
 const SUPPORTER_TYPES = ['Individual', 'Corporate', 'Anonymous'];
+
 const DONATION_TYPES  = ['Monetary', 'InKind', 'Volunteer', 'Skills', 'SocialMedia'];
 const FREQUENCY_OPTIONS = ['Once', 'Monthly'];
 
@@ -264,12 +265,19 @@ export default function DonorPage() {
 
   // ── Load data when tab / page / filters change ───────────────────────────
   const loadData = () => {
+
     if (!isLoggedIn) return;
     setLoading(true);
     setError(null);
     if (activeTab === 'supporters') {
       fetchSupporters(page, pageSize, supporterFilters)
-        .then((res) => { setSupporters(res.data); setTotalPages(res.totalPages); setTotalCount(res.totalCount); })
+        .then((res) => {
+          console.log("Supporters from API:", res.data); // 👈 ADD THIS LINE
+          setSupporters(res.data);
+          setTotalPages(res.totalPages);
+          setTotalCount(res.totalCount);
+        })
+                
         .catch((e) => setError(e.message))
         .finally(() => setLoading(false));
     } else {
@@ -290,9 +298,22 @@ export default function DonorPage() {
     setDebouncedSearch('');
   };
 
+  const ANONYMOUS_SUPPORTER_ID = 62;
+
   // ── Supporter filter helpers ─────────────────────────────────────────────
   const updateSupporterFilter = (key: keyof SupporterFilters, value: string | undefined) => {
     setSupporterFilters((p) => { const n = { ...p }; if (value) (n as Record<string,unknown>)[key] = value; else delete (n as Record<string,unknown>)[key]; return n; });
+    setPage(1);
+  };
+
+  const setSupporterTypeFilter = (t: string | undefined) => {
+    if (t === 'Anonymous') {
+      setSupporterFilters((p) => ({ ...p, supporterId: ANONYMOUS_SUPPORTER_ID, supporterType: undefined }));
+    } else if (t) {
+      setSupporterFilters((p) => ({ ...p, supporterType: t, supporterId: undefined }));
+    } else {
+      setSupporterFilters((p) => { const { supporterType: _t, supporterId: _id, ...rest } = p; void _t; void _id; return rest; });
+    }
     setPage(1);
   };
   const clearSupporterFilters = () => {
@@ -336,6 +357,7 @@ export default function DonorPage() {
   };
   const handleDeleteSupporter = async () => {
     if (!selectedSupporter || !window.confirm('Delete this supporter profile?')) return;
+    console.log("Deleting supporter ID:", selectedSupporter?.supporterId);
     setSaving(true);
     try { await deleteSupporter(selectedSupporter.supporterId); closeSupporter(); loadData(); }
     catch (e) { alert(e instanceof Error ? e.message : 'Failed to delete'); }
@@ -454,7 +476,7 @@ export default function DonorPage() {
   };
 
   // ── Sidebar active type ──────────────────────────────────────────────────
-  const activeSupporterType   = supporterFilters.supporterType;
+  const activeSupporterType = supporterFilters.supporterId === 62 ? 'Anonymous' : supporterFilters.supporterType;
   const activeDonationType    = contributionFilters.donationType;
 
   // ── Access denied ────────────────────────────────────────────────────────
@@ -487,17 +509,17 @@ export default function DonorPage() {
                   <li>
                     <button
                       className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium transition ${!activeSupporterType ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-700' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'}`}
-                      onClick={() => updateSupporterFilter('supporterType', undefined)}
+                      onClick={() => setSupporterTypeFilter(undefined)}
                     >
                       <Filter className="h-4 w-4" />
                       All Types
                     </button>
                   </li>
-                  {SUPPORTER_TYPES.map((t) => (
+                  {(filterOptions?.supporterTypes ?? SUPPORTER_TYPES).map((t) => (
                     <li key={t}>
                       <button
-                        className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium transition ${activeSupporterType === t ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-700' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'}`}
-                        onClick={() => updateSupporterFilter('supporterType', t)}
+                        className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium transition ${activeSupporterType?.toLowerCase() === t.toLowerCase() ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-700' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'}`}
+                        onClick={() => setSupporterTypeFilter(t)}
                       >
                         <SupporterIcon type={t} /> {t}
                       </button>
