@@ -1,8 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using HearthHaven.API.Data;
+using HearthHaven.API.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace HearthHaven.API.Controllers;
 
+[Authorize(Roles = AppRoles.Admin + "," + AppRoles.OutreachManager)]
 [Route("[controller]")]
 [ApiController]
 public class SocialMediaPostController : ControllerBase

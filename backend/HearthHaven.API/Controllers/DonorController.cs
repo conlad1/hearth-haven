@@ -1,10 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using HearthHaven.API.Data;
+using HearthHaven.API.Models;
 using System.Globalization;
+using Microsoft.AspNetCore.Authorization;
 
 namespace HearthHaven.API.Controllers;
 
+[Authorize]
 [Route("[controller]")]
 [ApiController]
 public class DonorController : ControllerBase
@@ -121,6 +124,7 @@ public class DonorController : ControllerBase
 
     // GET /Donor/FilterOptions
     [HttpGet("FilterOptions")]
+    [Authorize(Roles = AppRoles.Admin + "," + AppRoles.DonationsManager)]
     public IActionResult GetFilterOptions()
     {
         var supporterTypes = _db.Supporters
@@ -164,6 +168,7 @@ public class DonorController : ControllerBase
 
     // GET /Donor/Analytics
     [HttpGet("Analytics")]
+    [Authorize(Roles = AppRoles.Admin + "," + AppRoles.DonationsManager)]
     public IActionResult GetAnalytics()
     {
         var supporters = _db.Supporters.AsNoTracking().ToList();
@@ -333,6 +338,7 @@ public class DonorController : ControllerBase
 
     // GET /Donor/Supporters
     [HttpGet("Supporters")]
+    [Authorize(Roles = AppRoles.Admin + "," + AppRoles.DonationsManager)]
     public IActionResult GetSupporters(
         int page = 1,
         int pageSize = 20,
@@ -384,6 +390,7 @@ public class DonorController : ControllerBase
 
     // POST /Donor/Supporters
     [HttpPost("Supporters")]
+    [Authorize(Roles = AppRoles.Admin + "," + AppRoles.DonationsManager)]
     public IActionResult CreateSupporter([FromBody] SupporterPayload payload)
     {
         if (string.IsNullOrWhiteSpace(payload.supporterType))
@@ -416,6 +423,7 @@ public class DonorController : ControllerBase
 
     // GET /Donor/Contributions
     [HttpGet("Contributions")]
+    [Authorize(Roles = AppRoles.Admin + "," + AppRoles.DonationsManager)]
     public IActionResult GetContributions(
         int page = 1,
         int pageSize = 20,
@@ -490,6 +498,7 @@ public class DonorController : ControllerBase
 
     // POST /Donor/Contributions
     [HttpPost("Contributions")]
+    [Authorize(Roles = AppRoles.Admin + "," + AppRoles.DonationsManager)]
     public IActionResult CreateContribution([FromBody] ContributionPayload payload)
     {
         if (!_db.Supporters.Any(s => s.SupporterId == payload.supporterId))
@@ -525,6 +534,7 @@ public class DonorController : ControllerBase
 
     // PUT /Donor/Contributions/{id}
     [HttpPut("Contributions/{id}")]
+    [Authorize(Roles = AppRoles.Admin + "," + AppRoles.DonationsManager)]
     public IActionResult UpdateContribution(int id, [FromBody] ContributionPayload payload)
     {
         var donation = _db.Donations.Include(d => d.Supporter).FirstOrDefault(d => d.DonationId == id);
@@ -557,6 +567,7 @@ public class DonorController : ControllerBase
 
     // PUT /Donor/{id}
     [HttpPut("{id}")]
+    [Authorize(Roles = AppRoles.Admin + "," + AppRoles.DonationsManager)]
     public IActionResult UpdateDonor(int id, [FromBody] SupporterPayload payload)
     {
         var donor = _db.Supporters.FirstOrDefault(s => s.SupporterId == id);
@@ -584,6 +595,7 @@ public class DonorController : ControllerBase
 
     // DELETE /Donor/{id}
     [HttpDelete("{id}")]
+    [Authorize(Roles = AppRoles.Admin + "," + AppRoles.DonationsManager)]
     public IActionResult DeleteDonor(int id)
     {
         var donor = _db.Supporters.FirstOrDefault(s => s.SupporterId == id);
@@ -610,6 +622,7 @@ public class DonorController : ControllerBase
 
     // DELETE /Donor/Contributions/{id}
     [HttpDelete("Contributions/{id}")]
+    [Authorize(Roles = AppRoles.Admin + "," + AppRoles.DonationsManager)]
     public IActionResult DeleteContribution(int id)
     {
         var donation = _db.Donations.FirstOrDefault(d => d.DonationId == id);

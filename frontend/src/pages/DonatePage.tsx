@@ -1,31 +1,54 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AuthService } from '../api/AuthService';
 import { API_BASE_URL } from '../api/config';
+import { apiFetch } from '../api/http';
 import { Heart, UserX, User, ArrowRight, LogIn } from 'lucide-react';
+import { useAuthSession } from '../authSession';
 
 const AMOUNTS: number[] = [10, 25, 50, 100, 250, 500];
 type AuthMode = 'anonymous' | 'loggedin';
 
-function getStoredUserForm() {
-  const email = AuthService.getUserEmail() ?? '';
-  const fullName = AuthService.getUserName() ?? '';
-  const parts = fullName.trim().split(/\s+/);
-  const firstName = parts[0] ?? '';
-  const lastName = parts.slice(1).join(' ');
-  return { firstName, lastName, email };
-}
-
 function DonatePage() {
   const navigate = useNavigate();
-  const isLoggedIn = AuthService.isAuthenticated();
+  const { isAuthenticated, currentUser, sessionReady } = useAuthSession();
 
-  const [authMode, setAuthMode] = useState<AuthMode>(isLoggedIn ? 'loggedin' : 'anonymous');
+  const [authMode, setAuthMode] = useState<AuthMode>('anonymous');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [amount, setAmount] = useState<number | null>(50);
   const [customAmount, setCustomAmount] = useState('');
   const [notes, setNotes] = useState('');
-  const [form, setForm] = useState(() => isLoggedIn ? getStoredUserForm() : { firstName: '', lastName: '', email: '' });
+  const [form, setForm] = useState({ firstName: '', lastName: '', email: '' });
+
+  useEffect(() => {
+    if (!sessionReady || !isAuthenticated || !currentUser) {
+      return;
+    }
+
+    const parts = currentUser.displayName.trim().split(/\s+/).filter(Boolean);
+    const firstName = parts[0] ?? '';
+    const lastName = parts.slice(1).join(' ');
+    setAuthMode('loggedin');
+    setForm({
+      firstName,
+      lastName,
+      email: currentUser.email ?? '',
+    });
+  }, [currentUser, isAuthenticated, sessionReady]);
+
+  useEffect(() => {
+    if (!isAuthenticated || authMode !== 'loggedin' || !currentUser) {
+      return;
+    }
+
+    const parts = currentUser.displayName.trim().split(/\s+/).filter(Boolean);
+    const firstName = parts[0] ?? '';
+    const lastName = parts.slice(1).join(' ');
+    setForm({
+      firstName,
+      lastName,
+      email: currentUser.email ?? '',
+    });
+  }, [authMode, currentUser, isAuthenticated]);
 
   const finalAmount = customAmount ? Number(customAmount) : (amount ?? 0);
 
@@ -68,7 +91,7 @@ function DonatePage() {
     };
 
     try {
-      const res = await fetch(`${API_BASE_URL}/Donation/CreateDonation`, {
+      const res = await apiFetch(`${API_BASE_URL}/Donation/CreateDonation`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -84,7 +107,7 @@ function DonatePage() {
     }
   }
 
-  const showLoginTeaser = authMode === 'loggedin' && !isLoggedIn;
+  const showLoginTeaser = authMode === 'loggedin' && !isAuthenticated;
 
   return (
     <div>
@@ -151,18 +174,18 @@ function DonatePage() {
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <label className="block">
                     <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">First Name</span>
-                    <input name="firstName" value={form.firstName} onChange={handleInput} className={`input-field ${isLoggedIn ? 'bg-gray-50 dark:bg-gray-800/50' : ''}`}/>
+                    <input name="firstName" value={form.firstName} onChange={handleInput} className={`input-field ${isAuthenticated ? 'bg-gray-50 dark:bg-gray-800/50' : ''}`}/>
                     {errors.firstName && <p className="mt-1 text-xs text-red-500">{errors.firstName}</p>}
                   </label>
                   <label className="block">
                     <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Last Name</span>
-                    <input name="lastName" value={form.lastName} onChange={handleInput} className={`input-field ${isLoggedIn ? 'bg-gray-50 dark:bg-gray-800/50' : ''}`}/>
+                    <input name="lastName" value={form.lastName} onChange={handleInput} className={`input-field ${isAuthenticated ? 'bg-gray-50 dark:bg-gray-800/50' : ''}`}/>
                     {errors.lastName && <p className="mt-1 text-xs text-red-500">{errors.lastName}</p>}
                   </label>
                 </div>
                 <label className="block">
                   <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Email</span>
-                  <input name="email" value={form.email} onChange={handleInput} className={`input-field ${isLoggedIn ? 'bg-gray-50 dark:bg-gray-800/50' : ''}`} readOnly={isLoggedIn} />
+                  <input name="email" value={form.email} onChange={handleInput} className={`input-field ${isAuthenticated ? 'bg-gray-50 dark:bg-gray-800/50' : ''}`} readOnly={isAuthenticated} />
                   {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
                 </label>
               </div>
@@ -225,3 +248,4 @@ function DonatePage() {
 }
 
 export default DonatePage;
+

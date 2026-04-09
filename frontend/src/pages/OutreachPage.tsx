@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchOutreachSummary, OutreachSummary } from '../api/OutreachAPI';
-import { AuthService } from '../api/AuthService';
+import { useAuthSession } from '../authSession';
 import { BarChart3, Globe, MousePointerClick, TrendingUp } from 'lucide-react';
 
 function formatPercent(value: number) {
@@ -10,20 +10,26 @@ function formatPercent(value: number) {
 
 export default function OutreachPage() {
   const navigate = useNavigate();
+  const { isAuthenticated, sessionReady } = useAuthSession();
   const [data, setData] = useState<OutreachSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!AuthService.isAuthenticated()) {
+    if (!sessionReady) {
+      return;
+    }
+
+    if (!isAuthenticated) {
       navigate('/login', { replace: true, state: { returnTo: '/outreach' } });
       return;
     }
+
     fetchOutreachSummary()
       .then(setData)
       .catch(() => setError('Unable to load outreach analytics right now.'))
       .finally(() => setLoading(false));
-  }, [navigate]);
+  }, [isAuthenticated, navigate, sessionReady]);
 
   if (loading) return <div className="flex min-h-[50vh] items-center justify-center text-gray-500 dark:text-gray-400">Loading outreach insights...</div>;
   if (error || !data) return (

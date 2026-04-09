@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
-import { AuthService } from '../api/AuthService';
 import AllocationPage, { type AllocationPageHandle } from './AllocationPage';
 import { Supporter, Contribution, DonorFilterOptions, SupporterFilters, ContributionFilters } from '../types/Donor';
 import {
@@ -37,6 +36,7 @@ import {
   PanelLeftOpen,
   BarChart3,
 } from 'lucide-react';
+import { useAuthSession } from '../authSession';
 
 const PAGE_SIZE_OPTIONS = [20, 50, 100];
 
@@ -223,7 +223,7 @@ const contributionRequired: { key: keyof Contribution; label: string }[] = [
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function DonorPage() {
-  const isLoggedIn = AuthService.isAuthenticated();
+  const { isAuthenticated, sessionReady } = useAuthSession();
   const location = useLocation();
   const allocationPageRef = useRef<AllocationPageHandle>(null);
 
@@ -301,7 +301,7 @@ export default function DonorPage() {
   // ── Load data when tab / page / filters change ───────────────────────────
   const loadData = () => {
 
-    if (!isLoggedIn) return;
+    if (!sessionReady || !isAuthenticated) return;
     setLoading(true);
     setError(null);
     if (activeTab === 'supporters') {
@@ -323,7 +323,7 @@ export default function DonorPage() {
     }
   };
 
-  useEffect(() => { loadData(); }, [activeTab, page, pageSize, supporterFilters, contributionFilters, isLoggedIn]);
+  useEffect(() => { loadData(); }, [activeTab, page, pageSize, supporterFilters, contributionFilters, isAuthenticated, sessionReady]);
 
   // ── Open contribution modal from navigation state ───────────────────────
   useEffect(() => {
@@ -541,7 +541,7 @@ export default function DonorPage() {
 
   return (
     <>
-      {!isLoggedIn ? accessDeniedScreen : (
+      {!isAuthenticated ? accessDeniedScreen : (
         <div className="flex flex-col lg:flex-row">
 
           {/* ── SIDEBAR ───────────────────────────────────────────────────── */}

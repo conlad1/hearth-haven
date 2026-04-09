@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { API_BASE_URL } from '../api/config';
-import { AuthService } from '../api/AuthService';
+import { apiFetch } from '../api/http';
 import { ArrowLeft, CalendarDays, DollarSign, HeartHandshake, Repeat, Wallet } from 'lucide-react';
 
 type DonorPortalHistoryItem = {
@@ -45,11 +45,7 @@ export default function DonorPortalPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const email = AuthService.getUserEmail();
-    const params = new URLSearchParams();
-    if (email) params.set('email', email);
-
-    fetch(`${API_BASE_URL}/Donor/Portal?${params}`, { credentials: 'include' })
+    apiFetch(`${API_BASE_URL}/Donor/Portal`, { credentials: 'include' })
       .then(async (res) => {
         if (!res.ok) {
           throw new Error(`Failed to load donor portal: ${res.status}`);
@@ -58,9 +54,6 @@ export default function DonorPortalPage() {
       })
       .then((portal) => {
         setData(portal);
-        if (portal.displayName) {
-          AuthService.setUserName(portal.displayName);
-        }
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
@@ -174,3 +167,4 @@ export default function DonorPortalPage() {
     </div>
   );
 }
+

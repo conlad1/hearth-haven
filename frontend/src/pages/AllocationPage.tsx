@@ -2,6 +2,7 @@ import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Trash2, Pencil, Check, X, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { API_BASE_URL as API } from '../api/config';
+import { apiFetch } from '../api/http';
 
 const PROGRAM_AREAS = ['Education', 'Wellbeing', 'Operations', 'Transport', 'Maintenance', 'Outreach'];
 
@@ -111,7 +112,7 @@ const AllocationPage = forwardRef<AllocationPageHandle, AllocationPageProps>(fun
         params.set('programArea', programAreaFilter);
       }
 
-      const res = await fetch(`${API}/Allocation?${params.toString()}`);
+      const res = await apiFetch(`${API}/Allocation?${params.toString()}`);
       if (!res.ok) throw new Error(await res.text());
 
       const json = await res.json();
@@ -127,8 +128,8 @@ const AllocationPage = forwardRef<AllocationPageHandle, AllocationPageProps>(fun
 
   useEffect(() => {
     Promise.all([
-      fetch(`${API}/Allocation/Safehouses`),
-      fetch(`${API}/Allocation/Donations`),
+      apiFetch(`${API}/Allocation/Safehouses`),
+      apiFetch(`${API}/Allocation/Donations`),
     ]).then(async ([sRes, dRes]) => {
       if (sRes.ok) setSafehouses(await sRes.json());
       if (dRes.ok) setDonations(await dRes.json());
@@ -190,7 +191,7 @@ const AllocationPage = forwardRef<AllocationPageHandle, AllocationPageProps>(fun
     try {
       const url = editing ? `${API}/Allocation/${editing.allocationId}` : `${API}/Allocation`;
       const method = editing ? 'PUT' : 'POST';
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -211,7 +212,7 @@ const AllocationPage = forwardRef<AllocationPageHandle, AllocationPageProps>(fun
 
   async function handleDelete(id: number) {
     try {
-      const res = await fetch(`${API}/Allocation/${id}`, { method: 'DELETE' });
+      const res = await apiFetch(`${API}/Allocation/${id}`, { method: 'DELETE' });
       if (!res.ok) {
         alert(await res.text());
         return;
@@ -618,3 +619,4 @@ const AllocationPage = forwardRef<AllocationPageHandle, AllocationPageProps>(fun
 });
 
 export default AllocationPage;
+

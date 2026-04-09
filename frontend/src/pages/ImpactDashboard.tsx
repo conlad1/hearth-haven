@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, Home, Banknote, Handshake, ArrowRight } from 'lucide-react';
 import { API_BASE_URL as API } from '../api/config';
+import { apiFetch } from '../api/http';
 
 interface Stats {
   totalDonations: number;
@@ -32,7 +33,7 @@ export default function ImpactDashboard() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`${API}/Impact/Stats`)
+    apiFetch(`${API}/Impact/Stats`)
       .then((r) => {
         if (!r.ok) throw new Error('Failed to load');
         return r.json();
@@ -146,3 +147,4 @@ export default function ImpactDashboard() {
     </div>
   );
 }
+

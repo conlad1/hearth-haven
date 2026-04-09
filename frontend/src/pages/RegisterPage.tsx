@@ -36,10 +36,8 @@ export default function RegisterPage() {
     }
 
     try {
-      const response = await AuthService.register(email, password);
+      const response = await AuthService.register(email, fullName, password);
       if (response.ok) {
-        AuthService.setUserName(fullName);
-        AuthService.setUserEmail(email);
         navigate('/login', {
           replace: true,
           state: { registered: true, returnTo: locationState?.returnTo || '/' },

@@ -1,7 +1,23 @@
 import { Link } from 'react-router-dom';
 import { Phone } from 'lucide-react';
+import type { CurrentUser } from '../api/AuthService';
+import { canShowLink, footerLinks, getCurrentRole } from '../authz';
 
-function Footer() {
+type FooterProps = {
+  isAuthenticated: boolean;
+  currentUser: CurrentUser | null;
+};
+
+function Footer({ isAuthenticated, currentUser }: FooterProps) {
+  const role = getCurrentRole(currentUser);
+  const visibleLinks = footerLinks.filter((link) => canShowLink(link, isAuthenticated, role));
+
+  const quickLinks = visibleLinks.filter((link) => ['/', '/impact', '/donate', '/resources'].includes(link.to));
+  const accountLinks = isAuthenticated
+    ? visibleLinks.filter((link) => ['/profile'].includes(link.to))
+    : visibleLinks.filter((link) => ['/login', '/register'].includes(link.to));
+  const managerLinks = visibleLinks.filter((link) => !quickLinks.includes(link) && !accountLinks.includes(link) && !['/privacy', '/terms'].includes(link.to));
+
   return (
     <footer className="border-t border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
       <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
@@ -47,11 +63,9 @@ function Footer() {
           <div>
             <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-900 dark:text-white">Quick Links</h4>
             <div className="flex flex-col gap-2.5">
-              <Link to="/" className="text-sm text-gray-500 no-underline transition hover:text-orange-500 dark:text-gray-400">Home</Link>
-              <Link to="/outreach" className="text-sm text-gray-500 no-underline transition hover:text-orange-500 dark:text-gray-400">Outreach</Link>
-              <Link to="/cases" className="text-sm text-gray-500 no-underline transition hover:text-orange-500 dark:text-gray-400">Case Management</Link>
-              <Link to="/donors" className="text-sm text-gray-500 no-underline transition hover:text-orange-500 dark:text-gray-400">Donors</Link>
-              <Link to="/donate" className="text-sm text-gray-500 no-underline transition hover:text-orange-500 dark:text-gray-400">Donate</Link>
+              {quickLinks.map(({ to, label }) => (
+                <Link key={to} to={to} className="text-sm text-gray-500 no-underline transition hover:text-orange-500 dark:text-gray-400">{label}</Link>
+              ))}
             </div>
           </div>
 
@@ -59,10 +73,12 @@ function Footer() {
           <div>
             <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-900 dark:text-white">Get Involved</h4>
             <div className="flex flex-col gap-2.5">
-              <Link to="/donate" className="text-sm text-gray-500 no-underline transition hover:text-orange-500 dark:text-gray-400">Donate</Link>
-              <Link to="/register" className="text-sm text-gray-500 no-underline transition hover:text-orange-500 dark:text-gray-400">Create an Account</Link>
-              <Link to="/login" className="text-sm text-gray-500 no-underline transition hover:text-orange-500 dark:text-gray-400">Sign In</Link>
-              <Link to="/outreach" className="text-sm text-gray-500 no-underline transition hover:text-orange-500 dark:text-gray-400">Outreach Insights</Link>
+              {accountLinks.map(({ to, label }) => (
+                <Link key={to} to={to} className="text-sm text-gray-500 no-underline transition hover:text-orange-500 dark:text-gray-400">{label}</Link>
+              ))}
+              {managerLinks.map(({ to, label }) => (
+                <Link key={to} to={to} className="text-sm text-gray-500 no-underline transition hover:text-orange-500 dark:text-gray-400">{label}</Link>
+              ))}
             </div>
           </div>
 

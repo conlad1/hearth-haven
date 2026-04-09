@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { API_BASE_URL } from '../api/config';
+import { apiFetch } from '../api/http';
 import { Coffee, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -10,7 +11,7 @@ export default function TeapotPage() {
   useEffect(() => {
     const checkTeapot = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/teapot`);
+        const response = await apiFetch(`${API_BASE_URL}/teapot`);
         setStatus(response.status);
         const payload = await response.json();
         setMessage(payload?.message || "I'm a teapot.");
@@ -86,3 +87,4 @@ export default function TeapotPage() {
     </div>
   );
 }
+

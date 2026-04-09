@@ -1,4 +1,5 @@
 import { API_BASE_URL } from './config';
+import { apiFetch } from './http';
 
 // -- Shared filter params --
 
@@ -138,31 +139,32 @@ export interface ReintegrationRates {
 // -- Fetch functions --
 
 export const fetchReportsSummary = async (filters: ReportsFilters = {}): Promise<ReportsSummary> => {
-  const response = await fetch(`${API_BASE_URL}/Reports/Summary${buildParams(filters)}`);
+  const response = await apiFetch(`${API_BASE_URL}/Reports/Summary${buildParams(filters)}`);
   if (!response.ok) throw new Error(`Failed to fetch reports summary: ${response.status}`);
   return await response.json();
 };
 
 export const fetchDonationTrends = async (filters: ReportsFilters = {}): Promise<DonationTrends> => {
-  const response = await fetch(`${API_BASE_URL}/Reports/DonationTrends${buildParams(filters)}`);
+  const response = await apiFetch(`${API_BASE_URL}/Reports/DonationTrends${buildParams(filters)}`);
   if (!response.ok) throw new Error(`Failed to fetch donation trends: ${response.status}`);
   return await response.json();
 };
 
 export const fetchResidentOutcomes = async (filters: ReportsFilters = {}): Promise<ResidentOutcomes> => {
-  const response = await fetch(`${API_BASE_URL}/Reports/ResidentOutcomes${buildParams(filters)}`);
+  const response = await apiFetch(`${API_BASE_URL}/Reports/ResidentOutcomes${buildParams(filters)}`);
   if (!response.ok) throw new Error(`Failed to fetch resident outcomes: ${response.status}`);
   return await response.json();
 };
 
 export const fetchSafehousePerformance = async (filters: ReportsFilters = {}): Promise<SafehousePerformance> => {
-  const response = await fetch(`${API_BASE_URL}/Reports/SafehousePerformance${buildParams(filters)}`);
+  const response = await apiFetch(`${API_BASE_URL}/Reports/SafehousePerformance${buildParams(filters)}`);
   if (!response.ok) throw new Error(`Failed to fetch safehouse performance: ${response.status}`);
   return await response.json();
 };
 
 export const fetchReintegrationRates = async (filters: ReportsFilters = {}): Promise<ReintegrationRates> => {
-  const response = await fetch(`${API_BASE_URL}/Reports/ReintegrationRates${buildParams(filters)}`);
+  const response = await apiFetch(`${API_BASE_URL}/Reports/ReintegrationRates${buildParams(filters)}`);
   if (!response.ok) throw new Error(`Failed to fetch reintegration rates: ${response.status}`);
   return await response.json();
 };
+

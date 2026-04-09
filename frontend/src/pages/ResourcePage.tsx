@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Phone, MapPin, BookOpen } from "lucide-react";
 import { API_BASE_URL as API } from "../api/config";
+import { apiFetch } from '../api/http';
 
 interface SafehouseFilterOptions {
   regions: string[];
@@ -10,7 +11,7 @@ function ResourcesPage() {
   const [regions, setRegions] = useState<string[]>([]);
 
   useEffect(() => {
-    fetch(`${API}/Safehouse/FilterOptions`)
+    apiFetch(`${API}/Safehouse/PublicRegions`)
       .then((response) => {
         if (!response.ok) throw new Error("Failed to load safehouse regions");
         return response.json() as Promise<SafehouseFilterOptions>;
@@ -82,3 +83,4 @@ function ResourcesPage() {
 }
 
 export default ResourcesPage;
+

@@ -9,10 +9,10 @@ namespace HearthHaven.API.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly UserManager<IdentityUser> _userManager;
-        private readonly SignInManager<IdentityUser> _signInManager;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly SignInManager<ApplicationUser> _signInManager;
 
-        public AuthController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager)
+        public AuthController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager)
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -27,15 +27,20 @@ namespace HearthHaven.API.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto model)
         {
-            // 1. Create a new user object
-            var user = new IdentityUser { UserName = model.Email, Email = model.Email };
+            var user = new ApplicationUser
+            {
+                UserName = model.Email,
+                Email = model.Email,
+                DisplayName = string.IsNullOrWhiteSpace(model.DisplayName)
+                    ? model.Email.Trim()
+                    : model.DisplayName.Trim(),
+            };
             
-            // 2. Pass it to Identity to hash the password and save to the database
             var result = await _userManager.CreateAsync(user, model.Password);
 
             if (result.Succeeded)
             {
-                // In the future, we will link this AspNetUser to their row in the 'supporters' table here
+                await _userManager.AddToRoleAsync(user, AppRoles.User);
                 return Ok(new { Message = "User registered successfully." });
             }
 
@@ -45,7 +50,6 @@ namespace HearthHaven.API.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto model)
         {
-            // PasswordSignInAsync handles password verification and lockout policies securely
             var result = await _signInManager.PasswordSignInAsync(
                 model.Email, 
                 model.Password, 
@@ -54,7 +58,6 @@ namespace HearthHaven.API.Controllers
 
             if (result.Succeeded)
             {
-                // For now, return a success message. Later, we'll return a JWT token or cookie here!
                 return Ok(new { Message = "Login successful." });
             }
 
@@ -66,6 +69,30 @@ namespace HearthHaven.API.Controllers
         {
             await _signInManager.SignOutAsync();
             return Ok(new { Message = "Logout successful." });
+        }
+
+        [HttpGet("me")]
+        [Authorize]
+        public async Task<ActionResult<CurrentUserDto>> Me()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+
+            var email = user.Email ?? user.UserName ?? string.Empty;
+            var displayName = string.IsNullOrWhiteSpace(user.DisplayName)
+                ? email
+                : user.DisplayName.Trim();
+            var roles = await _userManager.GetRolesAsync(user);
+
+            return Ok(new CurrentUserDto
+            {
+                Email = email,
+                DisplayName = displayName,
+                Roles = roles.ToArray(),
+            });
         }
 
         [HttpPost("change-password")]

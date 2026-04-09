@@ -9,10 +9,11 @@ import {
 } from '../types/Donor';
 
 import { API_BASE_URL } from './config';
+import { apiFetch } from './http';
 
 // ── FETCH FILTER OPTIONS ─────────────────────────────────────
 export const fetchDonorFilterOptions = async (): Promise<DonorFilterOptions> => {
-  const res = await fetch(`${API_BASE_URL}/Donor/FilterOptions`, { credentials: 'include' });
+  const res = await apiFetch(`${API_BASE_URL}/Donor/FilterOptions`, { credentials: 'include' });
   if (!res.ok) throw new Error(`Failed to fetch filter options: ${res.status}`);
   return res.json();
 };
@@ -30,7 +31,7 @@ export const fetchSupporters = async (
   if (filters.status) params.set('status', filters.status);
   if (filters.search) params.set('search', filters.search);
 
-  const res = await fetch(`${API_BASE_URL}/Donor/Supporters?${params}`, {
+  const res = await apiFetch(`${API_BASE_URL}/Donor/Supporters?${params}`, {
     credentials: 'include',
   });
 
@@ -53,7 +54,7 @@ export const fetchContributions = async (
   if (filters.supporterId) params.set('supporterId', String(filters.supporterId));
   if (filters.search) params.set('search', filters.search);
 
-  const res = await fetch(`${API_BASE_URL}/Donor/Contributions?${params}`, {
+  const res = await apiFetch(`${API_BASE_URL}/Donor/Contributions?${params}`, {
     credentials: 'include',
   });
 
@@ -63,7 +64,7 @@ export const fetchContributions = async (
 
 // ── CREATE SUPPORTER ────────────────────────────────────────
 export const createSupporter = async (data: Partial<Supporter>): Promise<Supporter> => {
-  const res = await fetch(`${API_BASE_URL}/Donor/Supporters`, {
+  const res = await apiFetch(`${API_BASE_URL}/Donor/Supporters`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -76,7 +77,7 @@ export const createSupporter = async (data: Partial<Supporter>): Promise<Support
 
 // ── ✅ UPDATE SUPPORTER (FIXED) ─────────────────────────────
 export const updateSupporter = async (id: number, data: Supporter): Promise<Supporter> => {
-  const res = await fetch(`${API_BASE_URL}/Donor/${id}`, {
+  const res = await apiFetch(`${API_BASE_URL}/Donor/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -89,7 +90,7 @@ export const updateSupporter = async (id: number, data: Supporter): Promise<Supp
 
 // ── ✅ DELETE SUPPORTER (FIXED) ─────────────────────────────
 export const deleteSupporter = async (id: number): Promise<void> => {
-  const res = await fetch(`${API_BASE_URL}/Donor/${id}`, {
+  const res = await apiFetch(`${API_BASE_URL}/Donor/${id}`, {
     method: 'DELETE',
     credentials: 'include',
   });
@@ -99,7 +100,7 @@ export const deleteSupporter = async (id: number): Promise<void> => {
 
 // ── CREATE CONTRIBUTION ─────────────────────────────────────
 export const createContribution = async (data: Partial<Contribution>): Promise<Contribution> => {
-  const res = await fetch(`${API_BASE_URL}/Donor/Contributions`, {
+  const res = await apiFetch(`${API_BASE_URL}/Donor/Contributions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -112,7 +113,7 @@ export const createContribution = async (data: Partial<Contribution>): Promise<C
 
 // ── UPDATE CONTRIBUTION ─────────────────────────────────────
 export const updateContribution = async (id: number, data: Contribution): Promise<Contribution> => {
-  const res = await fetch(`${API_BASE_URL}/Donor/Contributions/${id}`, {
+  const res = await apiFetch(`${API_BASE_URL}/Donor/Contributions/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -125,7 +126,7 @@ export const updateContribution = async (id: number, data: Contribution): Promis
 
 // ── DELETE CONTRIBUTION ─────────────────────────────────────
 export const deleteContribution = async (id: number): Promise<void> => {
-  const res = await fetch(`${API_BASE_URL}/Donor/Contributions/${id}`, {
+  const res = await apiFetch(`${API_BASE_URL}/Donor/Contributions/${id}`, {
     method: 'DELETE',
     credentials: 'include',
   });
@@ -134,10 +135,11 @@ export const deleteContribution = async (id: number): Promise<void> => {
 };
 
 export const fetchDonorAnalytics = async (): Promise<DonorAnalyticsResponse> => {
-  const res = await fetch(`${API_BASE_URL}/Donor/Analytics`, {
+  const res = await apiFetch(`${API_BASE_URL}/Donor/Analytics`, {
     credentials: 'include',
   });
 
   if (!res.ok) throw new Error(`Failed to fetch donor analytics: ${res.status}`);
   return res.json();
 };
+

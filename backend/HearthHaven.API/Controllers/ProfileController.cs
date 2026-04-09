@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using HearthHaven.API.Models;
 
 namespace HearthHaven.API.Controllers;
 
@@ -12,9 +13,9 @@ namespace HearthHaven.API.Controllers;
 public class ProfileController : ControllerBase
 {
     private readonly HearthHavenDbContext _db;
-    private readonly UserManager<IdentityUser> _userManager;
+    private readonly UserManager<ApplicationUser> _userManager;
 
-    public ProfileController(HearthHavenDbContext db, UserManager<IdentityUser> userManager)
+    public ProfileController(HearthHavenDbContext db, UserManager<ApplicationUser> userManager)
     {
         _db = db;
         _userManager = userManager;
@@ -95,7 +96,7 @@ public class ProfileController : ControllerBase
         createdAt = supporter.CreatedAt.ToString("o"),
     };
 
-    private async Task<(IdentityUser user, Supporter? supporter)> ResolveCurrentAsync()
+    private async Task<(ApplicationUser user, Supporter? supporter)> ResolveCurrentAsync()
     {
         var user = await _userManager.GetUserAsync(User)
             ?? throw new UnauthorizedAccessException("No authenticated user.");
@@ -117,6 +118,11 @@ public class ProfileController : ControllerBase
     {
         var (user, supporter) = await ResolveCurrentAsync();
         var email = user.Email ?? user.UserName;
+        var roles = await _userManager.GetRolesAsync(user);
+        var role = roles.FirstOrDefault() ?? AppRoles.User;
+        var identityDisplayName = string.IsNullOrWhiteSpace(user.DisplayName)
+            ? FallbackDisplayName(email)
+            : user.DisplayName.Trim();
 
         if (supporter == null)
         {
@@ -137,10 +143,31 @@ public class ProfileController : ControllerBase
                 firstDonationDate = (string?)null,
                 acquisitionChannel = (string?)null,
                 createdAt = (string?)null,
+                identityDisplayName,
+                role,
             });
         }
 
-        return Ok(MapProfile(supporter));
+        return Ok(new
+        {
+            supporterId = supporter.SupporterId,
+            supporterType = supporter.SupporterType,
+            displayName = supporter.DisplayName,
+            organizationName = supporter.OrganizationName,
+            firstName = supporter.FirstName,
+            lastName = supporter.LastName,
+            relationshipType = supporter.RelationshipType,
+            region = supporter.Region,
+            country = supporter.Country,
+            email = supporter.Email,
+            phone = supporter.Phone,
+            status = supporter.Status,
+            firstDonationDate = supporter.FirstDonationDate?.ToString("yyyy-MM-dd"),
+            acquisitionChannel = supporter.AcquisitionChannel,
+            createdAt = supporter.CreatedAt.ToString("o"),
+            identityDisplayName,
+            role,
+        });
     }
 
     [HttpPut("me")]
@@ -168,6 +195,20 @@ public class ProfileController : ControllerBase
             {
                 return BadRequest(identityResult.Errors.Select(e => e.Description));
             }
+        }
+
+        user.DisplayName = ComputeDisplayName(
+            payload.displayName,
+            payload.organizationName,
+            payload.firstName,
+            payload.lastName,
+            newEmail,
+            payload.supporterType);
+
+        var nameUpdateResult = await _userManager.UpdateAsync(user);
+        if (!nameUpdateResult.Succeeded)
+        {
+            return BadRequest(nameUpdateResult.Errors.Select(e => e.Description));
         }
 
         if (supporter == null)
@@ -228,6 +269,28 @@ public class ProfileController : ControllerBase
 
         await _db.SaveChangesAsync();
 
-        return Ok(MapProfile(supporter));
+        var roles = await _userManager.GetRolesAsync(user);
+        var role = roles.FirstOrDefault() ?? AppRoles.User;
+
+        return Ok(new
+        {
+            supporterId = supporter.SupporterId,
+            supporterType = supporter.SupporterType,
+            displayName = supporter.DisplayName,
+            organizationName = supporter.OrganizationName,
+            firstName = supporter.FirstName,
+            lastName = supporter.LastName,
+            relationshipType = supporter.RelationshipType,
+            region = supporter.Region,
+            country = supporter.Country,
+            email = supporter.Email,
+            phone = supporter.Phone,
+            status = supporter.Status,
+            firstDonationDate = supporter.FirstDonationDate?.ToString("yyyy-MM-dd"),
+            acquisitionChannel = supporter.AcquisitionChannel,
+            createdAt = supporter.CreatedAt.ToString("o"),
+            identityDisplayName = string.IsNullOrWhiteSpace(user.DisplayName) ? FallbackDisplayName(newEmail) : user.DisplayName.Trim(),
+            role,
+        });
     }
 }

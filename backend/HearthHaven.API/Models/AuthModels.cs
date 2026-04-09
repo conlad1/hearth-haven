@@ -9,6 +9,9 @@ namespace HearthHaven.API.Models
         public required string Email { get; set; }
 
         [Required]
+        public required string DisplayName { get; set; }
+
+        [Required]
         public required string Password { get; set; }
     }
 
@@ -20,5 +23,12 @@ namespace HearthHaven.API.Models
 
         [Required]
         public required string Password { get; set; }
+    }
+
+    public sealed class CurrentUserDto
+    {
+        public required string Email { get; set; }
+        public required string DisplayName { get; set; }
+        public required string[] Roles { get; set; }
     }
 }

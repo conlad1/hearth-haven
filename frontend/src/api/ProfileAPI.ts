@@ -1,9 +1,12 @@
 import { API_BASE_URL } from './config';
+import { apiFetch } from './http';
 
 export interface UserProfile {
   supporterId: number | null;
   supporterType: string;
   displayName: string;
+  identityDisplayName?: string | null;
+  role?: string | null;
   organizationName: string | null;
   firstName: string | null;
   lastName: string | null;
@@ -19,7 +22,7 @@ export interface UserProfile {
 }
 
 export const fetchMyProfile = async (): Promise<UserProfile> => {
-  const res = await fetch(`${API_BASE_URL}/api/Profile/me`, {
+  const res = await apiFetch(`${API_BASE_URL}/api/Profile/me`, {
     credentials: 'include',
   });
 
@@ -28,7 +31,7 @@ export const fetchMyProfile = async (): Promise<UserProfile> => {
 };
 
 export const updateMyProfile = async (profile: UserProfile): Promise<UserProfile> => {
-  const res = await fetch(`${API_BASE_URL}/api/Profile/me`, {
+  const res = await apiFetch(`${API_BASE_URL}/api/Profile/me`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -44,7 +47,7 @@ export const updateMyProfile = async (profile: UserProfile): Promise<UserProfile
 };
 
 export const changeMyPassword = async (currentPassword: string, newPassword: string): Promise<void> => {
-  const res = await fetch(`${API_BASE_URL}/api/Auth/change-password`, {
+  const res = await apiFetch(`${API_BASE_URL}/api/Auth/change-password`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -56,3 +59,4 @@ export const changeMyPassword = async (currentPassword: string, newPassword: str
     throw new Error(message || `Failed to change password: ${res.status}`);
   }
 };
+

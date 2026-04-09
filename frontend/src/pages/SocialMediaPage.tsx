@@ -4,6 +4,7 @@ import {
   Trash2, Pencil, Check, X, ChevronLeft, ChevronRight, Search, Plus,
 } from 'lucide-react';
 import { API_BASE_URL as API } from '../api/config';
+import { apiFetch } from '../api/http';
 
 const PAGE_SIZE_OPTIONS = [20, 50, 100];
 
@@ -140,7 +141,7 @@ export default function SocialMediaPage() {
       if (platformFilter) params.set('platform', platformFilter);
       if (postTypeFilter) params.set('postType', postTypeFilter);
 
-      const res = await fetch(`${API}/SocialMediaPost?${params}`);
+      const res = await apiFetch(`${API}/SocialMediaPost?${params}`);
       if (!res.ok) throw new Error(await res.text());
       const json = await res.json();
       setPosts(json.data);
@@ -154,7 +155,7 @@ export default function SocialMediaPage() {
   }
 
   useEffect(() => {
-    fetch(`${API}/SocialMediaPost/FilterOptions`)
+    apiFetch(`${API}/SocialMediaPost/FilterOptions`)
       .then((r) => (r.ok ? r.json() : Promise.reject('Failed to load filter options')))
       .then(setFilterOpts)
       .catch(() => {});
@@ -255,7 +256,7 @@ export default function SocialMediaPage() {
     try {
       const url = editing ? `${API}/SocialMediaPost/${editing.postId}` : `${API}/SocialMediaPost`;
       const method = editing ? 'PUT' : 'POST';
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -264,7 +265,7 @@ export default function SocialMediaPage() {
       setModalOpen(false);
       loadPosts();
       // Refresh filter options in case new values were added
-      fetch(`${API}/SocialMediaPost/FilterOptions`)
+      apiFetch(`${API}/SocialMediaPost/FilterOptions`)
         .then((r) => (r.ok ? r.json() : null))
         .then((d) => d && setFilterOpts(d))
         .catch(() => {});
@@ -277,7 +278,7 @@ export default function SocialMediaPage() {
 
   async function handleDelete(id: number) {
     try {
-      const res = await fetch(`${API}/SocialMediaPost/${id}`, { method: 'DELETE' });
+      const res = await apiFetch(`${API}/SocialMediaPost/${id}`, { method: 'DELETE' });
       if (!res.ok) { alert(await res.text()); return; }
       setModalOpen(false);
       loadPosts();
@@ -859,3 +860,4 @@ export default function SocialMediaPage() {
     </div>
   );
 }
+

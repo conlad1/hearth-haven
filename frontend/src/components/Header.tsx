@@ -1,12 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { AuthService } from '../api/AuthService';
+import { AuthService, type CurrentUser } from '../api/AuthService';
 import { Menu, X, Heart, Sun, Moon, Monitor } from 'lucide-react';
 import { useTheme } from '../ThemeContext';
-import { API_BASE_URL } from '../api/config';
+import { AppRoles, canShowLink, getCurrentRole, headerLinks } from '../authz';
 
 type HeaderProps = {
   isAuthenticated: boolean;
+  currentUser: CurrentUser | null;
 };
 
 function ThemeToggle() {
@@ -39,12 +40,12 @@ function ThemeToggle() {
   );
 }
 
-function Header({ isAuthenticated }: HeaderProps) {
+function Header({ isAuthenticated, currentUser }: HeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [userName, setUserName] = useState(AuthService.getUserName());
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { theme } = useTheme();
+  const role = getCurrentRole(currentUser);
 
   const isActive = (to: string) =>
     to === '/' ? pathname === '/' : pathname.startsWith(to);
@@ -55,60 +56,11 @@ function Header({ isAuthenticated }: HeaderProps) {
     navigate('/');
   };
 
-  const publicNavLinks = [
-    { to: '/', label: 'Home' },
-    { to: '/impact', label: 'Impact' },
-  ];
-
-  const adminNavLinks = [
-    { to: '/admin', label: 'Dashboard' },
-    { to: '/cases', label: 'Case Management' },
-    { to: '/safehouse-management', label: 'Safehouse Management' },
-    { to: '/donors', label: 'Donors' },
-    { to: '/outreach', label: 'Outreach' },
-    { to: '/social-media', label: 'Social Media' },
-    { to: '/reports', label: 'Reports' },
-  ];
-
-  const adminPrefixes = ['/admin', '/cases', '/safehouse-management', '/donors', '/outreach', '/social-media', '/reports'];
-  const isOnAdminPage = adminPrefixes.some(p => pathname === p || pathname.startsWith(p + '/'));
-
-  const navLinks = isOnAdminPage ? publicNavLinks : [...publicNavLinks, ...adminNavLinks];
-  useEffect(() => {
-    const syncName = () => setUserName(AuthService.getUserName());
-    window.addEventListener('auth-change', syncName);
-
-    return () => window.removeEventListener('auth-change', syncName);
-  }, []);
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      setUserName(null);
-      return;
-    }
-
-    const email = AuthService.getUserEmail();
-    if (!email) {
-      return;
-    }
-
-    fetch(`${API_BASE_URL}/Donor/Portal?email=${encodeURIComponent(email)}`, { credentials: 'include' })
-      .then(async (res) => {
-        if (!res.ok) {
-          return null;
-        }
-        return res.json();
-      })
-      .then((data) => {
-        if (data?.displayName) {
-          AuthService.setUserName(data.displayName);
-          setUserName(data.displayName);
-        }
-      })
-      .catch(() => {
-        // Ignore header lookup failures so nav/header work remains stable.
-      });
-  }, [isAuthenticated]);
+  const visibleLinks = headerLinks.filter((link) => canShowLink(link, isAuthenticated, role));
+  const navLinks = visibleLinks.filter((link) => !['/profile', '/login', '/register'].includes(link.to));
+  const userName = currentUser?.displayName ?? null;
+  const primaryActionLabel = role === AppRoles.Admin ? 'Dashboard' : 'My Donations';
+  const primaryActionTo = role === AppRoles.Admin ? '/admin' : '/profile';
 
   return (
     <>
@@ -139,9 +91,6 @@ function Header({ isAuthenticated }: HeaderProps) {
 
           {/* Desktop actions */}
           <div className="hidden items-center gap-2 md:flex">
-            {isAuthenticated && userName && (
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Hi, {userName.split(' ')[0]}</span>
-            )}
             <Link to="/donate" className="btn-primary no-underline">
               <Heart className="h-4 w-4" />
               Donate
@@ -149,10 +98,12 @@ function Header({ isAuthenticated }: HeaderProps) {
             {!isAuthenticated ? (
               <>
                 <Link to="/login" className="btn-ghost no-underline">Sign in</Link>
+                <Link to="/register" className="btn-secondary no-underline">Register</Link>
               </>
             ) : (
               <>
-                <Link to="/profile" className="btn-secondary no-underline">My Donations</Link>
+                {userName && <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Hi, {userName}</span>}
+                <Link to={primaryActionTo} className="btn-secondary no-underline">{primaryActionLabel}</Link>
                 <button className="btn-ghost" onClick={handleLogout}>Logout</button>
               </>
             )}
@@ -204,13 +155,12 @@ function Header({ isAuthenticated }: HeaderProps) {
             {!isAuthenticated ? (
               <>
                 <Link to="/login" onClick={() => setMenuOpen(false)} className="btn-secondary w-full no-underline">Sign in</Link>
+                <Link to="/register" onClick={() => setMenuOpen(false)} className="btn-secondary w-full no-underline">Register</Link>
               </>
             ) : (
               <>
-                {userName && (
-                  <p className="px-1 text-sm font-medium text-gray-700 dark:text-gray-300">Hi, {userName.split(' ')[0]}</p>
-                )}
-                <Link to="/profile" onClick={() => setMenuOpen(false)} className="btn-secondary w-full no-underline">My Donations</Link>
+                {userName && <p className="px-1 text-sm font-medium text-gray-700 dark:text-gray-300">Hi, {userName}</p>}
+                <Link to={primaryActionTo} onClick={() => setMenuOpen(false)} className="btn-secondary w-full no-underline">{primaryActionLabel}</Link>
                 <button className="btn-secondary w-full" onClick={handleLogout}>Logout</button>
               </>
             )}

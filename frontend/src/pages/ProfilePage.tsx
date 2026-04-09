@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, DollarSign, HeartHandshake, Repeat, Save, UserRound, Wallet } from 'lucide-react';
-import { AuthService } from '../api/AuthService';
 import { fetchMyProfile, updateMyProfile, type UserProfile } from '../api/ProfileAPI';
 import { API_BASE_URL } from '../api/config';
+import { apiFetch } from '../api/http';
 
 const blankProfile: UserProfile = {
   supporterId: null,
@@ -73,7 +73,7 @@ export default function ProfilePage() {
   useEffect(() => {
     Promise.all([
       fetchMyProfile(),
-      fetch(`${API_BASE_URL}/Donor/Portal?email=${encodeURIComponent(AuthService.getUserEmail() ?? '')}`, { credentials: 'include' })
+      apiFetch(`${API_BASE_URL}/Donor/Portal`, { credentials: 'include' })
         .then(async (res) => {
           if (!res.ok) throw new Error(`Failed to fetch donation history: ${res.status}`);
           return res.json() as Promise<DonorPortalResponse>;
@@ -82,8 +82,6 @@ export default function ProfilePage() {
       .then(([profileData, portalData]) => {
         setProfile(profileData);
         setPortal(portalData);
-        if (profileData.displayName) AuthService.setUserName(profileData.displayName);
-        if (profileData.email) AuthService.setUserEmail(profileData.email);
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
@@ -102,8 +100,6 @@ export default function ProfilePage() {
     try {
       const updated = await updateMyProfile(profile);
       setProfile(updated);
-      if (updated.displayName) AuthService.setUserName(updated.displayName);
-      if (updated.email) AuthService.setUserEmail(updated.email);
       setPortal((current) => current ? {
         ...current,
         displayName: updated.displayName,
@@ -264,3 +260,4 @@ export default function ProfilePage() {
     </div>
   );
 }
+
