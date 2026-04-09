@@ -63,7 +63,7 @@ function LandingPage() {
       <section className="relative overflow-hidden">
         <div
           className="pointer-events-none absolute inset-0 bg-no-repeat opacity-[0.35]"
-          style={{ backgroundImage: `url(${theme === 'dark' ? '/heart-dark.svg' : '/Logo.svg'})`, backgroundSize: '800px', backgroundPosition: 'center center' }}
+          style={{ backgroundImage: `url(${theme === 'dark' ? '/heart-dark.svg' : '/Logo.svg'} alt-text="The Hearth Project Logo")`, backgroundSize: '800px', backgroundPosition: 'center center' }}
         />
         <div className="relative mx-auto flex min-h-[720px] max-w-4xl flex-col items-center px-4 pt-10 text-center sm:px-6">
           <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-5xl lg:text-6xl">

@@ -58,9 +58,11 @@ function DonatePage() {
 
   function validate() {
     const e: Record<string, string> = {};
-    if (!form.firstName.trim()) e.firstName = 'First name is required.';
-    if (!form.lastName.trim()) e.lastName = 'Last name is required.';
-    if (!form.email.trim()) e.email = 'Email is required.';
+    if (authMode === 'loggedin') {
+      if (!form.firstName.trim()) e.firstName = 'First name is required.';
+      if (!form.lastName.trim()) e.lastName = 'Last name is required.';
+      if (!form.email.trim()) e.email = 'Email is required.';
+    }
     if (!finalAmount || finalAmount <= 0) e.amount = 'Enter a valid amount.';
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -173,18 +175,24 @@ function DonatePage() {
               <div className="mt-6 space-y-4">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <label className="block">
-                    <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">First Name</span>
+                    <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      First Name{authMode === 'anonymous' ? ' (optional)' : ''}
+                    </span>
                     <input name="firstName" value={form.firstName} onChange={handleInput} className={`input-field ${isAuthenticated ? 'bg-gray-50 dark:bg-gray-800/50' : ''}`}/>
                     {errors.firstName && <p className="mt-1 text-xs text-red-500">{errors.firstName}</p>}
                   </label>
                   <label className="block">
-                    <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Last Name</span>
+                    <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Last Name{authMode === 'anonymous' ? ' (optional)' : ''}
+                    </span>
                     <input name="lastName" value={form.lastName} onChange={handleInput} className={`input-field ${isAuthenticated ? 'bg-gray-50 dark:bg-gray-800/50' : ''}`}/>
                     {errors.lastName && <p className="mt-1 text-xs text-red-500">{errors.lastName}</p>}
                   </label>
                 </div>
                 <label className="block">
-                  <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Email</span>
+                  <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Email{authMode === 'anonymous' ? ' (optional)' : ''}
+                  </span>
                   <input name="email" value={form.email} onChange={handleInput} className={`input-field ${isAuthenticated ? 'bg-gray-50 dark:bg-gray-800/50' : ''}`} readOnly={isAuthenticated} />
                   {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
                 </label>
