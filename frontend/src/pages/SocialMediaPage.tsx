@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
-  Trash2, Pencil, Check, X, ChevronLeft, ChevronRight, Search, Plus,
+  Trash2, Pencil, Check, X, ChevronLeft, ChevronRight, Search, Plus, Brain,
 } from 'lucide-react';
 import { API_BASE_URL as API } from '../api/config';
 import { apiFetch } from '../api/http';
+import { fetchSocialPostPrediction, SocialPostPrediction } from '../api/MLPredictAPI';
 
 const PAGE_SIZE_OPTIONS = [20, 50, 100];
 
@@ -123,6 +124,10 @@ export default function SocialMediaPage() {
   const [modalMode, setModalMode] = useState<'view' | 'edit' | 'create'>('create');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  // ML scores for the currently-viewed post
+  const [postPrediction, setPostPrediction] = useState<SocialPostPrediction | null>(null);
+  const [predictionLoading, setPredictionLoading] = useState(false);
+
   // Section collapse state
   const [sectionsOpen, setSectionsOpen] = useState({
     details: true, content: true, boost: true, engagement: true,
@@ -188,6 +193,12 @@ export default function SocialMediaPage() {
 
   function openView(p: SocialMediaPost) {
     setEditing(p);
+    setPostPrediction(null);
+    setPredictionLoading(true);
+    fetchSocialPostPrediction(p.postId)
+      .then(setPostPrediction)
+      .catch(() => {})
+      .finally(() => setPredictionLoading(false));
     setForm({
       platform: p.platform,
       platformPostId: p.platformPostId,
@@ -585,6 +596,50 @@ export default function SocialMediaPage() {
               {/* View mode */}
               {modalMode === 'view' && editing && (
                 <div className="space-y-4">
+
+                  {/* ML Scores */}
+                  {(predictionLoading || postPrediction) && (
+                    <div className="rounded-xl border border-blue-100 dark:border-blue-500/20 bg-blue-50 dark:bg-blue-500/5 p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Brain className="h-4 w-4 text-blue-500" />
+                        <span className="text-sm font-bold text-gray-700 dark:text-gray-300">ML Predictions</span>
+                        {predictionLoading && <span className="text-xs text-gray-400">Loading...</span>}
+                      </div>
+                      {postPrediction && (
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                          {postPrediction.donationConversion && (
+                            <div className="rounded-lg bg-white dark:bg-gray-900 p-3 border border-gray-100 dark:border-gray-700">
+                              <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Donation Conversion</div>
+                              <div className={`text-2xl font-bold mb-1 ${
+                                postPrediction.donationConversion.conversion_score >= 60 ? 'text-green-600 dark:text-green-400'
+                                : postPrediction.donationConversion.conversion_score >= 35 ? 'text-yellow-600 dark:text-yellow-400'
+                                : 'text-gray-500 dark:text-gray-400'
+                              }`}>
+                                {postPrediction.donationConversion.conversion_score}
+                                <span className="ml-0.5 text-sm font-normal text-gray-400">/100</span>
+                              </div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">{postPrediction.donationConversion.recommendation}</div>
+                            </div>
+                          )}
+                          {postPrediction.engagementRate && (
+                            <div className="rounded-lg bg-white dark:bg-gray-900 p-3 border border-gray-100 dark:border-gray-700">
+                              <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Predicted Engagement</div>
+                              <div className={`text-2xl font-bold mb-1 ${
+                                postPrediction.engagementRate.engagement_rate_pct >= 15 ? 'text-green-600 dark:text-green-400'
+                                : postPrediction.engagementRate.engagement_rate_pct >= 7 ? 'text-yellow-600 dark:text-yellow-400'
+                                : 'text-gray-500 dark:text-gray-400'
+                              }`}>
+                                {postPrediction.engagementRate.engagement_rate_pct.toFixed(1)}
+                                <span className="ml-0.5 text-sm font-normal text-gray-400">%</span>
+                              </div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">{postPrediction.engagementRate.recommendation}</div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <h3 className="mt-4 mb-2 text-sm font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">Post Details</h3>
                   <div className="grid grid-cols-1 gap-4 rounded-xl bg-gray-50 p-4 sm:grid-cols-2 dark:bg-white/5">
                     <div className="flex flex-col gap-1.5"><label className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Platform</label><span className="text-sm font-medium text-gray-900 dark:text-white">{editing.platform || '\u2014'}</span></div>

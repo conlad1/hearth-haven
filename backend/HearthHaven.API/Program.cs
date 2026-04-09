@@ -62,6 +62,12 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddHttpClient("MLService", client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["MLSERVICE_URL"] ?? "http://localhost:8000");
+    client.Timeout = TimeSpan.FromSeconds(10);
+});
+
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();

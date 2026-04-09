@@ -23,7 +23,11 @@ from sklearn.pipeline import Pipeline as SklearnPipeline
 
 from endpoints import (
     reintegration_prediction,
+    progress_prediction,
     donation_conversion_prediction,
+    engagement_rate_prediction,
+    donor_lapse_prediction,
+    donor_upgrade_prediction,
 )
 
 # ── Config ─────────────────────────────────────────────────────────────────────
@@ -92,12 +96,53 @@ class DonationConversionResponse(BaseModel):
     model_version:    str
     predicted_at:     str
 
+class DonorScoringRequest(BaseModel):
+    supporter_id: int
+    features: Dict[str, Any]
+
+class EngagementRateResponse(BaseModel):
+    post_id:                  int
+    predicted_engagement_rate: float
+    engagement_rate_pct:      float
+    recommendation:           str
+    model_version:            str
+    predicted_at:             str
+
+class DonorLapseResponse(BaseModel):
+    supporter_id:  int
+    lapse_score:   float
+    probability:   float
+    recommendation: str
+    model_version: str
+    predicted_at:  str
+
+class DonorUpgradeResponse(BaseModel):
+    supporter_id:  int
+    upgrade_score: float
+    probability:   float
+    recommendation: str
+    model_version: str
+    predicted_at:  str
+
+class ProgressResponse(BaseModel):
+    resident_id:    int
+    progress_score: float
+    recommendation: str
+    model_version:  str
+    predicted_at:   str
+
 class HealthCheckResponse(BaseModel):
     status:        str
     models_loaded: list[str]
 
 
 # ── Endpoints ──────────────────────────────────────────────────────────────────
+
+@app.get("/", include_in_schema=False)
+def root():
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/health")
+
 
 @app.get("/health", response_model=HealthCheckResponse)
 def health_check():
@@ -129,6 +174,28 @@ def predict_reintegration(request: PredictionRequest):
         raise HTTPException(status_code=500, detail=f"Prediction failed: {e}")
 
 
+@app.post("/predict/progress", response_model=ProgressResponse)
+def predict_progress(request: PredictionRequest):
+    """
+    Predict a resident's education progress percent (0–100).
+    .NET backend assembles the feature dict from Azure SQL and POSTs here.
+    """
+    try:
+        pipeline = load_model("progress_percent_latest")
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+
+    try:
+        return progress_prediction(
+            resident_id=request.resident_id,
+            features=request.features,
+            pipeline=pipeline,
+        )
+    except Exception as e:
+        log.error(f"Progress prediction failed for resident {request.resident_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Prediction failed: {e}")
+
+
 @app.post("/predict/donation-conversion", response_model=DonationConversionResponse)
 def predict_donation_conversion(request: PostScoringRequest):
     """
@@ -149,4 +216,70 @@ def predict_donation_conversion(request: PostScoringRequest):
         )
     except Exception as e:
         log.error(f"Prediction failed for post {request.post_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Prediction failed: {e}")
+
+
+@app.post("/predict/engagement-rate", response_model=EngagementRateResponse)
+def predict_engagement_rate(request: PostScoringRequest):
+    """
+    Predict a social media post's engagement rate.
+    .NET backend assembles the feature dict and POSTs here.
+    """
+    try:
+        pipeline = load_model("engagement_rate")
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+
+    try:
+        return engagement_rate_prediction(
+            post_id=request.post_id,
+            features=request.features,
+            pipeline=pipeline,
+        )
+    except Exception as e:
+        log.error(f"Engagement prediction failed for post {request.post_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Prediction failed: {e}")
+
+
+@app.post("/predict/donor-lapse", response_model=DonorLapseResponse)
+def predict_donor_lapse(request: DonorScoringRequest):
+    """
+    Predict whether a donor is at risk of lapsing.
+    .NET backend assembles aggregated features from Azure SQL and POSTs here.
+    """
+    try:
+        pipeline = load_model("is_lapsed")
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+
+    try:
+        return donor_lapse_prediction(
+            supporter_id=request.supporter_id,
+            features=request.features,
+            pipeline=pipeline,
+        )
+    except Exception as e:
+        log.error(f"Lapse prediction failed for supporter {request.supporter_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Prediction failed: {e}")
+
+
+@app.post("/predict/donor-upgrade", response_model=DonorUpgradeResponse)
+def predict_donor_upgrade(request: DonorScoringRequest):
+    """
+    Predict whether a donor is likely to increase their donation.
+    .NET backend assembles aggregated features from Azure SQL and POSTs here.
+    """
+    try:
+        pipeline = load_model("will_increase_donation")
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+
+    try:
+        return donor_upgrade_prediction(
+            supporter_id=request.supporter_id,
+            features=request.features,
+            pipeline=pipeline,
+        )
+    except Exception as e:
+        log.error(f"Upgrade prediction failed for supporter {request.supporter_id}: {e}")
         raise HTTPException(status_code=500, detail=f"Prediction failed: {e}")
