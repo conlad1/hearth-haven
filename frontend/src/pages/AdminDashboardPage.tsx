@@ -11,6 +11,9 @@ import {
   DashboardStats, SafehouseOccupancy, DashboardIncident, DashboardVisitation,
   DashboardSession, DashboardConference, DashboardHighRiskResident, DashboardDonation,
 } from '../api/AdminDashboardAPI';
+import TopReintegrationCandidatesCard from '../components/TopReintegrationCandidatesCard';
+import TopLapseRiskDonorsCard from '../components/TopLapseRiskDonorsCard';
+import TopUpgradePotentialDonorsCard from '../components/TopUpgradePotentialDonorsCard';
 
 function fmt(n: number) {
   return '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 0 });
@@ -92,7 +95,7 @@ export default function AdminDashboardPage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Operational overview across all safehouses and programs
@@ -102,7 +105,7 @@ export default function AdminDashboardPage() {
       {/* KPI Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {kpiCards.map((card) => (
-          <div key={card.label} className="card flex flex-col items-center text-center">
+          <div key={card.label} className="card flex flex-col items-center p-5 text-center">
             <div className={`mb-3 flex h-11 w-11 items-center justify-center rounded-xl ${card.color}`}>
               <card.icon className="h-5 w-5" />
             </div>
@@ -113,11 +116,13 @@ export default function AdminDashboardPage() {
         ))}
       </div>
 
-      {/* Safehouse Occupancy */}
-      <div className="mt-8">
-        <div className="card">
+      {/* ============================== Case Management ============================== */}
+      <h2 className="mt-8 mb-4 text-xl font-bold text-gray-900 dark:text-white">Case Management</h2>
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-2">
+        {/* Safehouse Occupancy */}
+        <div className="card p-5">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Safehouse Occupancy</h2>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Safehouse Occupancy</h3>
             <button className="btn-ghost text-sm" onClick={() => navigate('/safehouse-management')}>
               Manage <ArrowRight className="h-3.5 w-3.5" />
             </button>
@@ -130,7 +135,7 @@ export default function AdminDashboardPage() {
                 const pct = sh.capacityGirls > 0 ? Math.round((sh.activeResidents / sh.capacityGirls) * 100) : 0;
                 const barColor = pct >= 90 ? 'bg-red-500' : pct >= 70 ? 'bg-yellow-500' : 'bg-emerald-500';
                 return (
-                  <div key={sh.safehouseId} className="cursor-pointer rounded-lg p-2 -mx-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition" onClick={() => navigate(`/safehouse-management/safehouses/${sh.safehouseId}`, { state: { from: '/admin' } })}>
+                  <div key={sh.safehouseId} className="cursor-pointer rounded-lg p-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition" onClick={() => navigate(`/safehouse-management/safehouses/${sh.safehouseId}`, { state: { from: '/admin' } })}>
                     <div className="flex items-center justify-between text-sm">
                       <span className="font-medium text-gray-700 dark:text-gray-300">{sh.name}</span>
                       <span className="text-gray-500 dark:text-gray-400">
@@ -147,16 +152,13 @@ export default function AdminDashboardPage() {
             </div>
           )}
         </div>
-      </div>
 
-      {/* Two-column: High Risk Residents + Upcoming Conferences */}
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* High Risk Residents */}
-        <div className="card">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="flex items-center gap-2 text-lg font-bold text-gray-900 dark:text-white">
+        <div className="card flex max-h-96 flex-col p-5">
+          <div className="mb-4 flex shrink-0 items-center justify-between">
+            <h3 className="flex items-center gap-2 text-lg font-bold text-gray-900 dark:text-white">
               <ShieldAlert className="h-5 w-5 text-red-500" /> High Risk Residents
-            </h2>
+            </h3>
             <button className="btn-ghost text-sm" onClick={() => navigate('/cases')}>
               All Cases <ArrowRight className="h-3.5 w-3.5" />
             </button>
@@ -164,7 +166,7 @@ export default function AdminDashboardPage() {
           {highRisk.length === 0 ? (
             <p className="text-sm text-gray-500">No high-risk active cases.</p>
           ) : (
-            <div className="space-y-2">
+            <div className="flex-1 space-y-2 overflow-y-auto pr-1">
               {highRisk.map((r) => (
                 <div
                   key={r.residentId}
@@ -184,17 +186,19 @@ export default function AdminDashboardPage() {
           )}
         </div>
 
+        <TopReintegrationCandidatesCard />
+
         {/* Upcoming Conferences */}
-        <div className="card">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="flex items-center gap-2 text-lg font-bold text-gray-900 dark:text-white">
+        <div className="card flex max-h-96 flex-col p-5">
+          <div className="mb-4 flex shrink-0 items-center justify-between">
+            <h3 className="flex items-center gap-2 text-lg font-bold text-gray-900 dark:text-white">
               <CalendarClock className="h-5 w-5 text-purple-500" /> Upcoming Case Conferences
-            </h2>
+            </h3>
           </div>
           {conferences.length === 0 ? (
             <p className="text-sm text-gray-500">No upcoming conferences scheduled.</p>
           ) : (
-            <div className="space-y-2">
+            <div className="flex-1 space-y-2 overflow-y-auto pr-1">
               {conferences.map((c) => (
                 <div
                   key={c.planId}
@@ -218,19 +222,20 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* Two-column: Recent Incidents + Concerning Sessions */}
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+      {/* ============================== Recent Activity ============================== */}
+      <h2 className="mt-8 mb-4 text-xl font-bold text-gray-900 dark:text-white">Recent Activity</h2>
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-2">
         {/* Recent Incidents */}
-        <div className="card">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="flex items-center gap-2 text-lg font-bold text-gray-900 dark:text-white">
+        <div className="card flex max-h-96 flex-col p-5">
+          <div className="mb-4 flex shrink-0 items-center justify-between">
+            <h3 className="flex items-center gap-2 text-lg font-bold text-gray-900 dark:text-white">
               <AlertTriangle className="h-5 w-5 text-yellow-500" /> Recent Incidents
-            </h2>
+            </h3>
           </div>
           {incidents.length === 0 ? (
             <p className="text-sm text-gray-500">No recent incidents.</p>
           ) : (
-            <div className="space-y-2">
+            <div className="flex-1 space-y-2 overflow-y-auto pr-1">
               {incidents.map((i) => (
                 <div
                   key={i.incidentId}
@@ -254,17 +259,17 @@ export default function AdminDashboardPage() {
           )}
         </div>
 
-        {/* Concerning Counseling Sessions */}
-        <div className="card">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="flex items-center gap-2 text-lg font-bold text-gray-900 dark:text-white">
+        {/* Flagged Counseling Sessions */}
+        <div className="card flex max-h-96 flex-col p-5">
+          <div className="mb-4 flex shrink-0 items-center justify-between">
+            <h3 className="flex items-center gap-2 text-lg font-bold text-gray-900 dark:text-white">
               <MessageCircleWarning className="h-5 w-5 text-red-500" /> Flagged Counseling Sessions
-            </h2>
+            </h3>
           </div>
           {sessions.length === 0 ? (
             <p className="text-sm text-gray-500">No flagged sessions in the last 30 days.</p>
           ) : (
-            <div className="space-y-2">
+            <div className="flex-1 space-y-2 overflow-y-auto pr-1">
               {sessions.map((s) => (
                 <div
                   key={s.recordingId}
@@ -288,21 +293,18 @@ export default function AdminDashboardPage() {
             </div>
           )}
         </div>
-      </div>
 
-      {/* Two-column: Recent Visitations + Recent Donations */}
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Recent Visitations */}
-        <div className="card">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="flex items-center gap-2 text-lg font-bold text-gray-900 dark:text-white">
+        {/* Recent Visitations - full width */}
+        <div className="card flex max-h-96 flex-col p-5 lg:col-span-2">
+          <div className="mb-4 flex shrink-0 items-center justify-between">
+            <h3 className="flex items-center gap-2 text-lg font-bold text-gray-900 dark:text-white">
               <Eye className="h-5 w-5 text-blue-500" /> Recent Visitations
-            </h2>
+            </h3>
           </div>
           {visitations.length === 0 ? (
             <p className="text-sm text-gray-500">No recent visitations.</p>
           ) : (
-            <div className="space-y-2">
+            <div className="flex-1 space-y-2 overflow-y-auto pr-1">
               {visitations.map((v) => (
                 <div
                   key={v.visitationId}
@@ -325,13 +327,20 @@ export default function AdminDashboardPage() {
             </div>
           )}
         </div>
+      </div>
 
-        {/* Recent Donations */}
-        <div className="card">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="flex items-center gap-2 text-lg font-bold text-gray-900 dark:text-white">
+      {/* ============================== Fundraising ============================== */}
+      <h2 className="mt-8 mb-4 text-xl font-bold text-gray-900 dark:text-white">Fundraising</h2>
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-2">
+        <TopLapseRiskDonorsCard />
+        <TopUpgradePotentialDonorsCard />
+
+        {/* Recent Donations - full width */}
+        <div className="card flex max-h-96 flex-col p-5 lg:col-span-2">
+          <div className="mb-4 flex shrink-0 items-center justify-between">
+            <h3 className="flex items-center gap-2 text-lg font-bold text-gray-900 dark:text-white">
               <Banknote className="h-5 w-5 text-emerald-500" /> Recent Donations
-            </h2>
+            </h3>
             <button className="btn-ghost text-sm" onClick={() => navigate('/donors')}>
               All Donations <ArrowRight className="h-3.5 w-3.5" />
             </button>
@@ -339,7 +348,7 @@ export default function AdminDashboardPage() {
           {donations.length === 0 ? (
             <p className="text-sm text-gray-500">No recent donations.</p>
           ) : (
-            <div className="space-y-2">
+            <div className="flex-1 space-y-2 overflow-y-auto pr-1">
               {donations.map((d) => {
                 const value = d.amount ?? d.estimatedValue ?? 0;
                 const unallocated = value - d.totalAllocated;

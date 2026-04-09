@@ -14,6 +14,7 @@ import {
   MapPin,
   PanelLeftClose,
   PanelLeftOpen,
+  Download,
 } from 'lucide-react';
 import { Resident } from '../types/Resident';
 import {
@@ -190,6 +191,12 @@ function formatCell(value: unknown): string {
   if (value === null || value === undefined) return '--';
   if (typeof value === 'boolean') return value ? 'Yes' : 'No';
   return String(value);
+}
+
+function escapeCsvValue(value: unknown): string {
+  const normalized = value === null || value === undefined ? '' : String(value);
+  const escaped = normalized.replace(/"/g, '""');
+  return `"${escaped}"`;
 }
 
 const blankResident: Resident = {
@@ -398,6 +405,39 @@ export default function CasePage() {
   const handlePageSizeChange = (newSize: number) => {
     setPageSize(newSize);
     setPage(1);
+  };
+
+  const handleExportCsv = () => {
+    if (residents.length === 0) {
+      alert('There are no resident records to export for the current filters.');
+      return;
+    }
+
+    const safehouseLookup = new Map(
+      safehouses.map((safehouse) => [safehouse.safehouseId, safehouse.name])
+    );
+
+    const headers = ['Safehouse', ...tableColumns.map((column) => column.label)];
+    const rows = residents.map((resident) => [
+      safehouseLookup.get(resident.safehouseId) ?? 'Unknown',
+      ...tableColumns.map((column) => formatCell(resident[column.key])),
+    ]);
+
+    const csv = [headers, ...rows]
+      .map((row) => row.map((value) => escapeCsvValue(value)).join(','))
+      .join('\r\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const stamp = new Date().toISOString().slice(0, 10);
+
+    link.href = url;
+    link.download = `resident-cases-${stamp}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   // onboard handlers
@@ -653,6 +693,10 @@ export default function CasePage() {
           <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Resident Cases</h1>
             <div className="flex w-full flex-wrap items-center gap-4 lg:w-auto lg:justify-end">
+              <button className="btn-secondary w-full sm:w-auto" onClick={handleExportCsv}>
+                <Download className="h-4 w-4" />
+                Export CSV
+              </button>
               <button className="btn-primary w-full sm:w-auto" onClick={openOnboard}>
                 <Plus className="h-4 w-4" />
                 Onboard New Resident

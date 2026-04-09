@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import AllocationPage, { type AllocationPageHandle } from './AllocationPage';
@@ -36,6 +36,7 @@ import {
   PanelLeftOpen,
   BarChart3,
   Brain,
+  ArrowLeft,
 } from 'lucide-react';
 import { fetchDonorPrediction, DonorPrediction } from '../api/MLPredictAPI';
 import { useAuthSession } from '../authSession';
@@ -227,11 +228,18 @@ const contributionRequired: { key: keyof Contribution; label: string }[] = [
 export default function DonorPage() {
   const { isAuthenticated, sessionReady } = useAuthSession();
   const location = useLocation();
+  const navigate = useNavigate();
   const allocationPageRef = useRef<AllocationPageHandle>(null);
 
-  const locationState = location.state as { tab?: string; donationId?: number } | null;
+  const locationState = location.state as { tab?: string; donationId?: number; supporterId?: number; from?: string } | null;
   const [activeTab, setActiveTab] = useState<'supporters' | 'contributions' | 'allocations'>('supporters');
   const [pendingDonationId, setPendingDonationId] = useState<number | null>(null);
+  const [pendingSupporterId, setPendingSupporterId] = useState<number | null>(null);
+  // True when the supporter modal was opened by auto-navigation from /admin.
+  // Cleared when the modal closes or when the user manually opens any other
+  // supporter, so the "Back to Dashboard" button only appears for the donor
+  // they came in to look at.
+  const [modalFromAdmin, setModalFromAdmin] = useState(false);
 
   useEffect(() => {
     if (locationState?.tab === 'contributions' || locationState?.tab === 'allocations') {
@@ -239,6 +247,9 @@ export default function DonorPage() {
     }
     if (locationState?.donationId) {
       setPendingDonationId(locationState.donationId);
+    }
+    if (locationState?.supporterId) {
+      setPendingSupporterId(locationState.supporterId);
     }
   }, [location.key]);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -340,6 +351,32 @@ export default function DonorPage() {
     }
   }, [pendingDonationId, contributions]);
 
+  // ── Open supporter modal from navigation state ──────────────────────────
+  // Used when arriving from /admin (e.g. the at-risk / upgrade-potential
+  // donor cards). The supporter probably isn't on the loaded page, so fetch
+  // it directly via the supporterId filter rather than searching the list.
+  useEffect(() => {
+    if (!pendingSupporterId || !sessionReady || !isAuthenticated) return;
+    let cancelled = false;
+    const cameFromAdmin = locationState?.from === '/admin';
+    fetchSupporters(1, 1, { supporterId: pendingSupporterId })
+      .then((res) => {
+        if (cancelled) return;
+        const match = res.data[0];
+        if (match) {
+          openSupporter(match);
+          if (cameFromAdmin) setModalFromAdmin(true);
+        }
+      })
+      .catch((e) => console.error('Failed to load supporter from navigation state:', e))
+      .finally(() => {
+        if (!cancelled) setPendingSupporterId(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [pendingSupporterId, sessionReady, isAuthenticated]);
+
   // ── Tab switch resets ────────────────────────────────────────────────────
   const switchTab = (tab: 'supporters' | 'contributions' | 'allocations') => {
     setActiveTab(tab);
@@ -396,11 +433,17 @@ export default function DonorPage() {
     setEditSupData({ ...s });
     setIsEditingSup(false);
     setDonorPrediction(null);
+    setModalFromAdmin(false);
     fetchDonorPrediction(s.supporterId)
       .then(setDonorPrediction)
       .catch(() => {});
   };
-  const closeSupporter = () => { setSelectedSupporter(null); setEditSupData(null); setIsEditingSup(false); };
+  const closeSupporter = () => {
+    setSelectedSupporter(null);
+    setEditSupData(null);
+    setIsEditingSup(false);
+    setModalFromAdmin(false);
+  };
   const handleSaveSupporter = async () => {
     if (!editSupData) return;
     setSaving(true);
@@ -851,6 +894,15 @@ export default function DonorPage() {
       {selectedSupporter && editSupData && createPortal(
         <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="supporter-dialog-title" onClick={closeSupporter}>
           <div className="modal-body" onClick={(e) => e.stopPropagation()}>
+            {modalFromAdmin && (
+              <button
+                className="btn-ghost mb-4"
+                onClick={() => { closeSupporter(); navigate('/admin'); }}
+              >
+                <ArrowLeft size={16} />
+                Back to Dashboard
+              </button>
+            )}
             {/* Top bar */}
             <div className="mb-6 flex items-start gap-4 border-b border-gray-100 pb-5 dark:border-gray-700">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-orange-50 dark:bg-orange-500/10">

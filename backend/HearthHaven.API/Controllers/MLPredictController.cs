@@ -34,6 +34,57 @@ public class MLPredictController : ControllerBase
         var resident = await _db.Residents.FindAsync(residentId);
         if (resident is null) return NotFound();
 
+        var healthRecords = await _db.HealthWellbeingRecords
+            .Where(h => h.ResidentId == residentId)
+            .OrderBy(h => h.RecordDate)
+            .ToListAsync();
+
+        var eduRecords = await _db.EducationRecords
+            .Where(e => e.ResidentId == residentId)
+            .OrderBy(e => e.RecordDate)
+            .ToListAsync();
+
+        var sessions = await _db.ProcessRecordings
+            .Where(p => p.ResidentId == residentId)
+            .ToListAsync();
+
+        var incidents = await _db.IncidentReports
+            .Where(i => i.ResidentId == residentId)
+            .ToListAsync();
+
+        var visitations = await _db.HomeVisitations
+            .Where(v => v.ResidentId == residentId)
+            .ToListAsync();
+
+        var interventions = await _db.InterventionPlans
+            .Where(ip => ip.ResidentId == residentId)
+            .ToListAsync();
+
+        var features = BuildReintegrationFeatures(
+            resident, healthRecords, eduRecords, sessions, incidents, visitations, interventions);
+
+        return await ProxyToMl("predict/reintegration", new
+        {
+            resident_id = residentId,
+            features,
+        });
+    }
+
+    /// <summary>
+    /// Build the 60-key feature dictionary the reintegration_achieved model expects.
+    /// Pulled out so the batch top-candidates endpoint can call it once per resident
+    /// without re-issuing per-resident DB queries — the caller is responsible for
+    /// passing already-loaded related-table lists.
+    /// </summary>
+    private static Dictionary<string, object?> BuildReintegrationFeatures(
+        Resident resident,
+        IReadOnlyList<HealthWellbeingRecord> healthRecords,
+        IReadOnlyList<EducationRecord> eduRecords,
+        IReadOnlyList<ProcessRecording> sessions,
+        IReadOnlyList<IncidentReport> incidents,
+        IReadOnlyList<HomeVisitation> visitations,
+        IReadOnlyList<InterventionPlan> interventions)
+    {
         var today = DateTime.UtcNow.Date;
         var dob = resident.DateOfBirth.ToDateTime(TimeOnly.MinValue);
         var admission = resident.DateOfAdmission.ToDateTime(TimeOnly.MinValue);
@@ -45,86 +96,60 @@ public class MLPredictController : ControllerBase
             ? (int)(closed.Value - admission).TotalDays
             : daysInCare;
 
-        // Aggregate health (latest record scores)
-        var healthRecords = await _db.HealthWellbeingRecords
-            .Where(h => h.ResidentId == residentId)
-            .OrderBy(h => h.RecordDate)
-            .ToListAsync();
-
+        // Health (latest record + completion rate)
         var latestHealth = healthRecords.LastOrDefault();
-        double healthScoreLatest   = (double?)latestHealth?.GeneralHealthScore ?? 0;
-        double nutritionLatest     = (double?)latestHealth?.NutritionScore    ?? 0;
-        double sleepLatest         = (double?)latestHealth?.SleepQualityScore ?? 0;
-        double energyLatest        = (double?)latestHealth?.EnergyLevelScore  ?? 0;
-        double? bmiLatest          = (double?)latestHealth?.Bmi;
-        double checkupCompletion   = healthRecords.Count > 0
+        double healthScoreLatest = (double?)latestHealth?.GeneralHealthScore ?? 0;
+        double nutritionLatest   = (double?)latestHealth?.NutritionScore    ?? 0;
+        double sleepLatest       = (double?)latestHealth?.SleepQualityScore ?? 0;
+        double energyLatest      = (double?)latestHealth?.EnergyLevelScore  ?? 0;
+        double? bmiLatest        = (double?)latestHealth?.Bmi;
+        double checkupCompletion = healthRecords.Count > 0
             ? healthRecords.Count(h => h.MedicalCheckupDone) / (double)healthRecords.Count
             : 0;
 
-        // Aggregate education (latest record)
-        var eduRecords = await _db.EducationRecords
-            .Where(e => e.ResidentId == residentId)
-            .OrderBy(e => e.RecordDate)
-            .ToListAsync();
-
+        // Education (latest + averages)
         var latestEdu = eduRecords.LastOrDefault();
-        double attendanceLatest    = (double?)latestEdu?.AttendanceRate   ?? 0;
-        double progressLatest      = (double?)latestEdu?.ProgressPercent  ?? 0;
-        string eduLevelLatest      = latestEdu?.EducationLevel            ?? "None";
-        string enrollmentLatest    = latestEdu?.EnrollmentStatus          ?? "Not Enrolled";
-        string completionLatest    = latestEdu?.CompletionStatus          ?? "In Progress";
-        double progressAvg         = eduRecords.Count > 0 ? eduRecords.Average(e => (double)e.ProgressPercent) : 0;
-        double attendanceAvg       = eduRecords.Count > 0 ? eduRecords.Average(e => (double)e.AttendanceRate)  : 0;
-        int educationRecordCount   = eduRecords.Count;
+        double attendanceLatest  = (double?)latestEdu?.AttendanceRate  ?? 0;
+        double progressLatest    = (double?)latestEdu?.ProgressPercent ?? 0;
+        string eduLevelLatest    = latestEdu?.EducationLevel           ?? "None";
+        string enrollmentLatest  = latestEdu?.EnrollmentStatus         ?? "Not Enrolled";
+        string completionLatest  = latestEdu?.CompletionStatus         ?? "In Progress";
+        double progressAvg       = eduRecords.Count > 0 ? eduRecords.Average(e => (double)e.ProgressPercent) : 0;
+        double attendanceAvg     = eduRecords.Count > 0 ? eduRecords.Average(e => (double)e.AttendanceRate)  : 0;
+        int educationRecordCount = eduRecords.Count;
 
-        // Aggregate counseling
-        var sessions = await _db.ProcessRecordings
-            .Where(p => p.ResidentId == residentId)
-            .ToListAsync();
+        // Counseling
+        int sessionCount          = sessions.Count;
+        double avgSessionDuration = sessions.Count > 0 ? sessions.Average(p => (double)p.SessionDurationMinutes) : 0;
+        double progressRate       = sessions.Count > 0 ? sessions.Count(p => p.ProgressNoted) / (double)sessions.Count : 0;
+        double concernRate        = sessions.Count > 0 ? sessions.Count(p => p.ConcernsFlagged) / (double)sessions.Count : 0;
+        double referralRate       = sessions.Count > 0 ? sessions.Count(p => p.ReferralMade) / (double)sessions.Count : 0;
 
-        int sessionCount         = sessions.Count;
-        double avgSessionDuration= sessions.Count > 0 ? sessions.Average(p => (double)p.SessionDurationMinutes) : 0;
-        double progressRate      = sessions.Count > 0 ? sessions.Count(p => p.ProgressNoted) / (double)sessions.Count : 0;
-        double concernRate       = sessions.Count > 0 ? sessions.Count(p => p.ConcernsFlagged) / (double)sessions.Count : 0;
-        double referralRate      = sessions.Count > 0 ? sessions.Count(p => p.ReferralMade) / (double)sessions.Count : 0;
-
-        // Aggregate incidents
+        // Incidents
         static int SeverityNum(string s) => s switch { "High" => 3, "Medium" => 2, _ => 1 };
-        var incidents = await _db.IncidentReports
-            .Where(i => i.ResidentId == residentId)
-            .ToListAsync();
+        int incidentCount     = incidents.Count;
+        double avgSeverity    = incidents.Count > 0 ? incidents.Average(i => (double)SeverityNum(i.Severity)) : 0;
+        int highSeverityCount = incidents.Count(i => SeverityNum(i.Severity) == 3);
+        int runawayAttempts   = incidents.Count(i => i.IncidentType == "RunawayAttempt");
+        int selfHarmIncidents = incidents.Count(i => i.IncidentType == "SelfHarm");
 
-        int incidentCount      = incidents.Count;
-        double avgSeverity     = incidents.Count > 0 ? incidents.Average(i => (double)SeverityNum(i.Severity)) : 0;
-        int highSeverityCount  = incidents.Count(i => SeverityNum(i.Severity) == 3);
-        int runawayAttempts    = incidents.Count(i => i.IncidentType == "RunawayAttempt");
-        int selfHarmIncidents  = incidents.Count(i => i.IncidentType == "SelfHarm");
-
-        // Aggregate visitations
+        // Visitations
         static int CoopNum(string? s) => s switch
         {
             "Highly Cooperative" => 4, "Cooperative" => 3, "Neutral" => 2, _ => 1
         };
-        var visitations = await _db.HomeVisitations
-            .Where(v => v.ResidentId == residentId)
-            .ToListAsync();
+        int visitationCount         = visitations.Count;
+        double safetyConcernRate    = visitations.Count > 0 ? visitations.Count(v => v.SafetyConcernsNoted) / (double)visitations.Count : 0;
+        double favorableOutcomeRate = visitations.Count > 0 ? visitations.Count(v => v.VisitOutcome == "Favorable") / (double)visitations.Count : 0;
+        double familyCoopScore      = visitations.Count > 0 ? visitations.Average(v => (double)CoopNum(v.FamilyCooperationLevel)) : 0;
 
-        int visitationCount        = visitations.Count;
-        double safetyConcernRate   = visitations.Count > 0 ? visitations.Count(v => v.SafetyConcernsNoted) / (double)visitations.Count : 0;
-        double favorableOutcomeRate= visitations.Count > 0 ? visitations.Count(v => v.VisitOutcome == "Favorable") / (double)visitations.Count : 0;
-        double familyCoopScore     = visitations.Count > 0 ? visitations.Average(v => (double)CoopNum(v.FamilyCooperationLevel)) : 0;
-
-        // Aggregate interventions
-        var interventions = await _db.InterventionPlans
-            .Where(ip => ip.ResidentId == residentId)
-            .ToListAsync();
-
+        // Interventions
         int totalPlans         = interventions.Count;
         int openPlans          = interventions.Count(ip => ip.Status == "Open");
         int planCategories     = interventions.Select(ip => ip.PlanCategory).Distinct().Count();
         double achievementRate = interventions.Count > 0 ? interventions.Count(ip => ip.Status == "Achieved") / (double)interventions.Count : 0;
 
-        var features = new Dictionary<string, object?>
+        return new Dictionary<string, object?>
         {
             // Resident demographics & case info
             ["safehouse_id"]              = resident.SafehouseId,
@@ -199,12 +224,132 @@ public class MLPredictController : ControllerBase
             ["plan_categories"]           = planCategories,
             ["plan_achievement_rate"]     = achievementRate,
         };
+    }
 
-        return await ProxyToMl("predict/reintegration", new
+    // ── Top reintegration candidates (batch) ──────────────────────────────────
+
+    /// <summary>
+    /// Score every active resident whose case is not already marked Completed,
+    /// then return the top N ranked by readiness_score descending.
+    ///
+    /// This is a triage aid for admins, not a decision tool — see the model
+    /// metrics in ml-pipelines/models/reintegration_achieved.pkl.metrics.json.
+    /// </summary>
+    [HttpPost("reintegration/top-candidates")]
+    public async Task<IActionResult> GetTopReintegrationCandidates([FromQuery] int limit = 10)
+    {
+        if (limit <= 0) limit = 10;
+
+        // 1. Eligible residents: active cases not already reintegrated.
+        var residents = await _db.Residents
+            .Where(r => r.CaseStatus == "Active"
+                     && (r.ReintegrationStatus == null || r.ReintegrationStatus != "Completed"))
+            .ToListAsync();
+
+        if (residents.Count == 0)
         {
-            resident_id = residentId,
-            features,
+            return Ok(Array.Empty<object>());
+        }
+
+        var ids = residents.Select(r => r.ResidentId).ToList();
+
+        // 2. Bulk-fetch related records once (WHERE IN(ids)) and group in memory,
+        //    so feature assembly for N residents stays at 6 queries instead of 6N.
+        var healthByResident = (await _db.HealthWellbeingRecords
+                .Where(h => ids.Contains(h.ResidentId))
+                .OrderBy(h => h.RecordDate)
+                .ToListAsync())
+            .GroupBy(h => h.ResidentId)
+            .ToDictionary(g => g.Key, g => (IReadOnlyList<HealthWellbeingRecord>)g.ToList());
+
+        var eduByResident = (await _db.EducationRecords
+                .Where(e => ids.Contains(e.ResidentId))
+                .OrderBy(e => e.RecordDate)
+                .ToListAsync())
+            .GroupBy(e => e.ResidentId)
+            .ToDictionary(g => g.Key, g => (IReadOnlyList<EducationRecord>)g.ToList());
+
+        var sessionsByResident = (await _db.ProcessRecordings
+                .Where(p => ids.Contains(p.ResidentId))
+                .ToListAsync())
+            .GroupBy(p => p.ResidentId)
+            .ToDictionary(g => g.Key, g => (IReadOnlyList<ProcessRecording>)g.ToList());
+
+        var incidentsByResident = (await _db.IncidentReports
+                .Where(i => ids.Contains(i.ResidentId))
+                .ToListAsync())
+            .GroupBy(i => i.ResidentId)
+            .ToDictionary(g => g.Key, g => (IReadOnlyList<IncidentReport>)g.ToList());
+
+        var visitationsByResident = (await _db.HomeVisitations
+                .Where(v => ids.Contains(v.ResidentId))
+                .ToListAsync())
+            .GroupBy(v => v.ResidentId)
+            .ToDictionary(g => g.Key, g => (IReadOnlyList<HomeVisitation>)g.ToList());
+
+        var interventionsByResident = (await _db.InterventionPlans
+                .Where(ip => ids.Contains(ip.ResidentId))
+                .ToListAsync())
+            .GroupBy(ip => ip.ResidentId)
+            .ToDictionary(g => g.Key, g => (IReadOnlyList<InterventionPlan>)g.ToList());
+
+        // Pre-fetch the safehouse names referenced by these residents so the
+        // final projection doesn't need a per-row subquery.
+        var safehouseIds = residents.Select(r => r.SafehouseId).Distinct().ToList();
+        var safehouseNames = await _db.Safehouses
+            .Where(s => safehouseIds.Contains(s.SafehouseId))
+            .ToDictionaryAsync(s => s.SafehouseId, s => s.Name);
+
+        // 3. Score each resident in parallel via the ML inference server.
+        //    DbContext work is done — only HttpClient calls remain, and HttpClient
+        //    is safe to use concurrently.
+        var scoringTasks = residents.Select(async r =>
+        {
+            var features = BuildReintegrationFeatures(
+                r,
+                healthByResident.GetValueOrDefault(r.ResidentId)        ?? Array.Empty<HealthWellbeingRecord>(),
+                eduByResident.GetValueOrDefault(r.ResidentId)           ?? Array.Empty<EducationRecord>(),
+                sessionsByResident.GetValueOrDefault(r.ResidentId)      ?? Array.Empty<ProcessRecording>(),
+                incidentsByResident.GetValueOrDefault(r.ResidentId)     ?? Array.Empty<IncidentReport>(),
+                visitationsByResident.GetValueOrDefault(r.ResidentId)   ?? Array.Empty<HomeVisitation>(),
+                interventionsByResident.GetValueOrDefault(r.ResidentId) ?? Array.Empty<InterventionPlan>());
+
+            var (ok, body) = await ProxyToMlRaw("predict/reintegration", new
+            {
+                resident_id = r.ResidentId,
+                features,
+            });
+            return (resident: r, ok, body);
         });
+
+        var results = await Task.WhenAll(scoringTasks);
+
+        // 4. Parse, sort by readiness_score desc, take top N, project to display shape.
+        var ranked = results
+            .Where(x => x.ok)
+            .Select(x =>
+            {
+                var prediction = JsonSerializer.Deserialize<JsonElement>(x.body);
+                var score = prediction.TryGetProperty("readiness_score", out var s) && s.ValueKind == JsonValueKind.Number
+                    ? s.GetDouble()
+                    : 0.0;
+                return new
+                {
+                    residentId           = x.resident.ResidentId,
+                    caseControlNo        = x.resident.CaseControlNo,
+                    internalCode         = x.resident.InternalCode,
+                    caseCategory         = x.resident.CaseCategory,
+                    assignedSocialWorker = x.resident.AssignedSocialWorker,
+                    safehouseName        = safehouseNames.GetValueOrDefault(x.resident.SafehouseId),
+                    readinessScore       = score,
+                    prediction,
+                };
+            })
+            .OrderByDescending(x => x.readinessScore)
+            .Take(limit)
+            .ToList();
+
+        return Ok(ranked);
     }
 
     // ── Resident education progress ───────────────────────────────────────────
@@ -446,18 +591,13 @@ public class MLPredictController : ControllerBase
         var supporter = await _db.Supporters.FindAsync(supporterId);
         if (supporter is null) return NotFound();
 
-        var today = DateTime.UtcNow.Date;
         var donations = await _db.Donations
             .Where(d => d.SupporterId == supporterId)
             .ToListAsync();
 
-        var monetaryDonations = donations.Where(d => d.DonationType == "Monetary" && d.Amount.HasValue).ToList();
-        int monetaryCount      = monetaryDonations.Count;
-        double avgGift         = monetaryCount > 0 ? (double)monetaryDonations.Average(d => d.Amount!.Value) : 0;
-        int uniqueCampaigns    = donations.Select(d => d.CampaignName).Distinct().Count();
-        int donationTypesCount = donations.Select(d => d.DonationType).Distinct().Count();
-        bool isRecurring       = donations.Any(d => d.IsRecurring);
+        var baseFeatures = BuildDonorBaseFeatures(supporter, donations);
 
+        var today = DateTime.UtcNow.Date;
         var lastDonationDate = donations.Count > 0
             ? donations.Max(d => d.DonationDate.ToDateTime(TimeOnly.MinValue))
             : (DateTime?)null;
@@ -465,30 +605,6 @@ public class MLPredictController : ControllerBase
         double daysSinceLastDonation = lastDonationDate.HasValue
             ? (today - lastDonationDate.Value.Date).TotalDays
             : -1;
-
-        double daysSinceFirstDonation = supporter.FirstDonationDate.HasValue
-            ? (today - supporter.FirstDonationDate.Value.ToDateTime(TimeOnly.MinValue).Date).TotalDays
-            : -1;
-
-        double daysSinceCreated = (today - supporter.CreatedAt.Date).TotalDays;
-
-        // Shared features (minus days_since_last_donation for lapse model — direct leakage)
-        var baseFeatures = new Dictionary<string, object?>
-        {
-            ["monetary_donation_count"]  = monetaryCount,
-            ["avg_monetary_gift"]        = avgGift,
-            ["unique_campaigns"]         = uniqueCampaigns,
-            ["donation_types_count"]     = donationTypesCount,
-            ["days_since_first_donation"]= daysSinceFirstDonation,
-            ["days_since_created"]       = daysSinceCreated,
-            ["supporter_type"]           = supporter.SupporterType,
-            ["relationship_type"]        = supporter.RelationshipType,
-            ["country"]                  = supporter.Country ?? "Unknown",
-            ["region"]                   = supporter.Region ?? "Unknown",
-            ["status"]                   = supporter.Status,
-            ["acquisition_channel"]      = supporter.AcquisitionChannel ?? "Unknown",
-            ["is_recurring_donor"]       = isRecurring,
-        };
 
         // Lapse model: exclude days_since_last_donation (direct leakage per training notebook)
         var lapseFeatures = new Dictionary<string, object?>(baseFeatures);
@@ -516,6 +632,228 @@ public class MLPredictController : ControllerBase
                 ? JsonSerializer.Deserialize<JsonElement>(upgradeBody)
                 : (object?)null,
         });
+    }
+
+    /// <summary>
+    /// Build the base donor feature dictionary shared by the lapse and upgrade
+    /// models. The returned dict does NOT include <c>days_since_last_donation</c> —
+    /// the upgrade model adds that on top, and the lapse model intentionally
+    /// omits it to avoid direct leakage (see the donor-lapse training notebook).
+    ///
+    /// Pulled out so the batch top-candidates endpoints can call it once per
+    /// supporter without re-issuing per-supporter DB queries — the caller is
+    /// responsible for passing an already-loaded donations list.
+    /// </summary>
+    private static Dictionary<string, object?> BuildDonorBaseFeatures(
+        Supporter supporter,
+        IReadOnlyList<Donation> donations)
+    {
+        var today = DateTime.UtcNow.Date;
+
+        var monetaryDonations = donations.Where(d => d.DonationType == "Monetary" && d.Amount.HasValue).ToList();
+        int monetaryCount      = monetaryDonations.Count;
+        double avgGift         = monetaryCount > 0 ? (double)monetaryDonations.Average(d => d.Amount!.Value) : 0;
+        int uniqueCampaigns    = donations.Select(d => d.CampaignName).Distinct().Count();
+        int donationTypesCount = donations.Select(d => d.DonationType).Distinct().Count();
+        bool isRecurring       = donations.Any(d => d.IsRecurring);
+
+        double daysSinceFirstDonation = supporter.FirstDonationDate.HasValue
+            ? (today - supporter.FirstDonationDate.Value.ToDateTime(TimeOnly.MinValue).Date).TotalDays
+            : -1;
+
+        double daysSinceCreated = (today - supporter.CreatedAt.Date).TotalDays;
+
+        return new Dictionary<string, object?>
+        {
+            ["monetary_donation_count"]  = monetaryCount,
+            ["avg_monetary_gift"]        = avgGift,
+            ["unique_campaigns"]         = uniqueCampaigns,
+            ["donation_types_count"]     = donationTypesCount,
+            ["days_since_first_donation"]= daysSinceFirstDonation,
+            ["days_since_created"]       = daysSinceCreated,
+            ["supporter_type"]           = supporter.SupporterType,
+            ["relationship_type"]        = supporter.RelationshipType,
+            ["country"]                  = supporter.Country ?? "Unknown",
+            ["region"]                   = supporter.Region ?? "Unknown",
+            ["status"]                   = supporter.Status,
+            ["acquisition_channel"]      = supporter.AcquisitionChannel ?? "Unknown",
+            ["is_recurring_donor"]       = isRecurring,
+        };
+    }
+
+    // ── Top lapse-risk donors (batch) ─────────────────────────────────────────
+
+    /// <summary>
+    /// Score every active supporter with the donor-lapse model and return the
+    /// top N ranked by lapse_score descending.
+    ///
+    /// Mirrors the reintegration batch endpoint's shape: one query for
+    /// supporters, one query for all related donations, then parallel ML calls
+    /// via Task.WhenAll. Skips supporters whose ML call fails so a single
+    /// inference error doesn't blank the whole list.
+    /// </summary>
+    [HttpPost("donors/top-lapse-risk")]
+    public async Task<IActionResult> GetTopLapseRiskDonors([FromQuery] int limit = 5)
+    {
+        if (limit <= 0) limit = 5;
+
+        // 1. Eligible supporters: active status only.
+        var supporters = await _db.Supporters
+            .Where(s => s.Status == "Active")
+            .ToListAsync();
+
+        if (supporters.Count == 0)
+        {
+            return Ok(Array.Empty<object>());
+        }
+
+        var ids = supporters.Select(s => s.SupporterId).ToList();
+
+        // 2. Bulk-fetch all donations for these supporters in ONE query and
+        //    group by SupporterId so BuildDonorBaseFeatures becomes in-memory.
+        var donationsBySupporter = (await _db.Donations
+                .Where(d => ids.Contains(d.SupporterId))
+                .ToListAsync())
+            .GroupBy(d => d.SupporterId)
+            .ToDictionary(g => g.Key, g => (IReadOnlyList<Donation>)g.ToList());
+
+        // 3. Score each supporter in parallel — DbContext work is done, only
+        //    HttpClient calls remain, and HttpClient is safe to use concurrently.
+        var scoringTasks = supporters.Select(async s =>
+        {
+            var donations = donationsBySupporter.GetValueOrDefault(s.SupporterId)
+                ?? Array.Empty<Donation>();
+
+            // Lapse model: base features only (days_since_last_donation is a
+            // direct-leakage feature excluded by the training notebook).
+            var features = BuildDonorBaseFeatures(s, donations);
+
+            var (ok, body) = await ProxyToMlRaw("predict/donor-lapse", new
+            {
+                supporter_id = s.SupporterId,
+                features,
+            });
+            return (supporter: s, ok, body);
+        });
+
+        var results = await Task.WhenAll(scoringTasks);
+
+        // 4. Parse, sort by lapse_score desc, take top N, project to display shape.
+        var ranked = results
+            .Where(x => x.ok)
+            .Select(x =>
+            {
+                var prediction = JsonSerializer.Deserialize<JsonElement>(x.body);
+                var score = prediction.TryGetProperty("lapse_score", out var s) && s.ValueKind == JsonValueKind.Number
+                    ? s.GetDouble()
+                    : 0.0;
+                return new
+                {
+                    supporterId   = x.supporter.SupporterId,
+                    displayName   = x.supporter.DisplayName,
+                    supporterType = x.supporter.SupporterType,
+                    country       = x.supporter.Country,
+                    region        = x.supporter.Region,
+                    status        = x.supporter.Status,
+                    lapseScore    = score,
+                    prediction,
+                };
+            })
+            .OrderByDescending(x => x.lapseScore)
+            .Take(limit)
+            .ToList();
+
+        return Ok(ranked);
+    }
+
+    // ── Top upgrade-potential donors (batch) ──────────────────────────────────
+
+    /// <summary>
+    /// Score every active supporter with the donor-upgrade model and return the
+    /// top N ranked by upgrade_score descending. Same shape as the lapse-risk
+    /// endpoint but the upgrade model includes days_since_last_donation, so we
+    /// compute that per supporter from the bulk-fetched donations list.
+    /// </summary>
+    [HttpPost("donors/top-upgrade-potential")]
+    public async Task<IActionResult> GetTopUpgradePotentialDonors([FromQuery] int limit = 5)
+    {
+        if (limit <= 0) limit = 5;
+
+        var supporters = await _db.Supporters
+            .Where(s => s.Status == "Active")
+            .ToListAsync();
+
+        if (supporters.Count == 0)
+        {
+            return Ok(Array.Empty<object>());
+        }
+
+        var ids = supporters.Select(s => s.SupporterId).ToList();
+
+        var donationsBySupporter = (await _db.Donations
+                .Where(d => ids.Contains(d.SupporterId))
+                .ToListAsync())
+            .GroupBy(d => d.SupporterId)
+            .ToDictionary(g => g.Key, g => (IReadOnlyList<Donation>)g.ToList());
+
+        var today = DateTime.UtcNow.Date;
+
+        var scoringTasks = supporters.Select(async s =>
+        {
+            var donations = donationsBySupporter.GetValueOrDefault(s.SupporterId)
+                ?? Array.Empty<Donation>();
+
+            var baseFeatures = BuildDonorBaseFeatures(s, donations);
+
+            // Upgrade model adds days_since_last_donation on top of the base dict.
+            var lastDonationDate = donations.Count > 0
+                ? donations.Max(d => d.DonationDate.ToDateTime(TimeOnly.MinValue))
+                : (DateTime?)null;
+
+            double daysSinceLastDonation = lastDonationDate.HasValue
+                ? (today - lastDonationDate.Value.Date).TotalDays
+                : -1;
+
+            var features = new Dictionary<string, object?>(baseFeatures)
+            {
+                ["days_since_last_donation"] = daysSinceLastDonation,
+            };
+
+            var (ok, body) = await ProxyToMlRaw("predict/donor-upgrade", new
+            {
+                supporter_id = s.SupporterId,
+                features,
+            });
+            return (supporter: s, ok, body);
+        });
+
+        var results = await Task.WhenAll(scoringTasks);
+
+        var ranked = results
+            .Where(x => x.ok)
+            .Select(x =>
+            {
+                var prediction = JsonSerializer.Deserialize<JsonElement>(x.body);
+                var score = prediction.TryGetProperty("upgrade_score", out var s) && s.ValueKind == JsonValueKind.Number
+                    ? s.GetDouble()
+                    : 0.0;
+                return new
+                {
+                    supporterId   = x.supporter.SupporterId,
+                    displayName   = x.supporter.DisplayName,
+                    supporterType = x.supporter.SupporterType,
+                    country       = x.supporter.Country,
+                    region        = x.supporter.Region,
+                    status        = x.supporter.Status,
+                    upgradeScore  = score,
+                    prediction,
+                };
+            })
+            .OrderByDescending(x => x.upgradeScore)
+            .Take(limit)
+            .ToList();
+
+        return Ok(ranked);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

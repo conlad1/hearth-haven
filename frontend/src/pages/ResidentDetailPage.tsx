@@ -1239,7 +1239,7 @@ export default function ResidentDetailPage() {
   return (
     <>
       <div className="p-4 sm:p-6 lg:p-8">
-        <button className="btn-ghost mb-4" onClick={() => navigate('/cases')}>
+        <button className="btn-ghost mb-4" onClick={() => navigate(backTo)}>
           <ArrowLeft size={16} />
           {backLabel}
         </button>
