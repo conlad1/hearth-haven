@@ -226,6 +226,132 @@ public class MLPredictController : ControllerBase
         };
     }
 
+    // ── Top reintegration candidates (batch) ──────────────────────────────────
+
+    /// <summary>
+    /// Score every active resident whose case is not already marked Completed,
+    /// then return the top N ranked by readiness_score descending.
+    ///
+    /// This is a triage aid for admins, not a decision tool — see the model
+    /// metrics in ml-pipelines/models/reintegration_achieved.pkl.metrics.json.
+    /// </summary>
+    [HttpPost("reintegration/top-candidates")]
+    public async Task<IActionResult> GetTopReintegrationCandidates([FromQuery] int limit = 10)
+    {
+        if (limit <= 0) limit = 10;
+
+        // 1. Eligible residents: active cases not already reintegrated.
+        var residents = await _db.Residents
+            .Where(r => r.CaseStatus == "Active"
+                     && (r.ReintegrationStatus == null || r.ReintegrationStatus != "Completed"))
+            .ToListAsync();
+
+        if (residents.Count == 0)
+        {
+            return Ok(Array.Empty<object>());
+        }
+
+        var ids = residents.Select(r => r.ResidentId).ToList();
+
+        // 2. Bulk-fetch related records once (WHERE IN(ids)) and group in memory,
+        //    so feature assembly for N residents stays at 6 queries instead of 6N.
+        var healthByResident = (await _db.HealthWellbeingRecords
+                .Where(h => ids.Contains(h.ResidentId))
+                .OrderBy(h => h.RecordDate)
+                .ToListAsync())
+            .GroupBy(h => h.ResidentId)
+            .ToDictionary(g => g.Key, g => (IReadOnlyList<HealthWellbeingRecord>)g.ToList());
+
+        var eduByResident = (await _db.EducationRecords
+                .Where(e => ids.Contains(e.ResidentId))
+                .OrderBy(e => e.RecordDate)
+                .ToListAsync())
+            .GroupBy(e => e.ResidentId)
+            .ToDictionary(g => g.Key, g => (IReadOnlyList<EducationRecord>)g.ToList());
+
+        var sessionsByResident = (await _db.ProcessRecordings
+                .Where(p => ids.Contains(p.ResidentId))
+                .ToListAsync())
+            .GroupBy(p => p.ResidentId)
+            .ToDictionary(g => g.Key, g => (IReadOnlyList<ProcessRecording>)g.ToList());
+
+        var incidentsByResident = (await _db.IncidentReports
+                .Where(i => ids.Contains(i.ResidentId))
+                .ToListAsync())
+            .GroupBy(i => i.ResidentId)
+            .ToDictionary(g => g.Key, g => (IReadOnlyList<IncidentReport>)g.ToList());
+
+        var visitationsByResident = (await _db.HomeVisitations
+                .Where(v => ids.Contains(v.ResidentId))
+                .ToListAsync())
+            .GroupBy(v => v.ResidentId)
+            .ToDictionary(g => g.Key, g => (IReadOnlyList<HomeVisitation>)g.ToList());
+
+        var interventionsByResident = (await _db.InterventionPlans
+                .Where(ip => ids.Contains(ip.ResidentId))
+                .ToListAsync())
+            .GroupBy(ip => ip.ResidentId)
+            .ToDictionary(g => g.Key, g => (IReadOnlyList<InterventionPlan>)g.ToList());
+
+        // Pre-fetch the safehouse names referenced by these residents so the
+        // final projection doesn't need a per-row subquery.
+        var safehouseIds = residents.Select(r => r.SafehouseId).Distinct().ToList();
+        var safehouseNames = await _db.Safehouses
+            .Where(s => safehouseIds.Contains(s.SafehouseId))
+            .ToDictionaryAsync(s => s.SafehouseId, s => s.Name);
+
+        // 3. Score each resident in parallel via the ML inference server.
+        //    DbContext work is done — only HttpClient calls remain, and HttpClient
+        //    is safe to use concurrently.
+        var scoringTasks = residents.Select(async r =>
+        {
+            var features = BuildReintegrationFeatures(
+                r,
+                healthByResident.GetValueOrDefault(r.ResidentId)        ?? Array.Empty<HealthWellbeingRecord>(),
+                eduByResident.GetValueOrDefault(r.ResidentId)           ?? Array.Empty<EducationRecord>(),
+                sessionsByResident.GetValueOrDefault(r.ResidentId)      ?? Array.Empty<ProcessRecording>(),
+                incidentsByResident.GetValueOrDefault(r.ResidentId)     ?? Array.Empty<IncidentReport>(),
+                visitationsByResident.GetValueOrDefault(r.ResidentId)   ?? Array.Empty<HomeVisitation>(),
+                interventionsByResident.GetValueOrDefault(r.ResidentId) ?? Array.Empty<InterventionPlan>());
+
+            var (ok, body) = await ProxyToMlRaw("predict/reintegration", new
+            {
+                resident_id = r.ResidentId,
+                features,
+            });
+            return (resident: r, ok, body);
+        });
+
+        var results = await Task.WhenAll(scoringTasks);
+
+        // 4. Parse, sort by readiness_score desc, take top N, project to display shape.
+        var ranked = results
+            .Where(x => x.ok)
+            .Select(x =>
+            {
+                var prediction = JsonSerializer.Deserialize<JsonElement>(x.body);
+                var score = prediction.TryGetProperty("readiness_score", out var s) && s.ValueKind == JsonValueKind.Number
+                    ? s.GetDouble()
+                    : 0.0;
+                return new
+                {
+                    residentId           = x.resident.ResidentId,
+                    caseControlNo        = x.resident.CaseControlNo,
+                    internalCode         = x.resident.InternalCode,
+                    caseCategory         = x.resident.CaseCategory,
+                    assignedSocialWorker = x.resident.AssignedSocialWorker,
+                    safehouseName        = safehouseNames.GetValueOrDefault(x.resident.SafehouseId),
+                    readinessScore       = score,
+                    prediction,
+                };
+            })
+            .OrderByDescending(x => x.readinessScore)
+            .Take(limit)
+            .ToList();
+
+        return Ok(ranked);
+    }
+
     // ── Resident education progress ───────────────────────────────────────────
 
     /// <summary>
