@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -14,7 +13,7 @@ import {
   type ChartOptions,
 } from 'chart.js';
 import { Line, Bar, Doughnut } from 'react-chartjs-2';
-import { ArrowLeft, BarChart3, DollarSign, TrendingUp, Users } from 'lucide-react';
+import { BarChart3, DollarSign, TrendingUp, Users } from 'lucide-react';
 import { fetchDonorAnalytics } from '../api/DonorAPI';
 import { DonorAnalyticsResponse } from '../types/Donor';
 
@@ -186,12 +185,7 @@ export default function DonorAnalytics() {
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
       <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <Link to="/donors" className="mb-3 inline-flex items-center gap-2 text-sm font-medium text-orange-600 no-underline hover:text-orange-700">
-            <ArrowLeft className="h-4 w-4" />
-            Back to Donor Management
-          </Link>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Donor Analytics</h1>
-          
         </div>
       </div>
 

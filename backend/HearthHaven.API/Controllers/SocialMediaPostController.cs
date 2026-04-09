@@ -14,6 +14,49 @@ public class SocialMediaPostController : ControllerBase
 
     public SocialMediaPostController(HearthHavenDbContext db) => _db = db;
 
+    private static void ApplyPayload(SocialMediaPost post, SocialMediaPostUpsertDto payload)
+    {
+        post.Platform = payload.Platform;
+        post.PlatformPostId = payload.PlatformPostId;
+        post.PostUrl = payload.PostUrl;
+        post.CreatedAt = payload.CreatedAt;
+        post.PostType = payload.PostType;
+        post.MediaType = payload.MediaType;
+        post.Caption = payload.Caption;
+        post.Hashtags = payload.Hashtags;
+        post.NumHashtags = payload.NumHashtags;
+        post.MentionsCount = payload.MentionsCount;
+        post.HasCallToAction = payload.HasCallToAction;
+        post.CallToActionType = payload.HasCallToAction ? payload.CallToActionType : null;
+        post.ContentTopic = payload.ContentTopic;
+        post.SentimentTone = payload.SentimentTone;
+        post.FeaturesResidentStory = payload.FeaturesResidentStory;
+        post.CampaignName = payload.CampaignName;
+        post.IsBoosted = payload.IsBoosted;
+        post.BoostBudgetPhp = payload.IsBoosted ? payload.BoostBudgetPhp : null;
+        post.Impressions = payload.Impressions;
+        post.Reach = payload.Reach;
+        post.Likes = payload.Likes;
+        post.Comments = payload.Comments;
+        post.Shares = payload.Shares;
+        post.Saves = payload.Saves;
+        post.ClickThroughs = payload.ClickThroughs;
+        post.VideoViews = payload.VideoViews;
+        post.EngagementRate = payload.EngagementRate;
+        post.ProfileVisits = payload.ProfileVisits;
+        post.DonationReferrals = payload.DonationReferrals;
+        post.EstimatedDonationValuePhp = payload.EstimatedDonationValuePhp;
+        post.FollowerCountAtPost = payload.FollowerCountAtPost;
+        post.WatchTimeSeconds = payload.WatchTimeSeconds;
+        post.AvgViewDurationSeconds = payload.AvgViewDurationSeconds;
+        post.SubscriberCountAtPost = payload.SubscriberCountAtPost;
+        post.Forwards = payload.Forwards;
+
+        post.DayOfWeek = payload.CreatedAt.DayOfWeek.ToString();
+        post.PostHour = payload.CreatedAt.Hour;
+        post.CaptionLength = payload.Caption?.Length ?? 0;
+    }
+
     [HttpGet]
     public IActionResult GetAll(
         [FromQuery] int page = 1,
@@ -85,11 +128,19 @@ public class SocialMediaPostController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] SocialMediaPost post)
+    public async Task<IActionResult> Create([FromBody] SocialMediaPostUpsertDto payload)
     {
-        post.DayOfWeek = post.CreatedAt.DayOfWeek.ToString();
-        post.PostHour = post.CreatedAt.Hour;
-        post.CaptionLength = post.Caption?.Length ?? 0;
+        var post = new SocialMediaPost
+        {
+            Platform = string.Empty,
+            PlatformPostId = string.Empty,
+            DayOfWeek = string.Empty,
+            PostType = string.Empty,
+            MediaType = string.Empty,
+            ContentTopic = string.Empty,
+            SentimentTone = string.Empty,
+        };
+        ApplyPayload(post, payload);
 
         try
         {
@@ -104,17 +155,12 @@ public class SocialMediaPostController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
-    public async Task<IActionResult> Update(int id, [FromBody] SocialMediaPost updated)
+    public async Task<IActionResult> Update(int id, [FromBody] SocialMediaPostUpsertDto payload)
     {
         var post = await _db.SocialMediaPosts.FindAsync(id);
         if (post == null) return NotFound($"Post {id} not found.");
 
-        updated.DayOfWeek = updated.CreatedAt.DayOfWeek.ToString();
-        updated.PostHour = updated.CreatedAt.Hour;
-        updated.CaptionLength = updated.Caption?.Length ?? 0;
-
-        _db.Entry(post).CurrentValues.SetValues(updated);
-        post.PostId = id;
+        ApplyPayload(post, payload);
 
         try
         {

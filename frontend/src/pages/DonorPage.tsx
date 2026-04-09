@@ -246,7 +246,6 @@ export default function DonorPage() {
   const [error,      setError]      = useState<string | null>(null);
   const [page,       setPage]       = useState(1);
   const [pageSize,   setPageSize]   = useState(20);
-  const [allocationPageSize, setAllocationPageSize] = useState(20);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [saving,     setSaving]     = useState(false);
@@ -368,7 +367,7 @@ export default function DonorPage() {
     setDebouncedSearch('');
     setPage(1);
   };
-  const hasSupporterFilters = !!(supporterFilters.status || supporterFilters.search);
+  const hasSupporterFilters = !!(supporterFilters.status || supporterFilters.supporterType || supporterFilters.supporterId || supporterFilters.search);
 
   // ── Contribution filter helpers ──────────────────────────────────────────
   const updateContributionFilter = (key: keyof ContributionFilters, value: string | undefined) => {
@@ -382,7 +381,7 @@ export default function DonorPage() {
     setPage(1);
   };
   const hasContributionFilters = !!(
-    contributionFilters.status || contributionFilters.programArea ||
+    contributionFilters.status || contributionFilters.programArea || contributionFilters.donationType ||
     contributionFilters.safehouseAllocation || contributionFilters.search
   );
 
@@ -550,7 +549,7 @@ export default function DonorPage() {
             <div className={`flex items-center pt-6 pb-2 ${sidebarCollapsed ? 'lg:justify-center lg:px-2 px-5' : 'justify-between px-5'}`}>
               {!sidebarCollapsed && (
                 <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  {activeTab === 'supporters' ? 'Supporter Type' : 'Donation Type'}
+                  Views
                 </h2>
               )}
               <button
@@ -564,65 +563,42 @@ export default function DonorPage() {
             </div>
             <div className={`pb-6 ${sidebarCollapsed ? 'lg:px-2 px-5' : 'px-5'}`}>
               <ul className="flex gap-2 overflow-x-auto pb-1 lg:block lg:space-y-1 lg:pb-0">
-                {activeTab === 'supporters' ? (
-                  <>
-                    <li>
-                      <button
-                        title={sidebarCollapsed ? 'All Types' : undefined}
-                        className={`flex w-full min-w-max items-center gap-3 whitespace-nowrap rounded-lg py-2 text-sm font-medium transition lg:min-w-0 ${
-                          sidebarCollapsed ? 'lg:justify-center lg:px-2 px-3' : 'px-3 text-left'
-                        } ${!activeSupporterType ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-700' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'}`}
-                        onClick={() => setSupporterTypeFilter(undefined)}
-                      >
-                        <Filter className="h-4 w-4 shrink-0" />
-                        <span className={sidebarCollapsed ? 'lg:hidden' : ''}>All Types</span>
-                      </button>
-                    </li>
-                    {(filterOptions?.supporterTypes ?? SUPPORTER_TYPES).map((t) => (
-                      <li key={t}>
-                        <button
-                          title={sidebarCollapsed ? t : undefined}
-                          className={`flex w-full min-w-max items-center gap-3 whitespace-nowrap rounded-lg py-2 text-sm font-medium transition lg:min-w-0 ${
-                            sidebarCollapsed ? 'lg:justify-center lg:px-2 px-3' : 'px-3 text-left'
-                          } ${activeSupporterType?.toLowerCase() === t.toLowerCase() ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-700' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'}`}
-                          onClick={() => setSupporterTypeFilter(t)}
-                        >
-                          <SupporterIcon type={t} />
-                          <span className={sidebarCollapsed ? 'lg:hidden' : ''}>{t}</span>
-                        </button>
-                      </li>
-                    ))}
-                  </>
-                ) : (
-                  <>
-                    <li>
-                      <button
-                        title={sidebarCollapsed ? 'All Types' : undefined}
-                        className={`flex w-full min-w-max items-center gap-3 whitespace-nowrap rounded-lg py-2 text-sm font-medium transition lg:min-w-0 ${
-                          sidebarCollapsed ? 'lg:justify-center lg:px-2 px-3' : 'px-3 text-left'
-                        } ${!activeDonationType ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-700' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'}`}
-                        onClick={() => updateContributionFilter('donationType', undefined)}
-                      >
-                        <Filter className="h-4 w-4 shrink-0" />
-                        <span className={sidebarCollapsed ? 'lg:hidden' : ''}>All Types</span>
-                      </button>
-                    </li>
-                    {DONATION_TYPES.map((t) => (
-                      <li key={t}>
-                        <button
-                          title={sidebarCollapsed ? t : undefined}
-                          className={`flex w-full min-w-max items-center gap-3 whitespace-nowrap rounded-lg py-2 text-sm font-medium transition lg:min-w-0 ${
-                            sidebarCollapsed ? 'lg:justify-center lg:px-2 px-3' : 'px-3 text-left'
-                          } ${activeDonationType === t ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-700' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'}`}
-                          onClick={() => updateContributionFilter('donationType', t)}
-                        >
-                          <TypeIcon type={t} />
-                          <span className={sidebarCollapsed ? 'lg:hidden' : ''}>{t}</span>
-                        </button>
-                      </li>
-                    ))}
-                  </>
-                )}
+                <li>
+                  <button
+                    title={sidebarCollapsed ? 'Supporters' : undefined}
+                    className={`flex w-full min-w-max items-center gap-3 whitespace-nowrap rounded-lg py-2 text-sm font-medium transition lg:min-w-0 ${
+                      sidebarCollapsed ? 'lg:justify-center lg:px-2 px-3' : 'px-3 text-left'
+                    } ${activeTab === 'supporters' ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-700' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'}`}
+                    onClick={() => switchTab('supporters')}
+                  >
+                    <Users className="h-4 w-4 shrink-0" />
+                    <span className={sidebarCollapsed ? 'lg:hidden' : ''}>Supporters</span>
+                  </button>
+                </li>
+                <li>
+                  <button
+                    title={sidebarCollapsed ? 'Contributions' : undefined}
+                    className={`flex w-full min-w-max items-center gap-3 whitespace-nowrap rounded-lg py-2 text-sm font-medium transition lg:min-w-0 ${
+                      sidebarCollapsed ? 'lg:justify-center lg:px-2 px-3' : 'px-3 text-left'
+                    } ${activeTab === 'contributions' ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-700' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'}`}
+                    onClick={() => switchTab('contributions')}
+                  >
+                    <DollarSign className="h-4 w-4 shrink-0" />
+                    <span className={sidebarCollapsed ? 'lg:hidden' : ''}>Contributions</span>
+                  </button>
+                </li>
+                <li>
+                  <button
+                    title={sidebarCollapsed ? 'Allocations' : undefined}
+                    className={`flex w-full min-w-max items-center gap-3 whitespace-nowrap rounded-lg py-2 text-sm font-medium transition lg:min-w-0 ${
+                      sidebarCollapsed ? 'lg:justify-center lg:px-2 px-3' : 'px-3 text-left'
+                    } ${activeTab === 'allocations' ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-700' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'}`}
+                    onClick={() => switchTab('allocations')}
+                  >
+                    <Filter className="h-4 w-4 shrink-0" />
+                    <span className={sidebarCollapsed ? 'lg:hidden' : ''}>Allocations</span>
+                  </button>
+                </li>
               </ul>
             </div>
           </aside>
@@ -640,30 +616,6 @@ export default function DonorPage() {
                   <BarChart3 className="h-4 w-4" /> Analytics
                 </Link>
 
-                {/* Tab toggle */}
-                <div className="w-full overflow-x-auto lg:w-auto">
-                  <div className="inline-flex min-w-max overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
-                  <button
-                    className={`inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium transition ${activeTab === 'supporters' ? 'bg-orange-500 text-white' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}
-                    onClick={() => switchTab('supporters')}
-                  >
-                    <Users className="h-4 w-4" /> Supporters
-                  </button>
-                  <button
-                    className={`inline-flex items-center gap-1.5 border-l border-gray-200 dark:border-gray-700 px-4 py-2 text-sm font-medium transition ${activeTab === 'contributions' ? 'bg-orange-500 text-white' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}
-                    onClick={() => switchTab('contributions')}
-                  >
-                    <DollarSign className="h-4 w-4" /> Contributions
-                  </button>
-                  <button
-                    className={`inline-flex items-center gap-1.5 border-l border-gray-200 dark:border-gray-700 px-4 py-2 text-sm font-medium transition ${activeTab === 'allocations' ? 'bg-orange-500 text-white' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}
-                    onClick={() => switchTab('allocations')}
-                  >
-                    <Filter className="h-4 w-4" /> Allocations
-                  </button>
-                  </div>
-                </div>
-
                 {/* Action button */}
                 {activeTab === 'supporters' ? (
                   <button className="btn-primary w-full sm:w-auto" onClick={openAddSupporter}>
@@ -674,86 +626,97 @@ export default function DonorPage() {
                     <Plus className="h-4 w-4" /> Record Contribution
                   </button>
                 ) : activeTab === 'allocations' ? (
-                  <>
-                    <button className="btn-primary w-full sm:w-auto" onClick={() => allocationPageRef.current?.openCreate()}>
-                      <Plus className="h-4 w-4" /> Add Allocation
-                    </button>
-                    <label className="flex w-full items-center gap-2 text-sm text-gray-600 dark:text-gray-400 sm:w-auto">
-                      Per page:
-                      <select
-                        className="select-field w-full sm:w-auto"
-                        value={allocationPageSize}
-                        onChange={(e) => setAllocationPageSize(Number(e.target.value))}
-                        aria-label="Allocations per page"
-                      >
-                        {PAGE_SIZE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
-                      </select>
-                    </label>
-                  </>
+                  <button className="btn-primary w-full sm:w-auto" onClick={() => allocationPageRef.current?.openCreate()}>
+                    <Plus className="h-4 w-4" /> Add Allocation
+                  </button>
                 ) : null}
+              </div>
+            </div>
 
-                {/* Page size */}
-                {activeTab !== 'allocations' && (
+            {/* Filter bar */}
+            {activeTab !== 'allocations' && (
+              <div className="mb-4 rounded-xl border border-gray-200 bg-white p-4 shadow-md dark:border-gray-700 dark:bg-gray-900">
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                    <input
+                      className="input-field pl-9"
+                      type="text"
+                      placeholder={activeTab === 'supporters' ? 'Search by name, email, organization...' : 'Search by supporter, type, description...'}
+                      value={searchInput}
+                      onChange={(e) => setSearchInput(e.target.value)}
+                      aria-label={activeTab === 'supporters' ? 'Search supporters' : 'Search contributions'}
+                    />
+                  </div>
+
                   <label className="flex w-full items-center gap-2 text-sm text-gray-600 dark:text-gray-400 sm:w-auto">
                     Per page:
                     <select className="select-field w-full sm:w-auto" value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }} aria-label={activeTab === 'supporters' ? 'Supporters per page' : 'Contributions per page'}>
                       {PAGE_SIZE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
                     </select>
                   </label>
-                )}
-              </div>
-            </div>
 
-            {/* Filter bar */}
-            {activeTab !== 'allocations' && (
-              <div className="mb-4 flex flex-wrap items-center gap-3">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                  <input
-                    className="input-field pl-9"
-                    type="text"
-                    placeholder={activeTab === 'supporters' ? 'Search by name, email, organization...' : 'Search by supporter, type, description...'}
-                    value={searchInput}
-                    onChange={(e) => setSearchInput(e.target.value)}
-                    aria-label={activeTab === 'supporters' ? 'Search supporters' : 'Search contributions'}
-                  />
+                  {activeTab === 'supporters' && (
+                    <select
+                      className="select-field w-auto"
+                      value={activeSupporterType || ''}
+                      onChange={(e) => setSupporterTypeFilter(e.target.value || undefined)}
+                      aria-label="Filter supporters by type"
+                    >
+                      <option value="">All Types</option>
+                      <option value="Anonymous">Anonymous</option>
+                      {(filterOptions?.supporterTypes ?? SUPPORTER_TYPES).map((t) => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  )}
+
+                  {activeTab === 'contributions' && (
+                    <select
+                      className="select-field w-auto"
+                      value={activeDonationType || ''}
+                      onChange={(e) => updateContributionFilter('donationType', e.target.value || undefined)}
+                      aria-label="Filter contributions by donation type"
+                    >
+                      <option value="">All Types</option>
+                      {DONATION_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  )}
+
+                  {filterOptions && activeTab === 'supporters' && (
+                    <div className="flex items-center gap-2">
+                      <select className="select-field w-auto" value={supporterFilters.status || ''} onChange={(e) => updateSupporterFilter('status', e.target.value || undefined)} aria-label="Filter supporters by status">
+                        <option value="">All Statuses</option>
+                        {filterOptions.statuses.map((s) => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                      {hasSupporterFilters && (
+                        <button className="btn-ghost text-orange-600" onClick={clearSupporterFilters}>
+                          <X className="h-4 w-4" /> Clear
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {filterOptions && activeTab === 'contributions' && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <select className="select-field w-auto" value={contributionFilters.status || ''} onChange={(e) => updateContributionFilter('status', e.target.value || undefined)} aria-label="Filter contributions by status">
+                        <option value="">All Statuses</option>
+                        {filterOptions.contributionStatuses.map((s) => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                      <select className="select-field w-auto" value={contributionFilters.programArea || ''} onChange={(e) => updateContributionFilter('programArea', e.target.value || undefined)} aria-label="Filter contributions by program area">
+                        <option value="">All Program Areas</option>
+                        {filterOptions.programAreas.map((p) => <option key={p} value={p}>{p}</option>)}
+                      </select>
+                      <select className="select-field w-auto" value={contributionFilters.safehouseAllocation || ''} onChange={(e) => updateContributionFilter('safehouseAllocation', e.target.value || undefined)} aria-label="Filter contributions by safehouse">
+                        <option value="">All Safehouses</option>
+                        {filterOptions.safehouseAllocations.map((a) => <option key={a} value={a}>{a}</option>)}
+                      </select>
+                      {hasContributionFilters && (
+                        <button className="btn-ghost text-orange-600" onClick={clearContributionFilters}>
+                          <X className="h-4 w-4" /> Clear
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
-
-                {filterOptions && activeTab === 'supporters' && (
-                  <div className="flex items-center gap-2">
-                    <select className="select-field w-auto" value={supporterFilters.status || ''} onChange={(e) => updateSupporterFilter('status', e.target.value || undefined)} aria-label="Filter supporters by status">
-                      <option value="">All Statuses</option>
-                      {filterOptions.statuses.map((s) => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                    {hasSupporterFilters && (
-                      <button className="btn-ghost text-orange-600" onClick={clearSupporterFilters}>
-                        <X className="h-4 w-4" /> Clear
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                {filterOptions && activeTab === 'contributions' && (
-                  <div className="flex flex-wrap items-center gap-2">
-                    <select className="select-field w-auto" value={contributionFilters.status || ''} onChange={(e) => updateContributionFilter('status', e.target.value || undefined)} aria-label="Filter contributions by status">
-                      <option value="">All Statuses</option>
-                      {filterOptions.contributionStatuses.map((s) => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                    <select className="select-field w-auto" value={contributionFilters.programArea || ''} onChange={(e) => updateContributionFilter('programArea', e.target.value || undefined)} aria-label="Filter contributions by program area">
-                      <option value="">All Program Areas</option>
-                      {filterOptions.programAreas.map((p) => <option key={p} value={p}>{p}</option>)}
-                    </select>
-                    <select className="select-field w-auto" value={contributionFilters.safehouseAllocation || ''} onChange={(e) => updateContributionFilter('safehouseAllocation', e.target.value || undefined)} aria-label="Filter contributions by safehouse">
-                      <option value="">All Safehouses</option>
-                      {filterOptions.safehouseAllocations.map((a) => <option key={a} value={a}>{a}</option>)}
-                    </select>
-                    {hasContributionFilters && (
-                      <button className="btn-ghost text-orange-600" onClick={clearContributionFilters}>
-                        <X className="h-4 w-4" /> Clear
-                      </button>
-                    )}
-                  </div>
-                )}
               </div>
             )}
 
@@ -850,9 +813,6 @@ export default function DonorPage() {
             {activeTab === 'allocations' && (
               <AllocationPage
                 ref={allocationPageRef}
-                pageSize={allocationPageSize}
-                onPageSizeChange={setAllocationPageSize}
-                showPageSizeControl={false}
               />
             )}
 

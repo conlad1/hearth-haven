@@ -4,6 +4,7 @@ import { ArrowLeft, DollarSign, HeartHandshake, Repeat, Save, UserRound, Wallet 
 import { fetchMyProfile, updateMyProfile, type UserProfile } from '../api/ProfileAPI';
 import { API_BASE_URL } from '../api/config';
 import { apiFetch } from '../api/http';
+import { isValidPhone } from '../utils/phoneValidation';
 
 const blankProfile: UserProfile = {
   supporterId: null,
@@ -91,11 +92,23 @@ export default function ProfilePage() {
     setProfile((current) => ({ ...current, [key]: value }));
   }
 
+  function handlePhoneChange(value: string) {
+    const cleaned = value.replace(/[^0-9\s\-\.\+\(\)]/g, '');
+    setField('phone', cleaned);
+  }
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaving(true);
     setError(null);
     setSuccess(null);
+
+    const phoneValue = (profile.phone ?? '').trim();
+    if (phoneValue && !isValidPhone(phoneValue)) {
+      setSaving(false);
+      setError('Please enter a valid phone number (10-15 digits with common separators like +, -, .).');
+      return;
+    }
 
     try {
       const updated = await updateMyProfile(profile);
@@ -183,7 +196,9 @@ export default function ProfilePage() {
                 placeholder="Add a phone number"
                 className="input-field"
                 value={valueOrEmpty(profile.phone)}
-                onChange={(e) => setField('phone', e.target.value)}
+                onChange={(e) => handlePhoneChange(e.target.value)}
+                inputMode="tel"
+                autoComplete="tel"
               />
             </label>
           </div>

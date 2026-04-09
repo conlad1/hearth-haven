@@ -232,30 +232,8 @@ const AllocationPage = forwardRef<AllocationPageHandle, AllocationPageProps>(fun
 
       {!loading && !error && (
         <>
-          {showPageSizeControl && (
-            <div className="mb-6 flex justify-end">
-              <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                Per page:
-                <select
-                className="select-field w-auto"
-                value={pageSize}
-                onChange={(e) => {
-                  setPageSize(Number(e.target.value));
-                  setPage(1);
-                }}
-                aria-label="Allocations per page"
-              >
-                  {PAGE_SIZE_OPTIONS.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-          )}
-
-          <div className="mb-4 flex flex-wrap items-center gap-3">
+          <div className="mb-4 rounded-xl border border-gray-200 bg-white p-4 shadow-md dark:border-gray-700 dark:bg-gray-900">
+            <div className="flex flex-wrap items-center gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
@@ -268,26 +246,48 @@ const AllocationPage = forwardRef<AllocationPageHandle, AllocationPageProps>(fun
               />
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <select
-                className="select-field w-auto"
-                value={programAreaFilter}
-                onChange={(e) => setProgramAreaFilter(e.target.value)}
-                aria-label="Filter allocations by program area"
-              >
-                <option value="">All Program Areas</option>
-                {PROGRAM_AREAS.map((area) => (
-                  <option key={area} value={area}>
-                    {area}
-                  </option>
-                ))}
-              </select>
+              <div className="flex flex-wrap items-center gap-2">
+                <select
+                  className="select-field w-auto"
+                  value={programAreaFilter}
+                  onChange={(e) => setProgramAreaFilter(e.target.value)}
+                  aria-label="Filter allocations by program area"
+                >
+                  <option value="">All Program Areas</option>
+                  {PROGRAM_AREAS.map((area) => (
+                    <option key={area} value={area}>
+                      {area}
+                    </option>
+                  ))}
+                </select>
 
-              {(search || programAreaFilter) && (
-                <button className="btn-ghost text-orange-600" onClick={clearFilters}>
-                  <X className="h-4 w-4" /> Clear
-                </button>
-              )}
+                {showPageSizeControl && (
+                  <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                    Per page:
+                    <select
+                      className="select-field w-auto"
+                      value={pageSize}
+                      onChange={(e) => {
+                        setPageSize(Number(e.target.value));
+                        setPage(1);
+                      }}
+                      aria-label="Allocations per page"
+                    >
+                      {PAGE_SIZE_OPTIONS.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+
+                {(search || programAreaFilter) && (
+                  <button className="btn-ghost text-orange-600" onClick={clearFilters}>
+                    <X className="h-4 w-4" /> Clear
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 

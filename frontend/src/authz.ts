@@ -90,7 +90,7 @@ export function canAccessRoute(pathname: string, isAuthenticated: boolean, role:
     return true;
   }
 
-  if (role === AppRoles.DonationsManager && (exactMatches(pathname, '/donors') || exactMatches(pathname, '/allocations') || exactMatches(pathname, '/donor-analytics'))) {
+  if (role === AppRoles.DonationsManager && (exactMatches(pathname, '/donors') || exactMatches(pathname, '/donor-analytics'))) {
     return true;
   }
 
@@ -133,7 +133,6 @@ export const footerLinks: NavLink[] = [
   { to: '/cases', label: 'Case Management', roles: [AppRoles.Admin, AppRoles.CaseManager] },
   { to: '/safehouse-management', label: 'Safehouse Management', roles: [AppRoles.Admin, AppRoles.CaseManager] },
   { to: '/donors', label: 'Donors', roles: [AppRoles.Admin, AppRoles.DonationsManager] },
-  { to: '/allocations', label: 'Allocations', roles: [AppRoles.Admin, AppRoles.DonationsManager] },
   { to: '/outreach', label: 'Outreach', roles: [AppRoles.Admin, AppRoles.OutreachManager] },
   { to: '/social-media', label: 'Social Media', roles: [AppRoles.Admin, AppRoles.OutreachManager] },
   { to: '/reports', label: 'Reports', roles: [AppRoles.Admin, AppRoles.OutreachManager] },

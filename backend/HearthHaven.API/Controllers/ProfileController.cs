@@ -77,6 +77,18 @@ public class ProfileController : ControllerBase
         return string.IsNullOrWhiteSpace(supporterType) ? "Supporter" : supporterType.Trim();
     }
 
+    private static bool IsValidPhoneNumber(string phone)
+    {
+        if (string.IsNullOrWhiteSpace(phone))
+            return true;
+
+        var digitsOnly = System.Text.RegularExpressions.Regex.Replace(phone, @"\D", "");
+        if (digitsOnly.Length < 10 || digitsOnly.Length > 15)
+            return false;
+
+        return System.Text.RegularExpressions.Regex.IsMatch(phone, @"^[0-9\s\-\.\+\(\)]*$");
+    }
+
     private object MapProfile(Supporter supporter) => new
     {
         supporterId = supporter.SupporterId,
@@ -243,6 +255,10 @@ public class ProfileController : ControllerBase
         supporter.Country = string.IsNullOrWhiteSpace(payload.country) ? null : payload.country.Trim();
         supporter.Email = newEmail;
         supporter.Phone = string.IsNullOrWhiteSpace(payload.phone) ? null : payload.phone.Trim();
+        if (!string.IsNullOrWhiteSpace(supporter.Phone) && !IsValidPhoneNumber(supporter.Phone))
+        {
+            return BadRequest("Please enter a valid phone number (10-15 digits with common separators like +, -, .).");
+        }
         supporter.Status = string.IsNullOrWhiteSpace(payload.status) ? "Active" : payload.status.Trim();
         supporter.AcquisitionChannel = string.IsNullOrWhiteSpace(payload.acquisitionChannel) ? null : payload.acquisitionChannel.Trim();
 

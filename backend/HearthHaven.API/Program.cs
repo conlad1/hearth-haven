@@ -18,10 +18,24 @@ if (string.IsNullOrWhiteSpace(connectionString))
 
 // 2. Databases
 builder.Services.AddDbContext<HearthHavenDbContext>(options =>
-    options.UseSqlServer(connectionString));
+    options.UseSqlServer(connectionString, sql =>
+    {
+        sql.CommandTimeout(60);
+        sql.EnableRetryOnFailure(
+            maxRetryCount: 5,
+            maxRetryDelay: TimeSpan.FromSeconds(10),
+            errorNumbersToAdd: null);
+    }));
 
 builder.Services.AddDbContext<SecurityDbContext>(options =>
-    options.UseSqlServer(connectionString));
+    options.UseSqlServer(connectionString, sql =>
+    {
+        sql.CommandTimeout(60);
+        sql.EnableRetryOnFailure(
+            maxRetryCount: 5,
+            maxRetryDelay: TimeSpan.FromSeconds(10),
+            errorNumbersToAdd: null);
+    }));
 
 // 3. Identity
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>

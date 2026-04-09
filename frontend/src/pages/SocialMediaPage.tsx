@@ -329,58 +329,56 @@ export default function SocialMediaPage() {
       {!loading && !error && (
         <>
           {/* Filters */}
-          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-            <div className="relative w-full sm:flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              <input
-                className="input-field pl-9"
-                type="text"
-                placeholder="Search by platform, type, topic, caption, campaign..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                aria-label="Search posts"
-              />
+          <div className="mb-4 rounded-xl border border-gray-200 bg-white p-4 shadow-md dark:border-gray-700 dark:bg-gray-900">
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+              <div className="relative w-full sm:flex-1">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <input
+                  className="input-field pl-9"
+                  type="text"
+                  placeholder="Search by platform, type, topic, caption, campaign..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  aria-label="Search posts"
+                />
+              </div>
+              <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+                <select
+                  className="select-field w-full sm:w-auto"
+                  value={platformFilter}
+                  onChange={(e) => setPlatformFilter(e.target.value)}
+                  aria-label="Filter by platform"
+                >
+                  <option value="">All Platforms</option>
+                  {filterOpts.platforms.map((p) => <option key={p} value={p}>{p}</option>)}
+                </select>
+                <select
+                  className="select-field w-full sm:w-auto"
+                  value={postTypeFilter}
+                  onChange={(e) => setPostTypeFilter(e.target.value)}
+                  aria-label="Filter by post type"
+                >
+                  <option value="">All Post Types</option>
+                  {filterOpts.postTypes.map((t) => <option key={t} value={t}>{t}</option>)}
+                </select>
+                <label className="flex w-full items-center gap-2 text-sm text-gray-600 sm:w-auto dark:text-gray-400">
+                  Per page:
+                  <select
+                    className="select-field w-full sm:w-auto"
+                    value={pageSize}
+                    onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+                    aria-label="Posts per page"
+                  >
+                    {PAGE_SIZE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </label>
+                {(searchTerm || platformFilter || postTypeFilter) && (
+                  <button className="btn-ghost w-full text-orange-600 sm:w-auto" onClick={clearFilters}>
+                    <X className="h-4 w-4" /> Clear
+                  </button>
+                )}
+              </div>
             </div>
-            <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
-              <select
-                className="select-field w-full sm:w-auto"
-                value={platformFilter}
-                onChange={(e) => setPlatformFilter(e.target.value)}
-                aria-label="Filter by platform"
-              >
-                <option value="">All Platforms</option>
-                {filterOpts.platforms.map((p) => <option key={p} value={p}>{p}</option>)}
-              </select>
-              <select
-                className="select-field w-full sm:w-auto"
-                value={postTypeFilter}
-                onChange={(e) => setPostTypeFilter(e.target.value)}
-                aria-label="Filter by post type"
-              >
-                <option value="">All Post Types</option>
-                {filterOpts.postTypes.map((t) => <option key={t} value={t}>{t}</option>)}
-              </select>
-              {(searchTerm || platformFilter || postTypeFilter) && (
-                <button className="btn-ghost w-full text-orange-600 sm:w-auto" onClick={clearFilters}>
-                  <X className="h-4 w-4" /> Clear
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Page size */}
-          <div className="mb-4 flex justify-end">
-            <label className="flex w-full items-center gap-2 text-sm text-gray-600 sm:w-auto dark:text-gray-400">
-              Per page:
-              <select
-                className="select-field w-full sm:w-auto"
-                value={pageSize}
-                onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
-                aria-label="Posts per page"
-              >
-                {PAGE_SIZE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </label>
           </div>
 
           {/* Table */}

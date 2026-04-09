@@ -3,6 +3,7 @@ import { Pencil, Trash2, ShieldCheck, RefreshCw } from 'lucide-react';
 import ConfirmModal from '../components/ConfirmModal';
 import { useAuthSession } from '../authSession';
 import { AppRoles } from '../authz';
+import { isValidPhone } from '../utils/phoneValidation';
 import {
   deleteAdminUser,
   fetchAdminRoles,
@@ -99,6 +100,12 @@ export default function AdminUsersPage() {
     setForm((prev) => ({ ...prev, selectedRole: role }));
   };
 
+  const handlePhoneChange = (value: string) => {
+    // Keep only digits and common phone separators.
+    const cleaned = value.replace(/[^0-9\s\-\.\+\(\)]/g, '');
+    setForm((prev) => ({ ...prev, phoneNumber: cleaned }));
+  };
+
   const saveChanges = async () => {
     if (!editingUser) {
       return;
@@ -119,6 +126,11 @@ export default function AdminUsersPage() {
     if (!form.selectedRole) {
       setError('Exactly one role must be selected.');
       return;
+
+        if (form.phoneNumber.trim() && !isValidPhone(form.phoneNumber)) {
+          setError('Please enter a valid phone number (10-15 digits with common separators like +, -, .).');
+          return;
+        }
     }
 
     setSaving(true);
@@ -291,7 +303,10 @@ export default function AdminUsersPage() {
                   type="tel"
                   className="input-field"
                   value={form.phoneNumber}
-                  onChange={(event) => setForm((prev) => ({ ...prev, phoneNumber: event.target.value }))}
+                  onChange={(event) => handlePhoneChange(event.target.value)}
+                  inputMode="tel"
+                  autoComplete="tel"
+                  placeholder="(555) 123-4567"
                 />
               </label>
 
