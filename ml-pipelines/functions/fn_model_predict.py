@@ -161,11 +161,11 @@ def run_rfecv(preprocessor, X_train, y_train,
         X_test_sel  = X_test[selected]
     """
     import numpy as np
+    import pandas as pd
     from sklearn.base import clone
     from sklearn.feature_selection import RFECV
     from sklearn.ensemble import GradientBoostingClassifier, GradientBoostingRegressor
     from sklearn.model_selection import StratifiedKFold, KFold
-    from sklearn.pipeline import Pipeline
 
     if problem_type == 'classification':
         estimator = GradientBoostingClassifier(
@@ -178,25 +178,13 @@ def run_rfecv(preprocessor, X_train, y_train,
         cv      = KFold(n_splits=n_splits, shuffle=True, random_state=random_state)
         scoring = 'r2'
 
-    pipe = Pipeline([
-        ('preprocessor', clone(preprocessor)),
-        ('estimator',    estimator),
-    ])
+    # Pre-encode X_train so RFECV works on a plain numeric matrix.
+    # Nesting a ColumnTransformer inside RFECV breaks column name resolution
+    # when RFECV eliminates columns — the transformer can no longer find its
+    # named columns in the reduced matrix.
+    fitted_preprocessor = clone(preprocessor).fit(X_train)
+    X_encoded = fitted_preprocessor.transform(X_train)
 
-    print(f"\n[OK] run_rfecv() starting -- {X_train.shape[1]} original features")
-    print(f"     {n_splits}-fold CV, scoring={scoring}. This may take a few minutes...")
-
-    rfecv = RFECV(
-        estimator=pipe,
-        step=1,
-        cv=cv,
-        scoring=scoring,
-        min_features_to_select=3,
-        n_jobs=-1,
-    )
-    rfecv.fit(X_train, y_train)
-
-    fitted_preprocessor = rfecv.estimator_.named_steps['preprocessor']
     try:
         cat_names = (fitted_preprocessor
                      .named_transformers_['cat']
@@ -204,9 +192,24 @@ def run_rfecv(preprocessor, X_train, y_train,
                      .get_feature_names_out(categorical_features).tolist())
     except Exception:
         cat_names = []
-    feature_names = list(numeric_features) + cat_names
+    encoded_feature_names = list(numeric_features) + cat_names
 
-    selected_encoded = [f for f, s in zip(feature_names, rfecv.support_) if s]
+    X_encoded_df = pd.DataFrame(X_encoded, columns=encoded_feature_names)
+
+    print(f"\n[OK] run_rfecv() starting -- {X_train.shape[1]} original ({X_encoded_df.shape[1]} encoded) features")
+    print(f"     {n_splits}-fold CV, scoring={scoring}. This may take a few minutes...")
+
+    rfecv = RFECV(
+        estimator=estimator,
+        step=1,
+        cv=cv,
+        scoring=scoring,
+        min_features_to_select=3,
+        n_jobs=-1,
+    )
+    rfecv.fit(X_encoded_df, y_train)
+
+    selected_encoded = [f for f, s in zip(encoded_feature_names, rfecv.support_) if s]
 
     selected_numeric = [f for f in numeric_features if f in selected_encoded]
     selected_categorical = []

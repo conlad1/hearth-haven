@@ -1,267 +1,223 @@
-import pandas as pd
-from faker import Faker
-import random
+"""
+Generates synthetic relational data for Hearth Haven ML pipelines.
+Outputs to extra_seed.sql with INSERT statements matching schema.sql.
+"""
+
 import os
+import sys
+import datetime
+import numpy as np
+from faker import Faker
 
 fake = Faker()
+Faker.seed(42)
+np.random.seed(42)
 
-# ─── SHARED STATE FOR FOREIGN KEYS ─────────────────────────────────────────────
-# Stores valid IDs (real + synthetic) from parent tables so child tables 
-# can randomly select them, maintaining perfect referential integrity.
-valid_ids = {
-    'safehouses': [],
-    'supporters': [],
-    'residents': [],
-    'social_media_posts': [],
-    'donations': []
+OUTPUT = os.path.join(os.path.dirname(__file__), "extra_seed.sql")
+
+# Configuration
+NUM_RESIDENTS = 1000
+NUM_SUPPORTERS = 2000
+NUM_SOCIAL_POSTS = 1500
+START_ID = 10000 # Offset to prevent colliding with real seed data
+EXISTING_SAFEHOUSE_IDS = list(range(1, 10)) # SH01 to SH09 from seed.sql
+
+# Column types borrowed from your generate_seed.py for SQL formatting
+COLUMN_TYPES = {
+    "supporters": {"supporter_id": "int"},
+    "donations": {
+        "donation_id": "int", "supporter_id": "int", "amount": "dec", 
+        "estimated_value": "dec", "is_recurring": "bit"
+    },
+    "donation_allocations": {
+        "allocation_id": "int", "donation_id": "int", "safehouse_id": "int", "amount_allocated": "dec"
+    },
+    "residents": {
+        "resident_id": "int", "safehouse_id": "int", "has_special_needs": "bit"
+    },
+    "education_records": {
+        "education_record_id": "int", "resident_id": "int", "attendance_rate": "dec", "progress_percent": "dec"
+    },
+    "process_recordings": {
+        "recording_id": "int", "resident_id": "int", "session_duration_minutes": "int", "progress_noted": "bit"
+    },
+    "social_media_posts": {
+        "post_id": "int", "features_resident_story": "bit", "is_boosted": "bit", "donation_referrals": "int", "estimated_donation_value_php": "dec"
+    }
 }
 
-# ─── PARENT TABLE GENERATORS ───────────────────────────────────────────────────
-
-def generate_fake_safehouses(next_id, count):
-    rows = []
-    for i in range(count):
-        current_id = next_id + i
-        valid_ids['safehouses'].append(current_id)
-        rows.append({
-            'safehouse_id': current_id,
-            'name': f"Safehouse {fake.word().capitalize()}",
-            'location_city': fake.city(),
-            'location_region': fake.state(),
-            'capacity': random.randint(10, 50),
-            'current_occupancy': random.randint(5, 45),
-            'status': random.choices(['Active', 'Maintenance', 'Closed'], weights=[0.8, 0.15, 0.05])[0],
-            'date_established': fake.date_between(start_date='-10y', end_date='-2y').isoformat()
-        })
-    return rows
-
-def generate_fake_social_media_posts(next_id, count):
-    rows = []
-    for i in range(count):
-        current_id = next_id + i
-        valid_ids['social_media_posts'].append(current_id)
-        rows.append({
-            'post_id': current_id,
-            'platform': random.choice(['Facebook', 'Instagram', 'Twitter', 'LinkedIn']),
-            'post_type': random.choice(['Image', 'Video', 'Text', 'Link']),
-            'created_at': fake.date_between(start_date='-3y', end_date='today').isoformat(),
-            'campaign_name': random.choice(['End of Year', 'Spring Gala', 'Awareness Month', 'None']),
-            'impressions': random.randint(100, 50000),
-            'likes': random.randint(10, 5000),
-            'shares': random.randint(0, 500)
-        })
-    return rows
-
-def generate_fake_supporters(next_id, count):
-    rows = []
-    for i in range(count):
-        current_id = next_id + i
-        valid_ids['supporters'].append(current_id)
-        rows.append({
-            'supporter_id': current_id,
-            'first_name': fake.first_name(),
-            'last_name': fake.last_name(),
-            'email': fake.unique.email(),
-            'phone': fake.phone_number()[:15],
-            'supporter_type': random.choice(['MonetaryDonor', 'Volunteer', 'InKindDonor', 'PartnerOrganization']),
-            'acquisition_channel': random.choice(['Website', 'SocialMedia', 'Event', 'WordOfMouth']),
-            'status': random.choices(['Active', 'Inactive'], weights=[0.8, 0.2])[0],
-            'created_at': fake.date_between(start_date='-3y', end_date='today').isoformat()
-        })
-    return rows
-
-def generate_fake_residents(next_id, count):
-    rows = []
-    for i in range(count):
-        current_id = next_id + i
-        valid_ids['residents'].append(current_id)
-        rows.append({
-            'resident_id': current_id,
-            'initial_risk_level': random.choice(['Low', 'Medium', 'High', 'Critical']),
-            'current_risk_level': random.choice(['Low', 'Medium', 'High', 'Critical']),
-            'case_status': random.choice(['Active', 'Closed']),
-            'case_category': random.choice(['Trafficking', 'Abuse', 'At-Risk']),
-            'date_of_birth': fake.date_between(start_date='-20y', end_date='-10y').isoformat(),
-            'date_of_admission': fake.date_between(start_date='-5y', end_date='-1m').isoformat(),
-            'reintegration_status': random.choice(['Not Ready', 'In Progress', 'Completed'])
-        })
-    return rows
-
-
-# ─── CHILD TABLE GENERATORS ────────────────────────────────────────────────────
-
-def generate_fake_donations(next_id, count):
-    rows = []
-    for i in range(count):
-        current_id = next_id + i
-        valid_ids['donations'].append(current_id)
-        
-        # Grab foreign keys from shared state
-        supporter_id = random.choice(valid_ids['supporters']) if valid_ids['supporters'] else 1
-        
-        # 30% chance a donation came from a social media post
-        referral_post_id = random.choice(valid_ids['social_media_posts']) if (random.random() < 0.3 and valid_ids['social_media_posts']) else None
-        
-        rows.append({
-            'donation_id': current_id,
-            'supporter_id': supporter_id,
-            'referral_post_id': referral_post_id,
-            'donation_type': random.choice(['Monetary', 'InKind']),
-            'amount': round(random.uniform(10.0, 5000.0), 2),
-            'donation_date': fake.date_between(start_date='-3y', end_date='today').isoformat(),
-            'campaign_name': random.choice(['End of Year', 'Spring Gala', 'General'])
-        })
-    return rows
-
-def generate_fake_health_records(next_id, count):
-    rows = []
-    for i in range(count):
-        resident_id = random.choice(valid_ids['residents']) if valid_ids['residents'] else 1
-        rows.append({
-            'health_record_id': next_id + i,  # <-- FIX THIS LINE
-            'resident_id': resident_id,
-            'record_date': fake.date_between(start_date='-2y', end_date='today').isoformat(),
-            'general_health_score': round(random.uniform(1.0, 5.0), 1),
-            'nutrition_score': round(random.uniform(1.0, 5.0), 1),
-            'sleep_quality_score': round(random.uniform(1.0, 5.0), 1),
-            'bmi': round(random.uniform(16.0, 28.0), 1),
-            'medical_checkup_done': random.choice([True, False])
-        })
-    return rows
-
-def generate_fake_education_records(next_id, count):
-    rows = []
-    for i in range(count):
-        resident_id = random.choice(valid_ids['residents']) if valid_ids['residents'] else 1
-        rows.append({
-            'education_record_id': next_id + i,
-            'resident_id': resident_id,
-            'record_date': fake.date_between(start_date='-2y', end_date='today').isoformat(),
-            'attendance_rate': round(random.uniform(50.0, 100.0), 1),
-            'progress_percent': round(random.uniform(10.0, 100.0), 1),
-            'education_level': random.choice(['Primary', 'Secondary', 'Vocational']),
-            'enrollment_status': random.choice(['Enrolled', 'Not Enrolled', 'Graduated'])
-        })
-    return rows
-
-def generate_fake_process_recordings(next_id, count):
-    rows = []
-    for i in range(count):
-        resident_id = random.choice(valid_ids['residents']) if valid_ids['residents'] else 1
-        rows.append({
-            'recording_id': next_id + i,
-            'resident_id': resident_id,
-            'session_date': fake.date_between(start_date='-2y', end_date='today').isoformat(),
-            'session_duration_minutes': random.randint(30, 120),
-            'progress_noted': random.choice([True, False]),
-            'concerns_flagged': random.choice([True, False])
-        })
-    return rows
-
-
-# ─── CORE PROCESSING ENGINE ────────────────────────────────────────────────────
-
-def process_table(table_name, csv_path, id_col, target_rows, generator_func):
-    """Reads real data, logs valid IDs, generates fakes, and returns combined DataFrame."""
-    print(f"\\n--- Processing Table: {table_name} ---")
+def format_sql_value(value, col_type):
+    """Format Python values into SQL literals based on column type."""
+    if value is None:
+        return "NULL"
+    if col_type == "bit":
+        return "1" if value else "0"
+    if col_type in ("int", "dec"):
+        return str(value)
     
-    # 1. Read existing CSV safely
-    try:
-        real_df = pd.read_csv(csv_path)
-        current_rows = len(real_df)
-        print(f"Found {current_rows} real rows.")
-    except FileNotFoundError:
-        print(f"WARNING: Could not find {csv_path}. Starting from scratch.")
-        real_df = pd.DataFrame(columns=[id_col]) # Empty df to prevent crashes
-        current_rows = 0
+    # Handle dates and strings
+    if isinstance(value, (datetime.date, datetime.datetime)):
+        return f"N'{value.strftime('%Y-%m-%d')}'"
+        
+    escaped = str(value).replace("'", "''")
+    return f"N'{escaped}'"
 
-    # 2. Add real IDs to shared state for foreign keys
-    if table_name in valid_ids and current_rows > 0:
-        valid_ids[table_name].extend(real_df[id_col].tolist())
-        
-    # 3. Calculate gap
-    max_id = real_df[id_col].max() if current_rows > 0 else 0
-    next_id = max_id + 1
-    rows_to_add = target_rows - current_rows
+def generate_inserts(table_name, data_dicts):
+    """Generate SQL INSERT statements for a list of dictionaries."""
+    if not data_dicts:
+        return []
     
-    if rows_to_add <= 0:
-        print(f"Target count ({target_rows}) already met.")
-        return real_df
-        
-    # 4. Generate and combine
-    print(f"Generating {rows_to_add} synthetic rows...")
-    new_rows = generator_func(next_id, rows_to_add)
-    fake_df = pd.DataFrame(new_rows)
+    types = COLUMN_TYPES.get(table_name, {})
+    columns = list(data_dicts[0].keys())
+    col_list = ", ".join(f"[{c}]" for c in columns)
     
-    combined_df = pd.concat([real_df, fake_df], ignore_index=True)
-    return combined_df
+    stmts = []
+    for row in data_dicts:
+        vals = []
+        for col in columns:
+            raw_val = row[col]
+            col_type = types.get(col, "str")
+            vals.append(format_sql_value(raw_val, col_type))
+        
+        val_list = ", ".join(vals)
+        stmts.append(f"INSERT INTO dbo.[{table_name}] ({col_list}) VALUES ({val_list});")
+    return stmts
 
-def write_sql_inserts(df, table_name, file_handle):
-    """Writes the DataFrame as SQL INSERTs directly into the open file handle."""
-    file_handle.write(f"-- ==========================================\\n")
-    file_handle.write(f"-- TABLE: {table_name}\\n")
-    file_handle.write(f"-- ==========================================\\n")
-    file_handle.write(f"DELETE FROM dbo.{table_name};\\n\\n")
-    
-    # We use a trick to convert 'NaN' back to SQL NULLs
-    df = df.where(pd.notnull(df), None)
-    
-    for _, row in df.iterrows():
-        values = []
-        for val in row.values:
-            if val is None:
-                values.append('NULL')
-            elif isinstance(val, bool):
-                values.append('1' if val else '0') # SQL Server boolean format
-            elif isinstance(val, (int, float)):
-                values.append(str(val))
-            else:
-                clean_str = str(val).replace("'", "''")
-                values.append(f"'{clean_str}'")
-        
-        sql = f"INSERT INTO dbo.{table_name} ({', '.join(df.columns)}) VALUES ({', '.join(values)});\\n"
-        file_handle.write(sql)
-        
-    file_handle.write("\\n\\n")
-
-
-# ─── MAIN EXECUTION ────────────────────────────────────────────────────────────
-
-if __name__ == "__main__":
-    BASE_DIR = "/Users/michellejohanson/Programming/hearth-haven/source_data/lighthouse_csv_v7/"
-    OUTPUT_SQL = "long_seed.sql"
-    
-    # CRITICAL: Execution order dictates Foreign Key availability.
-    # Level 1 (Independent): safehouses, social_media_posts, supporters, residents
-    # Level 2 (Dependent): donations, health_records, education_records, process_recordings
-    
-    pipeline_config = [
-        {"table": "safehouses", "csv": "safehouses.csv", "id_col": "safehouse_id", "target": 5, "generator": generate_fake_safehouses},
-        {"table": "social_media_posts", "csv": "social_media_posts.csv", "id_col": "post_id", "target": 500, "generator": generate_fake_social_media_posts},
-        {"table": "supporters", "csv": "supporters.csv", "id_col": "supporter_id", "target": 500, "generator": generate_fake_supporters},
-        {"table": "residents", "csv": "residents.csv", "id_col": "resident_id", "target": 300, "generator": generate_fake_residents},
-        
-        # Level 2 tables start here (they can safely pull IDs from the above tables)
-        {"table": "donations", "csv": "donations.csv", "id_col": "donation_id", "target": 2000, "generator": generate_fake_donations},
-        {"table": "health_wellbeing_records", "csv": "health_wellbeing_records.csv", "id_col": "health_record_id", "target": 1500, "generator": generate_fake_health_records},
-        {"table": "education_records", "csv": "education_records.csv", "id_col": "education_record_id", "target": 1500, "generator": generate_fake_education_records},
-        {"table": "process_recordings", "csv": "process_recordings.csv", "id_col": "recording_id", "target": 2000, "generator": generate_fake_process_recordings},
-        
-        # To add `home_visitations` or `incident_reports`, just add their dictionary here!
+def main():
+    print("Generating relational synthetic data...")
+    all_sql_parts = [
+        "-- ============================================================",
+        "-- Hearth Haven – SYNTHETIC EXTRA SEED DATA (ML Training)",
+        "-- ============================================================",
+        "SET NOCOUNT ON;",
+        ""
     ]
     
-    with open(OUTPUT_SQL, 'w') as sql_file:
-        for config in pipeline_config:
-            # Construct the absolute path dynamically
-            csv_absolute_path = os.path.join(BASE_DIR, config["csv"])
+    global_ids = {'donation': START_ID, 'allocation': START_ID, 'edu': START_ID, 'process': START_ID}
+    
+    # ==========================================
+    # 1. RESIDENTS & RELATED RECORDS
+    # ==========================================
+    residents, edu_records, process_records = [], [], []
+    
+    for i in range(NUM_RESIDENTS):
+        res_id = START_ID + i
+        safehouse_id = np.random.choice(EXISTING_SAFEHOUSE_IDS)
+        dob = fake.date_of_birth(minimum_age=10, maximum_age=18)
+        admit_date = fake.date_between_dates(date_start=dob + datetime.timedelta(days=365*10), date_end=datetime.date.today())
+        has_spec_needs = np.random.rand() < 0.15
+        
+        residents.append({
+            "resident_id": res_id, "safehouse_id": safehouse_id, "first_name": fake.first_name_female(),
+            "last_name": fake.last_name(), "date_of_birth": dob, "date_of_admission": admit_date,
+            "has_special_needs": has_spec_needs, "status": "Active"
+        })
+        
+        # Education Records (Impacted by special needs)
+        for _ in range(np.random.randint(1, 12)): # 1 to 12 months of records
+            progress = np.clip(np.random.normal(loc=45 if has_spec_needs else 75, scale=15), 0, 100)
+            edu_records.append({
+                "education_record_id": global_ids['edu'], "resident_id": res_id,
+                "record_date": fake.date_between_dates(date_start=admit_date, date_end=datetime.date.today()),
+                "attendance_rate": np.round(np.clip(np.random.normal(85, 10), 0, 100), 2),
+                "progress_percent": np.round(progress, 2)
+            })
+            global_ids['edu'] += 1
             
-            final_df = process_table(
-                table_name=config["table"],
-                csv_path=csv_absolute_path,
-                id_col=config["id_col"],
-                target_rows=config["target"],
-                generator_func=config["generator"]
-            )
-            write_sql_inserts(final_df, config["table"], sql_file)
+        # Process Recordings (Counseling - Avg ~47 based on EDA)
+        for _ in range(int(np.random.normal(loc=47, scale=15))):
+            process_records.append({
+                "recording_id": global_ids['process'], "resident_id": res_id,
+                "session_date": fake.date_between_dates(date_start=admit_date, date_end=datetime.date.today()),
+                "session_duration_minutes": np.random.choice([30, 45, 60]),
+                "progress_noted": np.random.rand() > 0.3
+            })
+            global_ids['process'] += 1
+
+    # ==========================================
+    # 2. SUPPORTERS, DONATIONS & ALLOCATIONS
+    # ==========================================
+    supporters, donations, allocations = [], [], []
+    
+    for i in range(NUM_SUPPORTERS):
+        sup_id = START_ID + i
+        supporters.append({
+            "supporter_id": sup_id, "first_name": fake.first_name(), "last_name": fake.last_name(),
+            "email": fake.email(), "type": "Individual", "status": "Active"
+        })
+        
+        is_recurring = np.random.rand() < 0.25
+        num_donations = int(np.random.poisson(lam=24)) + 1 if is_recurring else int(np.random.poisson(lam=1)) + 1
+        
+        for _ in range(num_donations):
+            don_id = global_ids['donation']
+            amt = np.round(np.random.normal(loc=150 if is_recurring else 75, scale=40), 2)
+            if amt < 5: amt = 5.00 # Minimum donation
             
-    print(f"\\n✅ All tables processed successfully! Master SQL file saved to {OUTPUT_SQL}.")
+            donations.append({
+                "donation_id": don_id, "supporter_id": sup_id, "donation_date": fake.date_this_decade(),
+                "amount": amt, "donation_type": "Monetary", "is_recurring": is_recurring
+            })
+            
+            # Allocate donation to a random safehouse
+            allocations.append({
+                "allocation_id": global_ids['allocation'], "donation_id": don_id,
+                "safehouse_id": np.random.choice(EXISTING_SAFEHOUSE_IDS), "amount_allocated": amt
+            })
+            global_ids['donation'] += 1
+            global_ids['allocation'] += 1
+
+    # ==========================================
+    # 3. SOCIAL MEDIA POSTS
+    # ==========================================
+    social_posts = []
+    for i in range(NUM_SOCIAL_POSTS):
+        post_id = START_ID + i
+        features_story = np.random.rand() < 0.18
+        referrals = int(np.random.poisson(lam=15)) if features_story else int(np.random.poisson(lam=0.5))
+        
+        social_posts.append({
+            "post_id": post_id, "platform": np.random.choice(["Facebook", "Instagram", "Twitter"]),
+            "post_date": fake.date_this_year(), "features_resident_story": features_story,
+            "is_boosted": np.random.rand() < (0.6 if features_story else 0.2),
+            "donation_referrals": referrals,
+            "estimated_donation_value_php": referrals * 2500.00 # Mock avg value
+        })
+
+    # ==========================================
+    # BUILD SQL FILE
+    # ==========================================
+    tables_to_write = [
+        ("supporters", supporters),
+        ("donations", donations),
+        ("donation_allocations", allocations),
+        ("residents", residents),
+        ("education_records", edu_records),
+        ("process_recordings", process_records),
+        ("social_media_posts", social_posts)
+    ]
+    
+    total_inserts = 0
+    for table_name, data in tables_to_write:
+        if not data: continue
+        inserts = generate_inserts(table_name, data)
+        total_inserts += len(inserts)
+        
+        all_sql_parts.append(f"-- {table_name} ({len(inserts)} rows)")
+        all_sql_parts.append(f"SET IDENTITY_INSERT dbo.[{table_name}] ON;")
+        all_sql_parts.extend(inserts)
+        all_sql_parts.append(f"SET IDENTITY_INSERT dbo.[{table_name}] OFF;")
+        all_sql_parts.append("")
+
+    all_sql_parts.append("SET NOCOUNT OFF;")
+    all_sql_parts.append("")
+
+    # === THE FIX: Write line by line explicitly ===
+    with open(OUTPUT, "w", encoding="utf-8") as f:
+        for line in all_sql_parts:
+            f.write(line + "\n")
+
+    print(f"Success! Wrote {total_inserts} synthetic rows across {len(tables_to_write)} tables to {OUTPUT}")
+
+if __name__ == "__main__":
+    main()

@@ -4,10 +4,6 @@ intex/
 venv/
 env/
 
-# Data — replaced by live DB connection
-data/
-data_backup_*/
-
 # Python cache
 __pycache__/
 *.pyc

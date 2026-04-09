@@ -17,23 +17,22 @@ from fn_clean import (
 # ─── 1. PRIVATE HELPER FUNCTIONS (Data Fetching) ──────────────────────────────
 
 def _get_connection_string():
-    """Finds appsettings.Development.json and translates ADO.NET to ODBC format."""
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    appsettings_path = os.path.abspath(os.path.join(current_dir, '..', '..', 'backend', 'HearthHaven.API', 'appsettings.Development.json'))
-    
+    """Reads the ADO.NET connection string from dotnet user-secrets and translates it to ODBC format."""
+    user_secrets_path = os.path.expanduser("~/.microsoft/usersecrets/hearth-haven-api/secrets.json")
+
     try:
-        with open(appsettings_path, 'r') as file:
-            config = json.load(file)
-            dot_net_string = config.get("ConnectionStrings", {}).get("AZURE_SQL_CONNECTIONSTRING", "")
-            
+        with open(user_secrets_path, 'r', encoding='utf-8-sig') as file:
+            secrets = json.load(file)
+            dot_net_string = secrets.get("ConnectionStrings:AZURE_SQL_CONNECTIONSTRING", "")
+
             if not dot_net_string:
                 return None
-                
+
             if "Driver=" not in dot_net_string:
                 python_string = f"Driver={{ODBC Driver 18 for SQL Server}};{dot_net_string}"
             else:
                 python_string = dot_net_string
-                
+
             python_string = python_string.replace("Encrypt=True", "Encrypt=yes")
             python_string = python_string.replace("Encrypt=False", "Encrypt=no")
             python_string = python_string.replace("TrustServerCertificate=True", "TrustServerCertificate=yes")
@@ -43,9 +42,9 @@ def _get_connection_string():
             python_string = python_string.replace("Initial Catalog=", "Database=")
 
             return python_string
-            
+
     except FileNotFoundError:
-        print(f"[WARNING] Could not find appsettings at {appsettings_path}")
+        print(f"[WARNING] Could not find user secrets at {user_secrets_path}")
         return None
 
 def _get_data(table_name: str) -> pd.DataFrame:

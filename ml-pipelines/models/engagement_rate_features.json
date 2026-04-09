@@ -1,0 +1,46 @@
+{
+  "selected_features": [
+    "num_hashtags",
+    "mentions_count",
+    "caption_length",
+    "post_hour",
+    "post_month",
+    "follower_count_at_post",
+    "video_views",
+    "forwards",
+    "platform",
+    "post_type",
+    "media_type",
+    "day_of_week",
+    "call_to_action_type",
+    "content_topic",
+    "sentiment_tone",
+    "campaign_name",
+    "has_call_to_action",
+    "is_boosted",
+    "features_resident_story"
+  ],
+  "numeric_features": [
+    "num_hashtags",
+    "mentions_count",
+    "caption_length",
+    "post_hour",
+    "post_month",
+    "follower_count_at_post",
+    "video_views",
+    "forwards"
+  ],
+  "categorical_features": [
+    "platform",
+    "post_type",
+    "media_type",
+    "day_of_week",
+    "call_to_action_type",
+    "content_topic",
+    "sentiment_tone",
+    "campaign_name",
+    "has_call_to_action",
+    "is_boosted",
+    "features_resident_story"
+  ]
+}

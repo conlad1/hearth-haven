@@ -46,6 +46,12 @@ def fit_causal_regression(X_train, y_train):
 
     The constant (intercept) is added automatically inside this function.
 
+    Robust handling:
+        - Drops constant columns (zero variance) before fitting
+        - Drops near-constant columns (> 99% identical values)
+        - Raises a clear ValueError if the matrix is still singular after cleanup,
+          rather than crashing with a cryptic numpy LinAlgError
+
     Parameters:
         X_train (DataFrame): numeric feature matrix (already encoded, no target)
         y_train (Series): continuous target vector
@@ -64,12 +70,44 @@ def fit_causal_regression(X_train, y_train):
     """
     import statsmodels.api as sm
     import pandas as pd
+    import numpy as np
 
     X = pd.DataFrame(X_train).copy()
     X = X.apply(pd.to_numeric, errors='coerce').fillna(0)
+
+    # Drop constant columns — zero variance makes the matrix singular
+    constant_cols = [c for c in X.columns if X[c].nunique() <= 1]
+    if constant_cols:
+        print(f"[fit_causal_regression] Dropping {len(constant_cols)} constant "
+              f"column(s): {constant_cols}")
+        X = X.drop(columns=constant_cols)
+
+    # Drop near-constant columns — > 99% identical values add no information
+    near_constant = [c for c in X.columns
+                     if X[c].value_counts(normalize=True).iloc[0] > 0.99]
+    if near_constant:
+        print(f"[fit_causal_regression] Dropping {len(near_constant)} near-constant "
+              f"column(s): {near_constant}")
+        X = X.drop(columns=near_constant)
+
+    if X.shape[1] == 0:
+        raise ValueError(
+            "[fit_causal_regression] No features remain after dropping constant "
+            "and near-constant columns. Add more data or reduce feature count."
+        )
+
     X_const = sm.add_constant(X, has_constant='add')
 
-    results = sm.OLS(y_train, X_const).fit()
+    try:
+        results = sm.OLS(y_train, X_const).fit()
+    except np.linalg.LinAlgError as e:
+        raise ValueError(
+            f"[fit_causal_regression] Singular matrix — the feature matrix is "
+            f"still rank-deficient after cleanup. Try running check_vif() first "
+            f"and removing high-VIF features, or reduce the number of features "
+            f"relative to observations (n={len(y_train)}, p={X.shape[1]}).\n"
+            f"Original error: {e}"
+        ) from e
 
     print(f"\n[OK] fit_causal_regression() complete.")
     print(f"     R²: {results.rsquared:.4f}  |  Adj R²: {results.rsquared_adj:.4f}")
@@ -94,6 +132,13 @@ def fit_causal_classification(X_train, y_train, max_iter=200):
         holding all others constant. An odds ratio of 1.5 means the odds of
         the positive class are 50% higher per one-unit increase.
 
+    Robust handling:
+        - Drops constant columns (zero variance) before fitting
+        - Drops near-constant columns (> 99% identical values)
+        - Tries 'bfgs' optimizer as fallback if Newton-Raphson fails
+        - Raises a clear ValueError if the matrix is still singular after cleanup,
+          rather than crashing with a cryptic numpy LinAlgError
+
     Parameters:
         X_train (DataFrame): numeric feature matrix (already encoded)
         y_train (Series): binary target (0/1)
@@ -110,12 +155,58 @@ def fit_causal_classification(X_train, y_train, max_iter=200):
     """
     import statsmodels.api as sm
     import pandas as pd
+    import numpy as np
+    import warnings
 
     X = pd.DataFrame(X_train).copy()
     X = X.apply(pd.to_numeric, errors='coerce').fillna(0)
+
+    # Drop constant columns — zero variance makes the matrix singular
+    constant_cols = [c for c in X.columns if X[c].nunique() <= 1]
+    if constant_cols:
+        print(f"[fit_causal_classification] Dropping {len(constant_cols)} constant "
+              f"column(s): {constant_cols}")
+        X = X.drop(columns=constant_cols)
+
+    # Drop near-constant columns — > 99% identical values add no information
+    near_constant = [c for c in X.columns
+                     if X[c].value_counts(normalize=True).iloc[0] > 0.99]
+    if near_constant:
+        print(f"[fit_causal_classification] Dropping {len(near_constant)} near-constant "
+              f"column(s): {near_constant}")
+        X = X.drop(columns=near_constant)
+
+    if X.shape[1] == 0:
+        raise ValueError(
+            "[fit_causal_classification] No features remain after dropping constant "
+            "and near-constant columns. Add more data or reduce feature count."
+        )
+
     X_const = sm.add_constant(X, has_constant='add')
 
-    results = sm.Logit(y_train, X_const).fit(maxiter=max_iter, disp=False)
+    # Try Newton-Raphson first, fall back to bfgs if it fails
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        try:
+            results = sm.Logit(y_train, X_const).fit(
+                maxiter=max_iter, disp=False, method='newton'
+            )
+        except (np.linalg.LinAlgError, Exception) as e_newton:
+            print(f"[fit_causal_classification] Newton failed ({type(e_newton).__name__}), "
+                  f"trying bfgs optimizer...")
+            try:
+                results = sm.Logit(y_train, X_const).fit(
+                    maxiter=max_iter, disp=False, method='bfgs'
+                )
+                print("[fit_causal_classification] bfgs succeeded.")
+            except np.linalg.LinAlgError as e:
+                raise ValueError(
+                    f"[fit_causal_classification] Singular matrix — the feature matrix "
+                    f"is rank-deficient after cleanup. Try running check_vif() first "
+                    f"and removing high-VIF features, or use SelectKBest to reduce "
+                    f"features (n={len(y_train)}, p={X.shape[1]}).\n"
+                    f"Original error: {e}"
+                ) from e
 
     print(f"\n[OK] fit_causal_classification() complete.")
     print(f"     Pseudo R² (McFadden): {results.prsquared:.4f}")
@@ -375,7 +466,7 @@ def check_assumptions(results, dw_low=1.5, dw_high=2.5):
     try:
         bp_stat, bp_p, _, _ = het_breuschpagan(resid, results.model.exog)
         hs_v = 'PASS' if bp_p > 0.05 else ('WARN' if bp_p > 0.01 else 'FAIL')
-        verdicts['homoscedasticity'] = {'verdict': hs_v, 'stat': round(bp_p, 6),
+        verdicts['homoscedasticity'] = {'verdict': hs_v, 'stat': round(float(bp_p), 6),
             'note': f"Breusch-Pagan p={bp_p:.4f}"}
         print(f"\n5. Homoscedasticity:   [{hs_v}]")
         print(f"   Breusch-Pagan stat={bp_stat:.3f}, p={bp_p:.4f}")
@@ -542,7 +633,7 @@ def run_greedy_backward(X_train, y_train, X_val, y_val,
 
     trace        = pd.DataFrame(trace_rows)
     optimal_idx  = trace['val_rmse'].idxmin()
-    optimal_step = int(trace.loc[optimal_idx, 'step'])
+    optimal_step = int(trace.loc[optimal_idx, 'step'])  # type: ignore[arg-type]
     optimal_rmse = trace.loc[optimal_idx, 'val_rmse']
 
     all_features     = list(X_train.columns)
@@ -584,6 +675,7 @@ def run_stepwise_pvalue(X_train, y_train, p_threshold=0.05, model_type='linear')
     """
     import pandas as pd
     import statsmodels.api as sm
+    import numpy as np
     import warnings
 
     X = pd.DataFrame(X_train).copy()
@@ -598,10 +690,27 @@ def run_stepwise_pvalue(X_train, y_train, p_threshold=0.05, model_type='linear')
         X_cur = sm.add_constant(X[current], has_constant='add')
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
-            results = (sm.OLS(y_train, X_cur).fit() if model_type == 'linear'
-                       else sm.Logit(y_train, X_cur).fit(maxiter=200, disp=False))
+            if model_type == 'linear':
+                results = sm.OLS(y_train, X_cur).fit()
+            else:
+                try:
+                    results = sm.Logit(y_train, X_cur).fit(maxiter=200, disp=False, method='newton')
+                except np.linalg.LinAlgError:
+                    results = sm.Logit(y_train, X_cur).fit(maxiter=200, disp=False, method='bfgs')
 
-        pvals        = results.pvalues.drop('const', errors='ignore')
+        pvals = results.pvalues.drop('const', errors='ignore')
+
+        # Drop any features whose p-values are NaN (model failed to converge for them)
+        nan_feats = pvals[pvals.isna()].index.tolist()
+        if nan_feats:
+            for f in nan_feats:
+                current.remove(f)
+                step += 1
+                print(f"     Step {step}: removed '{f}' (NaN p-value, convergence failure) | {len(current)} remaining")
+            if not current:
+                break
+            continue
+
         worst_feat   = pvals.idxmax()
         worst_p      = pvals.max()
 
