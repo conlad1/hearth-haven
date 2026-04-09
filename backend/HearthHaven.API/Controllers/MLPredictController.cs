@@ -591,18 +591,13 @@ public class MLPredictController : ControllerBase
         var supporter = await _db.Supporters.FindAsync(supporterId);
         if (supporter is null) return NotFound();
 
-        var today = DateTime.UtcNow.Date;
         var donations = await _db.Donations
             .Where(d => d.SupporterId == supporterId)
             .ToListAsync();
 
-        var monetaryDonations = donations.Where(d => d.DonationType == "Monetary" && d.Amount.HasValue).ToList();
-        int monetaryCount      = monetaryDonations.Count;
-        double avgGift         = monetaryCount > 0 ? (double)monetaryDonations.Average(d => d.Amount!.Value) : 0;
-        int uniqueCampaigns    = donations.Select(d => d.CampaignName).Distinct().Count();
-        int donationTypesCount = donations.Select(d => d.DonationType).Distinct().Count();
-        bool isRecurring       = donations.Any(d => d.IsRecurring);
+        var baseFeatures = BuildDonorBaseFeatures(supporter, donations);
 
+        var today = DateTime.UtcNow.Date;
         var lastDonationDate = donations.Count > 0
             ? donations.Max(d => d.DonationDate.ToDateTime(TimeOnly.MinValue))
             : (DateTime?)null;
@@ -610,30 +605,6 @@ public class MLPredictController : ControllerBase
         double daysSinceLastDonation = lastDonationDate.HasValue
             ? (today - lastDonationDate.Value.Date).TotalDays
             : -1;
-
-        double daysSinceFirstDonation = supporter.FirstDonationDate.HasValue
-            ? (today - supporter.FirstDonationDate.Value.ToDateTime(TimeOnly.MinValue).Date).TotalDays
-            : -1;
-
-        double daysSinceCreated = (today - supporter.CreatedAt.Date).TotalDays;
-
-        // Shared features (minus days_since_last_donation for lapse model — direct leakage)
-        var baseFeatures = new Dictionary<string, object?>
-        {
-            ["monetary_donation_count"]  = monetaryCount,
-            ["avg_monetary_gift"]        = avgGift,
-            ["unique_campaigns"]         = uniqueCampaigns,
-            ["donation_types_count"]     = donationTypesCount,
-            ["days_since_first_donation"]= daysSinceFirstDonation,
-            ["days_since_created"]       = daysSinceCreated,
-            ["supporter_type"]           = supporter.SupporterType,
-            ["relationship_type"]        = supporter.RelationshipType,
-            ["country"]                  = supporter.Country ?? "Unknown",
-            ["region"]                   = supporter.Region ?? "Unknown",
-            ["status"]                   = supporter.Status,
-            ["acquisition_channel"]      = supporter.AcquisitionChannel ?? "Unknown",
-            ["is_recurring_donor"]       = isRecurring,
-        };
 
         // Lapse model: exclude days_since_last_donation (direct leakage per training notebook)
         var lapseFeatures = new Dictionary<string, object?>(baseFeatures);
@@ -661,6 +632,53 @@ public class MLPredictController : ControllerBase
                 ? JsonSerializer.Deserialize<JsonElement>(upgradeBody)
                 : (object?)null,
         });
+    }
+
+    /// <summary>
+    /// Build the base donor feature dictionary shared by the lapse and upgrade
+    /// models. The returned dict does NOT include <c>days_since_last_donation</c> —
+    /// the upgrade model adds that on top, and the lapse model intentionally
+    /// omits it to avoid direct leakage (see the donor-lapse training notebook).
+    ///
+    /// Pulled out so the batch top-candidates endpoints can call it once per
+    /// supporter without re-issuing per-supporter DB queries — the caller is
+    /// responsible for passing an already-loaded donations list.
+    /// </summary>
+    private static Dictionary<string, object?> BuildDonorBaseFeatures(
+        Supporter supporter,
+        IReadOnlyList<Donation> donations)
+    {
+        var today = DateTime.UtcNow.Date;
+
+        var monetaryDonations = donations.Where(d => d.DonationType == "Monetary" && d.Amount.HasValue).ToList();
+        int monetaryCount      = monetaryDonations.Count;
+        double avgGift         = monetaryCount > 0 ? (double)monetaryDonations.Average(d => d.Amount!.Value) : 0;
+        int uniqueCampaigns    = donations.Select(d => d.CampaignName).Distinct().Count();
+        int donationTypesCount = donations.Select(d => d.DonationType).Distinct().Count();
+        bool isRecurring       = donations.Any(d => d.IsRecurring);
+
+        double daysSinceFirstDonation = supporter.FirstDonationDate.HasValue
+            ? (today - supporter.FirstDonationDate.Value.ToDateTime(TimeOnly.MinValue).Date).TotalDays
+            : -1;
+
+        double daysSinceCreated = (today - supporter.CreatedAt.Date).TotalDays;
+
+        return new Dictionary<string, object?>
+        {
+            ["monetary_donation_count"]  = monetaryCount,
+            ["avg_monetary_gift"]        = avgGift,
+            ["unique_campaigns"]         = uniqueCampaigns,
+            ["donation_types_count"]     = donationTypesCount,
+            ["days_since_first_donation"]= daysSinceFirstDonation,
+            ["days_since_created"]       = daysSinceCreated,
+            ["supporter_type"]           = supporter.SupporterType,
+            ["relationship_type"]        = supporter.RelationshipType,
+            ["country"]                  = supporter.Country ?? "Unknown",
+            ["region"]                   = supporter.Region ?? "Unknown",
+            ["status"]                   = supporter.Status,
+            ["acquisition_channel"]      = supporter.AcquisitionChannel ?? "Unknown",
+            ["is_recurring_donor"]       = isRecurring,
+        };
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
