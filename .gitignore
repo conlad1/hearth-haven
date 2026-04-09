@@ -17,7 +17,9 @@ backend/HearthHaven.API/node_modules/
 *.userosscache
 *.sln.docstates
 *.sw?
+.DS_Store
 **/.DS_Store
+.vscode/
 
 # Local environment and secret overrides
 **/.env
