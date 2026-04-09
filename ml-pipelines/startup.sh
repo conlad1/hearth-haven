@@ -9,10 +9,17 @@
 #   az webapp config set \
 #     --resource-group <rg> \
 #     --name hearth-haven-ml \
-#     --startup-file "bash /home/site/wwwroot/startup.sh"
+#     --startup-file "bash startup.sh"
 #
-# It assumes the deploy root (wwwroot) contains this script alongside the
-# `inference/` and `models/` directories from ml-pipelines/.
+# IMPORTANT: use the RELATIVE path "bash startup.sh", not an absolute path
+# under /home/site/wwwroot/. When SCM_DO_BUILD_DURING_DEPLOYMENT=true, Azure's
+# Oryx build packs the app into output.tar.zst and extracts it at runtime to
+# /tmp/<random-hash>/ — NOT into /home/site/wwwroot/. The hash changes on
+# every deploy, so absolute paths under wwwroot will fail with
+# "No such file or directory". Azure sets the working directory to the
+# extraction path before executing the startup command, so relative paths
+# resolve correctly. $SCRIPT_DIR below uses bash introspection to locate
+# the extraction path at runtime for the --chdir into inference/.
 #
 # Workers:
 #   - 2 workers is a safe default for the smallest App Service tiers (B1/S1).
