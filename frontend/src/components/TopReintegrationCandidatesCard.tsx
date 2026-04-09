@@ -48,18 +48,20 @@ export default function TopReintegrationCandidatesCard({
   }, [limit]);
 
   return (
-    <div className="card">
-      <div className="mb-1 flex items-center justify-between">
-        <h2 className="flex items-center gap-2 text-lg font-bold text-gray-900 dark:text-white">
-          <Brain className="h-5 w-5 text-indigo-500" /> Top Reintegration Candidates
-        </h2>
+    <div className="card flex max-h-96 flex-col p-5">
+      <div className="shrink-0">
+        <div className="mb-1 flex items-center justify-between">
+          <h3 className="flex items-center gap-2 text-lg font-bold text-gray-900 dark:text-white">
+            <Brain className="h-5 w-5 text-indigo-500" /> Top Reintegration Candidates
+          </h3>
+        </div>
+        <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
+          ML triage aid &mdash; confirm with case conference.
+        </p>
       </div>
-      <p className="mb-4 text-xs text-gray-500 dark:text-gray-400">
-        ML triage aid &mdash; confirm with case conference.
-      </p>
 
       {loading ? (
-        <div className="space-y-2">
+        <div className="flex-1 space-y-2 overflow-y-auto pr-1">
           {Array.from({ length: 3 }).map((_, i) => (
             <div
               key={i}
@@ -74,7 +76,7 @@ export default function TopReintegrationCandidatesCard({
       ) : candidates.length === 0 ? (
         <p className="text-sm text-gray-500">No active residents to score yet.</p>
       ) : (
-        <div className="space-y-2">
+        <div className="flex-1 space-y-2 overflow-y-auto pr-1">
           {candidates.map((c) => (
             <div
               key={c.residentId}
