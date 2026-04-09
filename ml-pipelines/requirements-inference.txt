@@ -1,0 +1,15 @@
+# Slim dependency set for the FastAPI inference server (server.py + endpoints.py).
+# Excludes jupyter/notebook/matplotlib/playwright/etc. from the training-time
+# requirements.txt — those are not needed to serve predictions.
+#
+# sklearn is pinned exactly because version drift can break .pkl unpickling.
+# Keep this in sync with the version used to train the models in ml-pipelines/models/.
+
+fastapi==0.119.0
+uvicorn[standard]==0.37.0
+gunicorn==23.0.0
+pydantic==2.12.3
+scikit-learn==1.8.0
+pandas==3.0.2
+numpy==2.4.4
+joblib==1.5.3

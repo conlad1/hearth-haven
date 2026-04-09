@@ -513,12 +513,6 @@ export default function SafehouseManagementPage() {
                   <button className="btn-primary" onClick={() => setShCreating(true)}>
                     <Plus className="h-4 w-4" /> New Safehouse
                   </button>
-                  <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                    Per page:
-                    <select value={shPageSize} onChange={(e) => { setShPageSize(Number(e.target.value)); setShPage(1); }} className="select-field w-auto">
-                      {PAGE_SIZE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                  </label>
                 </div>
               </div>
 
@@ -542,6 +536,12 @@ export default function SafehouseManagementPage() {
                       <option value="">All Statuses</option>
                       {shFilterOpts.statuses.map((s) => <option key={s} value={s}>{s}</option>)}
                     </select>
+                    <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                      Per page:
+                      <select value={shPageSize} onChange={(e) => { setShPageSize(Number(e.target.value)); setShPage(1); }} className="select-field w-auto" aria-label="Safehouses per page">
+                        {PAGE_SIZE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </label>
                     {shHasActiveFilters && (
                       <button className="btn-ghost text-red-500 hover:text-red-700" onClick={clearShFilters}>
                         <X className="h-4 w-4" /> Clear Filters
@@ -592,12 +592,6 @@ export default function SafehouseManagementPage() {
                   <button className="btn-primary" onClick={() => setPCreating(true)}>
                     <Plus className="h-4 w-4" /> New Partner
                   </button>
-                  <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                    Per page:
-                    <select value={pPageSize} onChange={(e) => { setPPageSize(Number(e.target.value)); setPPage(1); }} className="select-field w-auto">
-                      {PAGE_SIZE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                  </label>
                 </div>
               </div>
 
@@ -628,6 +622,12 @@ export default function SafehouseManagementPage() {
                       <option value="">All Regions</option>
                       {pFilterOpts.regions.map((r) => <option key={r} value={r}>{r}</option>)}
                     </select>
+                    <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                      Per page:
+                      <select value={pPageSize} onChange={(e) => { setPPageSize(Number(e.target.value)); setPPage(1); }} className="select-field w-auto" aria-label="Partners per page">
+                        {PAGE_SIZE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </label>
                     {pHasActiveFilters && (
                       <button className="btn-ghost text-red-500 hover:text-red-700" onClick={clearPFilters}>
                         <X className="h-4 w-4" /> Clear Filters

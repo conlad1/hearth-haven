@@ -140,6 +140,12 @@ public class AdminUsersController : ControllerBase
         user.DisplayName = string.IsNullOrWhiteSpace(model.DisplayName) ? requestedEmail : model.DisplayName.Trim();
         user.PhoneNumber = string.IsNullOrWhiteSpace(model.PhoneNumber) ? null : model.PhoneNumber.Trim();
 
+        // Validate phone number if provided
+        if (!string.IsNullOrWhiteSpace(user.PhoneNumber) && !IsValidPhoneNumber(user.PhoneNumber))
+        {
+            return BadRequest(new { Message = "Please enter a valid phone number (10-15 digits with common separators like +, -, .)." });
+        }
+
         var updateResult = await _userManager.UpdateAsync(user);
         if (!updateResult.Succeeded)
         {
@@ -218,5 +224,22 @@ public class AdminUsersController : ControllerBase
             EmailConfirmed = user.EmailConfirmed,
             Roles = roles.OrderBy(r => r).ToArray(),
         };
+    }
+
+    private static bool IsValidPhoneNumber(string phone)
+    {
+        if (string.IsNullOrWhiteSpace(phone))
+            return true; // Phone is optional
+
+        // Must have between 10 and 15 digits
+        var digitsOnly = System.Text.RegularExpressions.Regex.Replace(phone, @"\D", "");
+        if (digitsOnly.Length < 10 || digitsOnly.Length > 15)
+            return false;
+
+        // Only allow digits and common separators: +, -, ., (, ), space
+        if (!System.Text.RegularExpressions.Regex.IsMatch(phone, @"^[0-9\s\-\.\+\(\)]*$"))
+            return false;
+
+        return true;
     }
 }

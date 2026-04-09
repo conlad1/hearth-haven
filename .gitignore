@@ -4,6 +4,7 @@ DEPLOYMENT.md
 # Build output
 backend/HearthHaven.API/bin/
 backend/HearthHaven.API/obj/
+backend/HearthHaven.API/publish/
 frontend/dist/
 frontend/dist-ssr/
 frontend/node_modules/
@@ -17,7 +18,9 @@ backend/HearthHaven.API/node_modules/
 *.userosscache
 *.sln.docstates
 *.sw?
+.DS_Store
 **/.DS_Store
+.vscode/
 
 # Local environment and secret overrides
 **/.env

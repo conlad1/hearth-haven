@@ -23,7 +23,6 @@ import SafehouseDetailPage from "./pages/SafehouseDetailPage";
 import PartnerDetailPage from "./pages/PartnerDetailPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import ReportsPage from "./pages/ReportsPage";
-import AllocationPage from "./pages/AllocationPage";
 import AdminUsersPage from "./pages/AdminUsersPage";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import TermsPage from "./pages/TermsPage";
@@ -46,7 +45,7 @@ type ProtectedRouteProps = {
 function ProtectedRoute({ children, isAuthenticated, sessionReady, currentUser, allowedRoles }: ProtectedRouteProps) {
   const role = getCurrentRole(currentUser);
 
-  if (!sessionReady && isAuthenticated) {
+  if (!sessionReady) {
     return <p className="py-20 text-center text-gray-500 dark:text-gray-400">Checking access...</p>;
   }
 
@@ -262,14 +261,6 @@ function App() {
               element={(
                 <ProtectedRoute isAuthenticated={isAuthenticated} sessionReady={sessionReady} currentUser={currentUser} allowedRoles={[AppRoles.Admin, AppRoles.OutreachManager]}>
                   <ReportsPage />
-                </ProtectedRoute>
-              )}
-            />
-            <Route
-              path="/allocations"
-              element={(
-                <ProtectedRoute isAuthenticated={isAuthenticated} sessionReady={sessionReady} currentUser={currentUser} allowedRoles={[AppRoles.Admin, AppRoles.DonationsManager]}>
-                  <AllocationPage />
                 </ProtectedRoute>
               )}
             />

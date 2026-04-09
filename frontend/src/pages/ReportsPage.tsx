@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   Banknote, Users, GraduationCap, HeartPulse, ArrowRightLeft, Home,
+  TrendingUp, TrendingDown, FlaskConical, AlertTriangle,
 } from 'lucide-react';
 import {
   Chart as ChartJS,
@@ -17,6 +18,66 @@ import {
 } from '../api/ReportsAPI';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend, Filler);
+
+// ── Causal data types ──
+
+interface CsvRow { [key: string]: string }
+
+function parseCsv(text: string): CsvRow[] {
+  const lines = text.trim().split('\n');
+  if (lines.length < 2) return [];
+  const headers = lines[0].split(',');
+  return lines.slice(1).map(line => {
+    const vals = line.split(',');
+    const row: CsvRow = {};
+    headers.forEach((h, i) => { row[h.trim()] = (vals[i] ?? '').trim(); });
+    return row;
+  });
+}
+
+function cleanFeatureName(raw: string): string {
+  return raw
+    .replace(/_True$/i, ': Yes')
+    .replace(/_False$/i, ': No')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase());
+}
+
+interface CoefRow {
+  feature: string;
+  coefficient: number;
+  significant: string;
+}
+
+interface DonorRetentionSummary {
+  top_value_drivers: { feature: string; coefficient: number }[];
+  model_r2: number;
+  model_version: string;
+}
+
+interface PostingStrategySummary {
+  top_positive_factors: { feature: string; coefficient: number }[];
+  top_negative_factors: { feature: string; coefficient: number }[];
+  model_r2: number;
+  model_adj_r2: number;
+  n_observations: number;
+  model_version: string;
+}
+
+interface InterventionSummary {
+  top_effective_interventions: { feature: string; coefficient: number }[];
+  model_pseudo_r2: number;
+  n_residents: number;
+  model_version: string;
+}
+
+interface CausalData {
+  riskDrivers: CoefRow[];
+  donorRetention: DonorRetentionSummary | null;
+  postingStrategy: PostingStrategySummary | null;
+  interventions: InterventionSummary | null;
+  interventionCoefs: CoefRow[];
+}
 
 // ── Helpers ──
 
@@ -121,6 +182,38 @@ export default function ReportsPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [causal, setCausal] = useState<CausalData | null>(null);
+
+  // Fetch causal insight files once on mount (static, not filtered)
+  useEffect(() => {
+    Promise.all([
+      fetch('/causal/current_risk_num_drivers.csv').then(r => r.text()),
+      fetch('/causal/donor_retention_summary.json').then(r => r.json()),
+      fetch('/causal/posting_strategy_summary.json').then(r => r.json()),
+      fetch('/causal/intervention_effectiveness_summary.json').then(r => r.json()),
+      fetch('/causal/intervention_effectiveness_coefficients.csv').then(r => r.text()),
+    ]).then(([riskCsv, donorJson, postingJson, interventionJson, interventionCsv]) => {
+      const riskDrivers: CoefRow[] = parseCsv(riskCsv).map(r => ({
+        feature: r['feature'] ?? '',
+        coefficient: parseFloat(r['coefficient'] ?? '0'),
+        significant: r['significant'] ?? '',
+      }));
+      const interventionCoefs: CoefRow[] = parseCsv(interventionCsv)
+        .filter(r => r['significant'] !== '(ns)')
+        .map(r => ({
+          feature: r['feature'] ?? '',
+          coefficient: parseFloat(r['coefficient'] ?? '0'),
+          significant: r['significant'] ?? '',
+        }));
+      setCausal({
+        riskDrivers,
+        donorRetention: donorJson as DonorRetentionSummary,
+        postingStrategy: postingJson as PostingStrategySummary,
+        interventions: interventionJson as InterventionSummary,
+        interventionCoefs,
+      });
+    }).catch(() => { /* causal section simply won't render */ });
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -570,6 +663,182 @@ export default function ReportsPage() {
           </div>
         </div>
       </div>
+
+      {/* ── Causal Insights (ML explanatory pipelines) ── */}
+      {causal && (
+        <>
+          <h2 className="mt-10 mb-1 text-lg font-bold text-gray-900 dark:text-white">
+            Causal Insights
+          </h2>
+          <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+            OLS regression results identifying statistically significant drivers. Coefficients show estimated effect size; <span className="font-medium">**</span> p&lt;0.01, <span className="font-medium">*</span> p&lt;0.05.
+          </p>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+
+            {/* Risk Drivers */}
+            <div className="card">
+              <div className="mb-3 flex items-center gap-2">
+                <FlaskConical className="h-4 w-4 text-orange-500 shrink-0" />
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  What Drives Resident Risk Level?
+                </h3>
+              </div>
+              <p className="mb-3 text-xs text-gray-400 dark:text-gray-500">
+                Significant predictors of current risk score (OLS on all residents)
+              </p>
+              <div className="space-y-2">
+                {causal.riskDrivers.map(row => {
+                  const isPositive = row.coefficient > 0;
+                  return (
+                    <div key={row.feature} className="flex items-center justify-between gap-3 rounded-lg bg-gray-50 px-3 py-2 dark:bg-gray-800">
+                      <div className="flex items-center gap-2 min-w-0">
+                        {isPositive
+                          ? <TrendingUp className="h-3.5 w-3.5 shrink-0 text-red-400" />
+                          : <TrendingDown className="h-3.5 w-3.5 shrink-0 text-green-400" />}
+                        <span className="truncate text-sm text-gray-700 dark:text-gray-300">
+                          {cleanFeatureName(row.feature)}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className={`text-sm font-mono font-medium ${isPositive ? 'text-red-500' : 'text-green-500'}`}>
+                          {isPositive ? '+' : ''}{row.coefficient.toFixed(3)}
+                        </span>
+                        <span className="text-xs text-gray-400">{row.significant}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Donor Retention Drivers */}
+            {causal.donorRetention && (
+              <div className="card">
+                <div className="mb-3 flex items-center gap-2">
+                  <FlaskConical className="h-4 w-4 text-emerald-500 shrink-0" />
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    What Drives Total Donor Value?
+                  </h3>
+                </div>
+                <p className="mb-3 text-xs text-gray-400 dark:text-gray-500">
+                  Top coefficient drivers of lifetime donation amount · R² = {(causal.donorRetention.model_r2 * 100).toFixed(1)}%
+                </p>
+                <div className="space-y-2">
+                  {causal.donorRetention.top_value_drivers.map(d => {
+                    const isPositive = d.coefficient > 0;
+                    return (
+                      <div key={d.feature} className="flex items-center justify-between gap-3 rounded-lg bg-gray-50 px-3 py-2 dark:bg-gray-800">
+                        <div className="flex items-center gap-2 min-w-0">
+                          {isPositive
+                            ? <TrendingUp className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
+                            : <TrendingDown className="h-3.5 w-3.5 shrink-0 text-red-400" />}
+                          <span className="truncate text-sm text-gray-700 dark:text-gray-300">
+                            {cleanFeatureName(d.feature)}
+                          </span>
+                        </div>
+                        <span className={`shrink-0 text-sm font-mono font-medium ${isPositive ? 'text-emerald-500' : 'text-red-500'}`}>
+                          {isPositive ? '+' : ''}${Math.round(d.coefficient).toLocaleString()}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Posting Strategy */}
+            {causal.postingStrategy && (
+              <div className="card">
+                <div className="mb-3 flex items-center gap-2">
+                  <FlaskConical className="h-4 w-4 text-blue-500 shrink-0" />
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    What Drives Post Engagement Rate?
+                  </h3>
+                </div>
+                <p className="mb-3 text-xs text-gray-400 dark:text-gray-500">
+                  OLS on {causal.postingStrategy.n_observations.toLocaleString()} posts · R² = {(causal.postingStrategy.model_r2 * 100).toFixed(1)}%
+                </p>
+                <div className="space-y-1">
+                  <p className="mb-1 text-xs font-medium text-green-600 dark:text-green-400">Positive factors</p>
+                  {causal.postingStrategy.top_positive_factors.map(d => (
+                    <div key={d.feature} className="flex items-center justify-between gap-3 rounded-lg bg-gray-50 px-3 py-2 dark:bg-gray-800">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <TrendingUp className="h-3.5 w-3.5 shrink-0 text-green-400" />
+                        <span className="truncate text-sm text-gray-700 dark:text-gray-300">{cleanFeatureName(d.feature)}</span>
+                      </div>
+                      <span className="shrink-0 text-sm font-mono font-medium text-green-500">
+                        +{(d.coefficient * 100).toFixed(2)}pp
+                      </span>
+                    </div>
+                  ))}
+                  <p className="mt-2 mb-1 text-xs font-medium text-red-500 dark:text-red-400">Negative factors</p>
+                  {causal.postingStrategy.top_negative_factors.map(d => (
+                    <div key={d.feature} className="flex items-center justify-between gap-3 rounded-lg bg-gray-50 px-3 py-2 dark:bg-gray-800">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <TrendingDown className="h-3.5 w-3.5 shrink-0 text-red-400" />
+                        <span className="truncate text-sm text-gray-700 dark:text-gray-300">{cleanFeatureName(d.feature)}</span>
+                      </div>
+                      <span className="shrink-0 text-sm font-mono font-medium text-red-500">
+                        {(d.coefficient * 100).toFixed(2)}pp
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Intervention Effectiveness */}
+            {causal.interventions && (
+              <div className="card">
+                <div className="mb-3 flex items-center gap-2">
+                  <FlaskConical className="h-4 w-4 text-purple-500 shrink-0" />
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    What Drives Intervention Success?
+                  </h3>
+                </div>
+                {causal.interventionCoefs.length > 0 ? (
+                  <>
+                    <p className="mb-3 text-xs text-gray-400 dark:text-gray-500">
+                      n = {causal.interventions.n_residents} residents · significant features only
+                    </p>
+                    <div className="space-y-2">
+                      {causal.interventionCoefs.map(row => {
+                        const isPositive = row.coefficient > 0;
+                        return (
+                          <div key={row.feature} className="flex items-center justify-between gap-3 rounded-lg bg-gray-50 px-3 py-2 dark:bg-gray-800">
+                            <div className="flex items-center gap-2 min-w-0">
+                              {isPositive
+                                ? <TrendingUp className="h-3.5 w-3.5 shrink-0 text-purple-400" />
+                                : <TrendingDown className="h-3.5 w-3.5 shrink-0 text-gray-400" />}
+                              <span className="truncate text-sm text-gray-700 dark:text-gray-300">
+                                {cleanFeatureName(row.feature)}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <span className={`text-sm font-mono font-medium ${isPositive ? 'text-purple-500' : 'text-gray-500'}`}>
+                                {isPositive ? '+' : ''}{row.coefficient.toFixed(1)}
+                              </span>
+                              <span className="text-xs text-gray-400">{row.significant}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex items-start gap-2 rounded-lg bg-yellow-50 px-3 py-3 dark:bg-yellow-500/10">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-yellow-500" />
+                    <p className="text-sm text-yellow-700 dark:text-yellow-400">
+                      No statistically significant intervention features found. The model had perfect separation on the training data (pseudo R² = {causal.interventions.model_pseudo_r2.toFixed(2)}, n = {causal.interventions.n_residents}), which suggests the dataset may be too small or categories too sparse for reliable coefficient estimates. More data is needed.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+          </div>
+        </>
+      )}
     </div>
   );
 }
