@@ -229,9 +229,10 @@ export default function DonorPage() {
   const location = useLocation();
   const allocationPageRef = useRef<AllocationPageHandle>(null);
 
-  const locationState = location.state as { tab?: string; donationId?: number } | null;
+  const locationState = location.state as { tab?: string; donationId?: number; supporterId?: number } | null;
   const [activeTab, setActiveTab] = useState<'supporters' | 'contributions' | 'allocations'>('supporters');
   const [pendingDonationId, setPendingDonationId] = useState<number | null>(null);
+  const [pendingSupporterId, setPendingSupporterId] = useState<number | null>(null);
 
   useEffect(() => {
     if (locationState?.tab === 'contributions' || locationState?.tab === 'allocations') {
@@ -239,6 +240,9 @@ export default function DonorPage() {
     }
     if (locationState?.donationId) {
       setPendingDonationId(locationState.donationId);
+    }
+    if (locationState?.supporterId) {
+      setPendingSupporterId(locationState.supporterId);
     }
   }, [location.key]);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -339,6 +343,28 @@ export default function DonorPage() {
       }
     }
   }, [pendingDonationId, contributions]);
+
+  // ── Open supporter modal from navigation state ──────────────────────────
+  // Used when arriving from /admin (e.g. the at-risk / upgrade-potential
+  // donor cards). The supporter probably isn't on the loaded page, so fetch
+  // it directly via the supporterId filter rather than searching the list.
+  useEffect(() => {
+    if (!pendingSupporterId || !sessionReady || !isAuthenticated) return;
+    let cancelled = false;
+    fetchSupporters(1, 1, { supporterId: pendingSupporterId })
+      .then((res) => {
+        if (cancelled) return;
+        const match = res.data[0];
+        if (match) openSupporter(match);
+      })
+      .catch((e) => console.error('Failed to load supporter from navigation state:', e))
+      .finally(() => {
+        if (!cancelled) setPendingSupporterId(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [pendingSupporterId, sessionReady, isAuthenticated]);
 
   // ── Tab switch resets ────────────────────────────────────────────────────
   const switchTab = (tab: 'supporters' | 'contributions' | 'allocations') => {
