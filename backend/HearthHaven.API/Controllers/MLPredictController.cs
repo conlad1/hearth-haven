@@ -34,6 +34,57 @@ public class MLPredictController : ControllerBase
         var resident = await _db.Residents.FindAsync(residentId);
         if (resident is null) return NotFound();
 
+        var healthRecords = await _db.HealthWellbeingRecords
+            .Where(h => h.ResidentId == residentId)
+            .OrderBy(h => h.RecordDate)
+            .ToListAsync();
+
+        var eduRecords = await _db.EducationRecords
+            .Where(e => e.ResidentId == residentId)
+            .OrderBy(e => e.RecordDate)
+            .ToListAsync();
+
+        var sessions = await _db.ProcessRecordings
+            .Where(p => p.ResidentId == residentId)
+            .ToListAsync();
+
+        var incidents = await _db.IncidentReports
+            .Where(i => i.ResidentId == residentId)
+            .ToListAsync();
+
+        var visitations = await _db.HomeVisitations
+            .Where(v => v.ResidentId == residentId)
+            .ToListAsync();
+
+        var interventions = await _db.InterventionPlans
+            .Where(ip => ip.ResidentId == residentId)
+            .ToListAsync();
+
+        var features = BuildReintegrationFeatures(
+            resident, healthRecords, eduRecords, sessions, incidents, visitations, interventions);
+
+        return await ProxyToMl("predict/reintegration", new
+        {
+            resident_id = residentId,
+            features,
+        });
+    }
+
+    /// <summary>
+    /// Build the 60-key feature dictionary the reintegration_achieved model expects.
+    /// Pulled out so the batch top-candidates endpoint can call it once per resident
+    /// without re-issuing per-resident DB queries — the caller is responsible for
+    /// passing already-loaded related-table lists.
+    /// </summary>
+    private static Dictionary<string, object?> BuildReintegrationFeatures(
+        Resident resident,
+        IReadOnlyList<HealthWellbeingRecord> healthRecords,
+        IReadOnlyList<EducationRecord> eduRecords,
+        IReadOnlyList<ProcessRecording> sessions,
+        IReadOnlyList<IncidentReport> incidents,
+        IReadOnlyList<HomeVisitation> visitations,
+        IReadOnlyList<InterventionPlan> interventions)
+    {
         var today = DateTime.UtcNow.Date;
         var dob = resident.DateOfBirth.ToDateTime(TimeOnly.MinValue);
         var admission = resident.DateOfAdmission.ToDateTime(TimeOnly.MinValue);
@@ -45,86 +96,60 @@ public class MLPredictController : ControllerBase
             ? (int)(closed.Value - admission).TotalDays
             : daysInCare;
 
-        // Aggregate health (latest record scores)
-        var healthRecords = await _db.HealthWellbeingRecords
-            .Where(h => h.ResidentId == residentId)
-            .OrderBy(h => h.RecordDate)
-            .ToListAsync();
-
+        // Health (latest record + completion rate)
         var latestHealth = healthRecords.LastOrDefault();
-        double healthScoreLatest   = (double?)latestHealth?.GeneralHealthScore ?? 0;
-        double nutritionLatest     = (double?)latestHealth?.NutritionScore    ?? 0;
-        double sleepLatest         = (double?)latestHealth?.SleepQualityScore ?? 0;
-        double energyLatest        = (double?)latestHealth?.EnergyLevelScore  ?? 0;
-        double? bmiLatest          = (double?)latestHealth?.Bmi;
-        double checkupCompletion   = healthRecords.Count > 0
+        double healthScoreLatest = (double?)latestHealth?.GeneralHealthScore ?? 0;
+        double nutritionLatest   = (double?)latestHealth?.NutritionScore    ?? 0;
+        double sleepLatest       = (double?)latestHealth?.SleepQualityScore ?? 0;
+        double energyLatest      = (double?)latestHealth?.EnergyLevelScore  ?? 0;
+        double? bmiLatest        = (double?)latestHealth?.Bmi;
+        double checkupCompletion = healthRecords.Count > 0
             ? healthRecords.Count(h => h.MedicalCheckupDone) / (double)healthRecords.Count
             : 0;
 
-        // Aggregate education (latest record)
-        var eduRecords = await _db.EducationRecords
-            .Where(e => e.ResidentId == residentId)
-            .OrderBy(e => e.RecordDate)
-            .ToListAsync();
-
+        // Education (latest + averages)
         var latestEdu = eduRecords.LastOrDefault();
-        double attendanceLatest    = (double?)latestEdu?.AttendanceRate   ?? 0;
-        double progressLatest      = (double?)latestEdu?.ProgressPercent  ?? 0;
-        string eduLevelLatest      = latestEdu?.EducationLevel            ?? "None";
-        string enrollmentLatest    = latestEdu?.EnrollmentStatus          ?? "Not Enrolled";
-        string completionLatest    = latestEdu?.CompletionStatus          ?? "In Progress";
-        double progressAvg         = eduRecords.Count > 0 ? eduRecords.Average(e => (double)e.ProgressPercent) : 0;
-        double attendanceAvg       = eduRecords.Count > 0 ? eduRecords.Average(e => (double)e.AttendanceRate)  : 0;
-        int educationRecordCount   = eduRecords.Count;
+        double attendanceLatest  = (double?)latestEdu?.AttendanceRate  ?? 0;
+        double progressLatest    = (double?)latestEdu?.ProgressPercent ?? 0;
+        string eduLevelLatest    = latestEdu?.EducationLevel           ?? "None";
+        string enrollmentLatest  = latestEdu?.EnrollmentStatus         ?? "Not Enrolled";
+        string completionLatest  = latestEdu?.CompletionStatus         ?? "In Progress";
+        double progressAvg       = eduRecords.Count > 0 ? eduRecords.Average(e => (double)e.ProgressPercent) : 0;
+        double attendanceAvg     = eduRecords.Count > 0 ? eduRecords.Average(e => (double)e.AttendanceRate)  : 0;
+        int educationRecordCount = eduRecords.Count;
 
-        // Aggregate counseling
-        var sessions = await _db.ProcessRecordings
-            .Where(p => p.ResidentId == residentId)
-            .ToListAsync();
+        // Counseling
+        int sessionCount          = sessions.Count;
+        double avgSessionDuration = sessions.Count > 0 ? sessions.Average(p => (double)p.SessionDurationMinutes) : 0;
+        double progressRate       = sessions.Count > 0 ? sessions.Count(p => p.ProgressNoted) / (double)sessions.Count : 0;
+        double concernRate        = sessions.Count > 0 ? sessions.Count(p => p.ConcernsFlagged) / (double)sessions.Count : 0;
+        double referralRate       = sessions.Count > 0 ? sessions.Count(p => p.ReferralMade) / (double)sessions.Count : 0;
 
-        int sessionCount         = sessions.Count;
-        double avgSessionDuration= sessions.Count > 0 ? sessions.Average(p => (double)p.SessionDurationMinutes) : 0;
-        double progressRate      = sessions.Count > 0 ? sessions.Count(p => p.ProgressNoted) / (double)sessions.Count : 0;
-        double concernRate       = sessions.Count > 0 ? sessions.Count(p => p.ConcernsFlagged) / (double)sessions.Count : 0;
-        double referralRate      = sessions.Count > 0 ? sessions.Count(p => p.ReferralMade) / (double)sessions.Count : 0;
-
-        // Aggregate incidents
+        // Incidents
         static int SeverityNum(string s) => s switch { "High" => 3, "Medium" => 2, _ => 1 };
-        var incidents = await _db.IncidentReports
-            .Where(i => i.ResidentId == residentId)
-            .ToListAsync();
+        int incidentCount     = incidents.Count;
+        double avgSeverity    = incidents.Count > 0 ? incidents.Average(i => (double)SeverityNum(i.Severity)) : 0;
+        int highSeverityCount = incidents.Count(i => SeverityNum(i.Severity) == 3);
+        int runawayAttempts   = incidents.Count(i => i.IncidentType == "RunawayAttempt");
+        int selfHarmIncidents = incidents.Count(i => i.IncidentType == "SelfHarm");
 
-        int incidentCount      = incidents.Count;
-        double avgSeverity     = incidents.Count > 0 ? incidents.Average(i => (double)SeverityNum(i.Severity)) : 0;
-        int highSeverityCount  = incidents.Count(i => SeverityNum(i.Severity) == 3);
-        int runawayAttempts    = incidents.Count(i => i.IncidentType == "RunawayAttempt");
-        int selfHarmIncidents  = incidents.Count(i => i.IncidentType == "SelfHarm");
-
-        // Aggregate visitations
+        // Visitations
         static int CoopNum(string? s) => s switch
         {
             "Highly Cooperative" => 4, "Cooperative" => 3, "Neutral" => 2, _ => 1
         };
-        var visitations = await _db.HomeVisitations
-            .Where(v => v.ResidentId == residentId)
-            .ToListAsync();
+        int visitationCount         = visitations.Count;
+        double safetyConcernRate    = visitations.Count > 0 ? visitations.Count(v => v.SafetyConcernsNoted) / (double)visitations.Count : 0;
+        double favorableOutcomeRate = visitations.Count > 0 ? visitations.Count(v => v.VisitOutcome == "Favorable") / (double)visitations.Count : 0;
+        double familyCoopScore      = visitations.Count > 0 ? visitations.Average(v => (double)CoopNum(v.FamilyCooperationLevel)) : 0;
 
-        int visitationCount        = visitations.Count;
-        double safetyConcernRate   = visitations.Count > 0 ? visitations.Count(v => v.SafetyConcernsNoted) / (double)visitations.Count : 0;
-        double favorableOutcomeRate= visitations.Count > 0 ? visitations.Count(v => v.VisitOutcome == "Favorable") / (double)visitations.Count : 0;
-        double familyCoopScore     = visitations.Count > 0 ? visitations.Average(v => (double)CoopNum(v.FamilyCooperationLevel)) : 0;
-
-        // Aggregate interventions
-        var interventions = await _db.InterventionPlans
-            .Where(ip => ip.ResidentId == residentId)
-            .ToListAsync();
-
+        // Interventions
         int totalPlans         = interventions.Count;
         int openPlans          = interventions.Count(ip => ip.Status == "Open");
         int planCategories     = interventions.Select(ip => ip.PlanCategory).Distinct().Count();
         double achievementRate = interventions.Count > 0 ? interventions.Count(ip => ip.Status == "Achieved") / (double)interventions.Count : 0;
 
-        var features = new Dictionary<string, object?>
+        return new Dictionary<string, object?>
         {
             // Resident demographics & case info
             ["safehouse_id"]              = resident.SafehouseId,
@@ -199,12 +224,6 @@ public class MLPredictController : ControllerBase
             ["plan_categories"]           = planCategories,
             ["plan_achievement_rate"]     = achievementRate,
         };
-
-        return await ProxyToMl("predict/reintegration", new
-        {
-            resident_id = residentId,
-            features,
-        });
     }
 
     // ── Resident education progress ───────────────────────────────────────────
