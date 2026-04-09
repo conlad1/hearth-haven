@@ -12,6 +12,8 @@ import {
   DashboardSession, DashboardConference, DashboardHighRiskResident, DashboardDonation,
 } from '../api/AdminDashboardAPI';
 import TopReintegrationCandidatesCard from '../components/TopReintegrationCandidatesCard';
+import TopLapseRiskDonorsCard from '../components/TopLapseRiskDonorsCard';
+import TopUpgradePotentialDonorsCard from '../components/TopUpgradePotentialDonorsCard';
 
 function fmt(n: number) {
   return '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 0 });
@@ -222,6 +224,12 @@ export default function AdminDashboardPage() {
       {/* Top Reintegration Candidates (ML-ranked) */}
       <div className="mt-6">
         <TopReintegrationCandidatesCard />
+      </div>
+
+      {/* Two-column: At-Risk Donors + Top Upgrade Potential Donors (ML-ranked) */}
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <TopLapseRiskDonorsCard />
+        <TopUpgradePotentialDonorsCard />
       </div>
 
       {/* Two-column: Recent Incidents + Concerning Sessions */}
