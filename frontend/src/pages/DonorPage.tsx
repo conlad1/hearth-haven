@@ -35,7 +35,9 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   BarChart3,
+  Brain,
 } from 'lucide-react';
+import { fetchDonorPrediction, DonorPrediction } from '../api/MLPredictAPI';
 import { useAuthSession } from '../authSession';
 
 const PAGE_SIZE_OPTIONS = [20, 50, 100];
@@ -263,6 +265,9 @@ export default function DonorPage() {
   const [isAddingSup,         setIsAddingSup]         = useState(false);
   const [newSupData,          setNewSupData]          = useState<Supporter>({ ...blankSupporter });
 
+  // ML donor prediction for the currently-viewed supporter
+  const [donorPrediction,     setDonorPrediction]    = useState<DonorPrediction | null>(null);
+
   // contributions
   const [contributions,       setContributions]       = useState<Contribution[]>([]);
   const [contributionFilters, setContributionFilters] = useState<ContributionFilters>({});
@@ -387,7 +392,15 @@ export default function DonorPage() {
   );
 
   // ── Supporter modal handlers ─────────────────────────────────────────────
-  const openSupporter = (s: Supporter) => { setSelectedSupporter(s); setEditSupData({ ...s }); setIsEditingSup(false); };
+  const openSupporter = (s: Supporter) => {
+    setSelectedSupporter(s);
+    setEditSupData({ ...s });
+    setIsEditingSup(false);
+    setDonorPrediction(null);
+    fetchDonorPrediction(s.supporterId)
+      .then(setDonorPrediction)
+      .catch(() => {});
+  };
   const closeSupporter = () => { setSelectedSupporter(null); setEditSupData(null); setIsEditingSup(false); };
   const handleSaveSupporter = async () => {
     if (!editSupData) return;
@@ -945,6 +958,46 @@ export default function DonorPage() {
                 </button>
               )}
             </div>
+
+            {/* ML Donor Predictions */}
+            {donorPrediction && (donorPrediction.lapse || donorPrediction.upgrade) && (
+              <div className="mb-6 rounded-xl border border-blue-100 dark:border-blue-500/20 bg-blue-50 dark:bg-blue-500/5 p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Brain className="h-4 w-4 text-blue-500" />
+                  <span className="text-sm font-bold text-gray-700 dark:text-gray-300">ML Donor Insights</span>
+                </div>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {donorPrediction.lapse && (
+                    <div className="rounded-lg bg-white dark:bg-gray-900 p-3 border border-gray-100 dark:border-gray-700">
+                      <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Lapse Risk</div>
+                      <div className={`text-2xl font-bold mb-1 ${
+                        donorPrediction.lapse.lapse_score >= 70 ? 'text-red-600 dark:text-red-400'
+                        : donorPrediction.lapse.lapse_score >= 40 ? 'text-yellow-600 dark:text-yellow-400'
+                        : 'text-green-600 dark:text-green-400'
+                      }`}>
+                        {donorPrediction.lapse.lapse_score}
+                        <span className="ml-0.5 text-sm font-normal text-gray-400">/100</span>
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">{donorPrediction.lapse.recommendation}</div>
+                    </div>
+                  )}
+                  {donorPrediction.upgrade && (
+                    <div className="rounded-lg bg-white dark:bg-gray-900 p-3 border border-gray-100 dark:border-gray-700">
+                      <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Upgrade Potential</div>
+                      <div className={`text-2xl font-bold mb-1 ${
+                        donorPrediction.upgrade.upgrade_score >= 60 ? 'text-green-600 dark:text-green-400'
+                        : donorPrediction.upgrade.upgrade_score >= 35 ? 'text-yellow-600 dark:text-yellow-400'
+                        : 'text-gray-500 dark:text-gray-400'
+                      }`}>
+                        {donorPrediction.upgrade.upgrade_score}
+                        <span className="ml-0.5 text-sm font-normal text-gray-400">/100</span>
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">{donorPrediction.upgrade.recommendation}</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Sections */}
             {supporterSections.map((sec) => (

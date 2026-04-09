@@ -12,8 +12,9 @@ import RecordModal, { RecordFieldDef } from '../components/RecordModal';
 import { SafetyChart, HealthChart, EducationChart } from '../components/ProgressChart';
 import {
   ArrowLeft, Pencil, Trash2, Plus, Check, X, Save,
-  ChevronLeft, ChevronRight, Filter,
+  ChevronLeft, ChevronRight, Filter, Brain,
 } from 'lucide-react';
+import { fetchReintegrationPrediction, ReintegrationPrediction, fetchProgressPrediction, ProgressPrediction } from '../api/MLPredictAPI';
 import {
   fetchResident,
   fetchSafehouses,
@@ -471,6 +472,10 @@ export default function ResidentDetailPage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const triggerRefresh = () => setRefreshKey((k) => k + 1);
 
+  // ML predictions
+  const [mlPrediction, setMlPrediction] = useState<ReintegrationPrediction | null>(null);
+  const [progressPrediction, setProgressPrediction] = useState<ProgressPrediction | null>(null);
+
   // -- Initial loads --
 
   useEffect(() => {
@@ -486,7 +491,16 @@ export default function ResidentDetailPage() {
     if (!id) return;
     setLoading(true);
     fetchResident(residentId)
-      .then((r) => { setResident(r); setEditData({ ...r }); })
+      .then((r) => {
+        setResident(r);
+        setEditData({ ...r });
+        fetchReintegrationPrediction(residentId)
+          .then(setMlPrediction)
+          .catch(() => { /* ML server unavailable — score card simply won't show */ });
+        fetchProgressPrediction(residentId)
+          .then(setProgressPrediction)
+          .catch(() => { /* ML server unavailable — score card simply won't show */ });
+      })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [id]);
@@ -1263,6 +1277,74 @@ export default function ResidentDetailPage() {
               )}
             </div>
           </div>
+
+          {/* ML Reintegration Score */}
+          {mlPrediction && (
+            <div className={`flex flex-wrap items-center gap-4 border-b border-gray-100 dark:border-gray-700 px-4 py-3 sm:px-6 ${
+              mlPrediction.readiness_score >= 75
+                ? 'bg-green-50 dark:bg-green-500/5'
+                : mlPrediction.readiness_score >= 50
+                ? 'bg-yellow-50 dark:bg-yellow-500/5'
+                : 'bg-red-50 dark:bg-red-500/5'
+            }`}>
+              <Brain className={`h-5 w-5 shrink-0 ${
+                mlPrediction.readiness_score >= 75 ? 'text-green-500'
+                : mlPrediction.readiness_score >= 50 ? 'text-yellow-500'
+                : 'text-red-500'
+              }`} />
+              <div className="flex flex-1 flex-wrap items-center gap-3">
+                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  Reintegration Readiness
+                </span>
+                <span className={`text-2xl font-bold ${
+                  mlPrediction.readiness_score >= 75 ? 'text-green-600 dark:text-green-400'
+                  : mlPrediction.readiness_score >= 50 ? 'text-yellow-600 dark:text-yellow-400'
+                  : 'text-red-600 dark:text-red-400'
+                }`}>
+                  {mlPrediction.readiness_score}
+                  <span className="ml-0.5 text-sm font-normal text-gray-400">/100</span>
+                </span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">{mlPrediction.recommendation}</span>
+              </div>
+              <span className="shrink-0 text-xs text-gray-400 dark:text-gray-500">
+                ML · {new Date(mlPrediction.predicted_at).toLocaleTimeString()}
+              </span>
+            </div>
+          )}
+
+          {/* ML Education Progress Score */}
+          {progressPrediction && (
+            <div className={`flex flex-wrap items-center gap-4 border-b border-gray-100 dark:border-gray-700 px-4 py-3 sm:px-6 ${
+              progressPrediction.progress_score >= 80
+                ? 'bg-green-50 dark:bg-green-500/5'
+                : progressPrediction.progress_score >= 60
+                ? 'bg-yellow-50 dark:bg-yellow-500/5'
+                : 'bg-red-50 dark:bg-red-500/5'
+            }`}>
+              <Brain className={`h-5 w-5 shrink-0 ${
+                progressPrediction.progress_score >= 80 ? 'text-green-500'
+                : progressPrediction.progress_score >= 60 ? 'text-yellow-500'
+                : 'text-red-500'
+              }`} />
+              <div className="flex flex-1 flex-wrap items-center gap-3">
+                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  Education Progress
+                </span>
+                <span className={`text-2xl font-bold ${
+                  progressPrediction.progress_score >= 80 ? 'text-green-600 dark:text-green-400'
+                  : progressPrediction.progress_score >= 60 ? 'text-yellow-600 dark:text-yellow-400'
+                  : 'text-red-600 dark:text-red-400'
+                }`}>
+                  {progressPrediction.progress_score}
+                  <span className="ml-0.5 text-sm font-normal text-gray-400">%</span>
+                </span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">{progressPrediction.recommendation}</span>
+              </div>
+              <span className="shrink-0 text-xs text-gray-400 dark:text-gray-500">
+                ML · {new Date(progressPrediction.predicted_at).toLocaleTimeString()}
+              </span>
+            </div>
+          )}
 
           {/* Tabs */}
           <div className="overflow-x-auto border-b border-gray-100 dark:border-gray-700">
