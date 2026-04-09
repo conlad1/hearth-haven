@@ -13,7 +13,7 @@ import {
 } from '../api/AdminDashboardAPI';
 
 function fmt(n: number) {
-  return '\u20B1' + Number(n).toLocaleString('en-PH', { minimumFractionDigits: 0 });
+  return '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 0 });
 }
 
 function severityColor(severity: string) {
@@ -90,7 +90,7 @@ export default function AdminDashboardPage() {
   ];
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+    <div className="p-4 sm:p-6 lg:p-8">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
@@ -365,7 +365,7 @@ export default function AdminDashboardPage() {
                       {d.donationType === 'Monetary' && unallocated > 0 && (
                         <button
                           className="mt-0.5 text-xs font-medium text-orange-500 hover:text-orange-600 transition cursor-pointer"
-                          onClick={() => navigate('/allocations')}
+                          onClick={() => navigate('/donors', { state: { tab: 'contributions', donationId: d.donationId } })}
                         >
                           {fmt(unallocated)} unallocated &rarr;
                         </button>

@@ -33,8 +33,7 @@ export default function LoginPage() {
           ? 'Account created and login confirmed. Redirecting you to The Hearth Project...'
           : 'Login successful. Redirecting you now...';
         setSuccessMessage(modalMessage);
-        AuthService.setAuthenticated(true);
-        AuthService.setUserEmail(email);
+        AuthService.setAuthenticated();
         setShowSuccessModal(true);
         window.setTimeout(() => navigate(returnTo, { replace: true }), 1200);
       } else {

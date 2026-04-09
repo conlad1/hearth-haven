@@ -7,9 +7,13 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
+  Check,
   Info,
   ArrowUpDown,
   Filter,
+  MapPin,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from 'lucide-react';
 import { Resident } from '../types/Resident';
 import {
@@ -293,6 +297,7 @@ export default function CasePage() {
   const [totalCount, setTotalCount] = useState(0);
 
   const [safehouses, setSafehouses] = useState<Safehouse[]>([]);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [filterOptions, setFilterOptions] = useState<FilterOptions | null>(
     null
   );
@@ -583,37 +588,58 @@ export default function CasePage() {
 
   return (
     <>
-      <div className="flex min-h-screen bg-white dark:bg-gray-900">
+      <div className="flex flex-col lg:flex-row">
         {/* Sidebar */}
-        <aside className="w-60 shrink-0 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-          <div className="px-5 py-6">
-            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-              Locations
-            </h2>
-            <ul className="space-y-1">
+        <aside className={`w-full shrink-0 border-b border-gray-200 bg-white transition-all duration-200 dark:border-gray-700 dark:bg-gray-900 lg:border-b-0 lg:border-r ${sidebarCollapsed ? 'lg:w-16' : 'lg:w-60'}`}>
+          {/* Header with collapse toggle */}
+          <div className={`flex items-center pt-6 pb-2 ${sidebarCollapsed ? 'lg:justify-center lg:px-2 px-5' : 'justify-between px-5'}`}>
+            {!sidebarCollapsed && (
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                Locations
+              </h2>
+            )}
+            <button
+              onClick={() => setSidebarCollapsed(prev => !prev)}
+              className="btn-icon hidden lg:inline-flex"
+              aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            >
+              {sidebarCollapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+            </button>
+          </div>
+          <div className={`pb-6 ${sidebarCollapsed ? 'lg:px-2 px-5' : 'px-5'}`}>
+            <ul className="flex gap-2 overflow-x-auto pb-1 lg:block lg:space-y-1 lg:pb-0">
               <li>
                 <button
-                  className={`w-full rounded-lg px-3 py-2 text-left text-sm font-medium transition ${
+                  title={sidebarCollapsed ? 'All Locations' : undefined}
+                  className={`flex w-full min-w-max items-center gap-3 whitespace-nowrap rounded-lg py-2 text-sm font-medium transition lg:min-w-0 ${
+                    sidebarCollapsed ? 'lg:justify-center lg:px-2 px-3' : 'px-3 text-left'
+                  } ${
                     filters.safehouseId === undefined
                       ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-700'
                       : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
                   }`}
                   onClick={() => handleSafehouseChange(undefined)}
                 >
-                  All Locations
+                  <MapPin className="h-4 w-4 shrink-0" />
+                  <span className={sidebarCollapsed ? 'lg:hidden' : ''}>All Locations</span>
                 </button>
               </li>
               {safehouses.map((sh) => (
                 <li key={sh.safehouseId}>
                   <button
-                    className={`w-full rounded-lg px-3 py-2 text-left text-sm font-medium transition ${
+                    title={sidebarCollapsed ? sh.name : undefined}
+                    className={`flex w-full min-w-max items-center gap-3 whitespace-nowrap rounded-lg py-2 text-sm font-medium transition lg:min-w-0 ${
+                      sidebarCollapsed ? 'lg:justify-center lg:px-2 px-3' : 'px-3 text-left'
+                    } ${
                       filters.safehouseId === sh.safehouseId
                         ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-700'
                         : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
                     }`}
                     onClick={() => handleSafehouseChange(sh.safehouseId)}
                   >
-                    {sh.name}
+                    <MapPin className="h-4 w-4 shrink-0" />
+                    <span className={sidebarCollapsed ? 'lg:hidden' : ''}>{sh.name}</span>
                   </button>
                 </li>
               ))}
@@ -622,21 +648,22 @@ export default function CasePage() {
         </aside>
 
         {/* Main content */}
-        <div className="flex-1 p-8">
+        <div className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
           {/* Header */}
-          <div className="mb-6 flex items-center justify-between">
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Resident Cases</h1>
-            <div className="flex items-center gap-4">
-              <button className="btn-primary" onClick={openOnboard}>
+            <div className="flex w-full flex-wrap items-center gap-4 lg:w-auto lg:justify-end">
+              <button className="btn-primary w-full sm:w-auto" onClick={openOnboard}>
                 <Plus className="h-4 w-4" />
                 Onboard New Resident
               </button>
-              <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+              <label className="flex w-full items-center gap-2 text-sm text-gray-600 dark:text-gray-400 sm:w-auto">
                 Residents per page:
                 <select
                   value={pageSize}
                   onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-                  className="select-field w-auto"
+                  className="select-field w-full sm:w-auto"
+                  aria-label="Residents per page"
                 >
                   {PAGE_SIZE_OPTIONS.map((size) => (
                     <option key={size} value={size}>
@@ -659,6 +686,7 @@ export default function CasePage() {
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 className="input-field pl-10"
+                aria-label="Search resident cases"
               />
             </div>
 
@@ -672,6 +700,7 @@ export default function CasePage() {
                     updateFilter('caseStatus', e.target.value || undefined)
                   }
                   className="select-field w-auto"
+                  aria-label="Filter by case status"
                 >
                   <option value="">All Statuses</option>
                   {filterOptions.caseStatuses.map((s) => (
@@ -687,6 +716,7 @@ export default function CasePage() {
                     updateFilter('caseCategory', e.target.value || undefined)
                   }
                   className="select-field w-auto"
+                  aria-label="Filter by case category"
                 >
                   <option value="">All Categories</option>
                   {filterOptions.caseCategories.map((c) => (
@@ -705,6 +735,7 @@ export default function CasePage() {
                     )
                   }
                   className="select-field w-auto"
+                  aria-label="Filter by risk level"
                 >
                   <option value="">All Risk Levels</option>
                   {filterOptions.riskLevels.map((r) => (
@@ -720,6 +751,7 @@ export default function CasePage() {
                     updateFilter('referralSource', e.target.value || undefined)
                   }
                   className="select-field w-auto"
+                  aria-label="Filter by referral source"
                 >
                   <option value="">All Referral Sources</option>
                   {filterOptions.referralSources.map((r) => (
@@ -738,6 +770,7 @@ export default function CasePage() {
                     )
                   }
                   className="select-field w-auto"
+                  aria-label="Filter by reintegration type"
                 >
                   <option value="">All Assessments</option>
                   {filterOptions.initialCaseAssessments.map((a) => (
@@ -756,6 +789,7 @@ export default function CasePage() {
                     )
                   }
                   className="select-field w-auto"
+                  aria-label="Filter by social worker"
                 >
                   <option value="">All Reintegration Types</option>
                   {filterOptions.reintegrationTypes.map((r) => (
@@ -774,6 +808,7 @@ export default function CasePage() {
                     )
                   }
                   className="select-field w-auto"
+                  aria-label="Sort resident cases"
                 >
                   <option value="">All Social Workers</option>
                   {filterOptions.socialWorkers.map((w) => (
@@ -868,41 +903,37 @@ export default function CasePage() {
       {/* Onboarding Modal */}
       {isOnboarding &&
         createPortal(
-          <div className="modal-overlay" onClick={closeOnboard}>
+          <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="new-resident-title" onClick={closeOnboard}>
             <div
               className="modal-body max-w-4xl"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Modal top bar */}
-              <div className="mb-6 flex items-center gap-4 border-b border-gray-100 dark:border-gray-700 pb-6">
-                <img
-                  src="/portrait_resident.png"
-                  alt="New Resident"
-                  className="h-14 w-14 rounded-full border-2 border-gray-100 dark:border-gray-700 object-cover"
-                />
-                <div className="flex-1">
-                  <h2 className="text-lg font-bold text-gray-900 dark:text-white">New Resident</h2>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Onboard a new resident</p>
+              <div className="mb-6 flex items-start justify-between border-b border-gray-100 pb-5 dark:border-gray-700">
+                <div className="min-w-0 flex-1">
+                  <h2 id="new-resident-title" className="text-lg font-bold text-gray-900 dark:text-white">New Resident</h2>
+                  <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">Onboard a new resident</p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="ml-4 flex items-center gap-2">
                   <button
-                    className="btn-primary"
+                    className="inline-flex items-center justify-center rounded-lg bg-orange-500 p-2 text-white shadow-sm transition hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 disabled:opacity-50 cursor-pointer"
                     onClick={handleCreate}
                     disabled={saving}
+                    aria-label={saving ? 'Creating' : 'Create'}
+                    title="Create"
                   >
-                    {saving ? 'Creating...' : 'Create'}
+                    {saving ? <span className="text-xs font-medium">Creating...</span> : <Check size={16} />}
                   </button>
                   <button
-                    className="btn-secondary"
+                    className="inline-flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 p-2 text-gray-600 dark:text-gray-400 transition hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200 disabled:opacity-50 cursor-pointer"
                     onClick={closeOnboard}
                     disabled={saving}
+                    aria-label="Cancel"
+                    title="Cancel"
                   >
-                    Cancel
+                    <X size={16} />
                   </button>
                 </div>
-                <button className="btn-icon" onClick={closeOnboard}>
-                  <X className="h-5 w-5" />
-                </button>
               </div>
 
               {/* Modal sections */}
@@ -911,10 +942,10 @@ export default function CasePage() {
                   <h3 className="mb-4 border-b border-gray-100 dark:border-gray-700 pb-2 text-sm font-bold uppercase tracking-wide text-gray-900 dark:text-white">
                     {section.title}
                   </h3>
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="grid grid-cols-1 gap-4 rounded-xl bg-gray-50 p-4 sm:grid-cols-2 lg:grid-cols-3 dark:bg-white/5">
                     {section.fields.map((col) => (
-                      <div className="flex flex-col gap-1" key={col.key}>
-                        <label className="flex items-center gap-1 text-xs font-semibold text-gray-700 dark:text-gray-300">
+                      <div className="flex flex-col gap-1.5" key={col.key}>
+                        <label className="flex items-center gap-1 text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                           {col.label}
                           {fieldTooltips[col.key] && (
                             <span

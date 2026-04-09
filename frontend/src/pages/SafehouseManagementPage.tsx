@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import {
-  Plus, Search, ChevronLeft, ChevronRight, X, ArrowUpDown, Filter,
+  Plus, Search, ChevronLeft, ChevronRight, X, Check, ArrowUpDown, Filter,
+  Home, Handshake, PanelLeftClose, PanelLeftOpen,
 } from 'lucide-react';
 import { Safehouse } from '../types/Safehouse';
 import { Partner } from '../types/Partner';
@@ -134,6 +135,7 @@ function formatCell(value: unknown): string {
 export default function SafehouseManagementPage() {
   const navigate = useNavigate();
   const [view, setView] = useState<ViewMode>('safehouses');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [alertModal, setAlertModal] = useState<{ title: string; message: string } | null>(null);
 
   // -- Safehouse state --
@@ -394,28 +396,41 @@ export default function SafehouseManagementPage() {
     return createPortal(
       <div className="modal-overlay" onClick={onClose}>
         <div className="modal-body max-w-4xl" onClick={(e) => e.stopPropagation()}>
-          <div className="mb-6 flex items-center gap-4 border-b border-gray-100 dark:border-gray-700 pb-6">
-            <div className="flex-1">
+          <div className="mb-6 flex items-start justify-between border-b border-gray-100 pb-5 dark:border-gray-700">
+            <div className="min-w-0 flex-1">
               <h2 className="text-lg font-bold text-gray-900 dark:text-white">New {title}</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Fill in the details below</p>
+              <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">Fill in the details below</p>
             </div>
-            <div className="flex items-center gap-2">
-              <button className="btn-primary" onClick={onSave} disabled={saving}>
-                {saving ? 'Creating...' : 'Create'}
+            <div className="ml-4 flex items-center gap-2">
+              <button
+                className="inline-flex items-center justify-center rounded-lg bg-orange-500 p-2 text-white shadow-sm transition hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 disabled:opacity-50 cursor-pointer"
+                onClick={onSave}
+                disabled={saving}
+                aria-label={saving ? 'Creating' : 'Create'}
+                title="Create"
+              >
+                {saving ? <span className="text-xs font-medium">Creating...</span> : <Check size={16} />}
               </button>
-              <button className="btn-secondary" onClick={onClose} disabled={saving}>Cancel</button>
+              <button
+                className="inline-flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 p-2 text-gray-600 dark:text-gray-400 transition hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200 disabled:opacity-50 cursor-pointer"
+                onClick={onClose}
+                disabled={saving}
+                aria-label="Cancel"
+                title="Cancel"
+              >
+                <X size={16} />
+              </button>
             </div>
-            <button className="btn-icon" onClick={onClose}><X className="h-5 w-5" /></button>
           </div>
           {sections.map((section) => (
             <div className="mb-6" key={section.title}>
               <h3 className="mb-4 border-b border-gray-100 dark:border-gray-700 pb-2 text-sm font-bold uppercase tracking-wide text-gray-900 dark:text-white">
                 {section.title}
               </h3>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 rounded-xl bg-gray-50 p-4 sm:grid-cols-2 lg:grid-cols-3 dark:bg-white/5">
                 {section.fields.map((col) => (
-                  <div className="flex flex-col gap-1" key={col.key as string}>
-                    <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">{col.label}</label>
+                  <div className="flex flex-col gap-1.5" key={col.key as string}>
+                    <label className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{col.label}</label>
                     {renderCreateInput(col, data, onChange, selectFields, dateFields, intFields, textareaFields)}
                   </div>
                 ))}
@@ -430,36 +445,57 @@ export default function SafehouseManagementPage() {
 
   return (
     <>
-      <div className="flex min-h-screen bg-white dark:bg-gray-900">
+      <div className="flex flex-col lg:flex-row">
         {/* Sidebar */}
-        <aside className="w-60 shrink-0 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-          <div className="px-5 py-6">
-            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-              Safehouse Management
-            </h2>
-            <ul className="space-y-1">
+        <aside className={`w-full shrink-0 border-b border-gray-200 bg-white transition-all duration-200 dark:border-gray-700 dark:bg-gray-900 lg:border-b-0 lg:border-r ${sidebarCollapsed ? 'lg:w-16' : 'lg:w-60'}`}>
+          {/* Header with collapse toggle */}
+          <div className={`flex items-center pt-6 pb-2 ${sidebarCollapsed ? 'lg:justify-center lg:px-2 px-5' : 'justify-between px-5'}`}>
+            {!sidebarCollapsed && (
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                Safehouse Management
+              </h2>
+            )}
+            <button
+              onClick={() => setSidebarCollapsed(prev => !prev)}
+              className="btn-icon hidden lg:inline-flex"
+              aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            >
+              {sidebarCollapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+            </button>
+          </div>
+          <div className={`pb-6 ${sidebarCollapsed ? 'lg:px-2 px-5' : 'px-5'}`}>
+            <ul className="flex gap-2 overflow-x-auto pb-1 lg:block lg:space-y-1 lg:pb-0">
               <li>
                 <button
-                  className={`w-full rounded-lg px-3 py-2 text-left text-sm font-medium transition ${
+                  title={sidebarCollapsed ? 'Safehouses' : undefined}
+                  className={`flex w-full min-w-max items-center gap-3 whitespace-nowrap rounded-lg py-2 text-sm font-medium transition lg:min-w-0 ${
+                    sidebarCollapsed ? 'lg:justify-center lg:px-2 px-3' : 'px-3 text-left'
+                  } ${
                     view === 'safehouses'
                       ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-700'
                       : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
                   }`}
                   onClick={() => setView('safehouses')}
                 >
-                  Safehouses
+                  <Home className="h-4 w-4 shrink-0" />
+                  <span className={sidebarCollapsed ? 'lg:hidden' : ''}>Safehouses</span>
                 </button>
               </li>
               <li>
                 <button
-                  className={`w-full rounded-lg px-3 py-2 text-left text-sm font-medium transition ${
+                  title={sidebarCollapsed ? 'Partners' : undefined}
+                  className={`flex w-full min-w-max items-center gap-3 whitespace-nowrap rounded-lg py-2 text-sm font-medium transition lg:min-w-0 ${
+                    sidebarCollapsed ? 'lg:justify-center lg:px-2 px-3' : 'px-3 text-left'
+                  } ${
                     view === 'partners'
                       ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-700'
                       : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
                   }`}
                   onClick={() => setView('partners')}
                 >
-                  Partners
+                  <Handshake className="h-4 w-4 shrink-0" />
+                  <span className={sidebarCollapsed ? 'lg:hidden' : ''}>Partners</span>
                 </button>
               </li>
             </ul>
@@ -467,7 +503,7 @@ export default function SafehouseManagementPage() {
         </aside>
 
         {/* Main content */}
-        <div className="flex-1 p-8">
+        <div className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
           {view === 'safehouses' ? (
             <>
               {/* Header */}

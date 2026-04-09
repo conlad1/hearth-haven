@@ -1,9 +1,12 @@
 using HearthHaven.API.Data;
+using HearthHaven.API.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace HearthHaven.API.Controllers;
 
+[Authorize(Roles = AppRoles.Admin + "," + AppRoles.OutreachManager + "," + AppRoles.CaseManager)]
 [Route("[controller]")]
 [ApiController]
 public class PartnerController : ControllerBase
@@ -125,6 +128,7 @@ public class PartnerController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = AppRoles.Admin + "," + AppRoles.OutreachManager)]
     public IActionResult Create([FromBody] Partner partner)
     {
         _context.Partners.Add(partner);
@@ -133,6 +137,7 @@ public class PartnerController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize(Roles = AppRoles.Admin + "," + AppRoles.OutreachManager)]
     public IActionResult Update(int id, [FromBody] Partner updated)
     {
         var partner = _context.Partners.Find(id);
@@ -146,6 +151,7 @@ public class PartnerController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = AppRoles.Admin + "," + AppRoles.OutreachManager)]
     public IActionResult Delete(int id)
     {
         var partner = _context.Partners.Find(id);

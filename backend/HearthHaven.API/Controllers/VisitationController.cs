@@ -1,8 +1,11 @@
 using HearthHaven.API.Data;
+using HearthHaven.API.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HearthHaven.API.Controllers;
 
+[Authorize(Roles = AppRoles.Admin + "," + AppRoles.CaseManager)]
 [Route("[controller]")]
 [ApiController]
 public class VisitationController : ControllerBase

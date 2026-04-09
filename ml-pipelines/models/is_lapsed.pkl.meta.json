@@ -1,0 +1,5 @@
+{
+  "target": "is_lapsed",
+  "model": "DecisionTreeClassifier",
+  "saved_at": "2026-04-08T22:13:18.902751"
+}

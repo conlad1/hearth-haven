@@ -2,6 +2,7 @@ import { Safehouse } from '../types/Safehouse';
 import { Partner } from '../types/Partner';
 import { PartnerAssignment } from '../types/PartnerAssignment';
 import { API_BASE_URL } from './config';
+import { apiFetch } from './http';
 
 // -- Paginated responses --
 
@@ -94,7 +95,7 @@ export const fetchSafehouses = async (
     if (filters.status) params.set('status', filters.status);
     if (filters.search) params.set('search', filters.search);
 
-    const response = await fetch(`${API_BASE_URL}/Safehouse/All?${params}`);
+    const response = await apiFetch(`${API_BASE_URL}/Safehouse/All?${params}`);
     if (!response.ok) throw new Error(`Failed to fetch safehouses: ${response.status}`);
     return await response.json();
   } catch (error) {
@@ -104,14 +105,14 @@ export const fetchSafehouses = async (
 };
 
 export const fetchSafehouse = async (id: number): Promise<Safehouse> => {
-  const response = await fetch(`${API_BASE_URL}/Safehouse/${id}`);
+  const response = await apiFetch(`${API_BASE_URL}/Safehouse/${id}`);
   if (!response.ok) throw new Error(`Failed to fetch safehouse: ${response.status}`);
   return await response.json();
 };
 
 export const fetchSafehouseFilterOptions = async (): Promise<SafehouseFilterOptions> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/Safehouse/FilterOptions`);
+    const response = await apiFetch(`${API_BASE_URL}/Safehouse/FilterOptions`);
     if (!response.ok) throw new Error(`Failed to fetch safehouse filter options: ${response.status}`);
     return await response.json();
   } catch (error) {
@@ -130,14 +131,14 @@ export const fetchSafehousePartners = async (
   if (filters.programArea) params.set('programArea', filters.programArea);
   if (filters.status) params.set('status', filters.status);
 
-  const response = await fetch(`${API_BASE_URL}/Safehouse/${safehouseId}/Partners?${params}`);
+  const response = await apiFetch(`${API_BASE_URL}/Safehouse/${safehouseId}/Partners?${params}`);
   if (!response.ok) throw new Error(`Failed to fetch safehouse partners: ${response.status}`);
   return await response.json();
 };
 
 export const createSafehouse = async (data: Partial<Safehouse>): Promise<Safehouse> => {
   const cleaned = cleanPayload(data as Record<string, unknown>, ['safehouseId']);
-  const response = await fetch(`${API_BASE_URL}/Safehouse`, {
+  const response = await apiFetch(`${API_BASE_URL}/Safehouse`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(cleaned),
@@ -150,7 +151,7 @@ export const createSafehouse = async (data: Partial<Safehouse>): Promise<Safehou
 };
 
 export const updateSafehouse = async (id: number, data: Safehouse): Promise<Safehouse> => {
-  const response = await fetch(`${API_BASE_URL}/Safehouse/${id}`, {
+  const response = await apiFetch(`${API_BASE_URL}/Safehouse/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -160,7 +161,7 @@ export const updateSafehouse = async (id: number, data: Safehouse): Promise<Safe
 };
 
 export const deleteSafehouse = async (id: number): Promise<void> => {
-  const response = await fetch(`${API_BASE_URL}/Safehouse/${id}`, { method: 'DELETE' });
+  const response = await apiFetch(`${API_BASE_URL}/Safehouse/${id}`, { method: 'DELETE' });
   if (!response.ok) throw new Error(`Failed to delete safehouse: ${response.status}`);
 };
 
@@ -181,7 +182,7 @@ export const fetchPartners = async (
     if (filters.region) params.set('region', filters.region);
     if (filters.search) params.set('search', filters.search);
 
-    const response = await fetch(`${API_BASE_URL}/Partner/All?${params}`);
+    const response = await apiFetch(`${API_BASE_URL}/Partner/All?${params}`);
     if (!response.ok) throw new Error(`Failed to fetch partners: ${response.status}`);
     return await response.json();
   } catch (error) {
@@ -191,14 +192,14 @@ export const fetchPartners = async (
 };
 
 export const fetchPartner = async (id: number): Promise<Partner> => {
-  const response = await fetch(`${API_BASE_URL}/Partner/${id}`);
+  const response = await apiFetch(`${API_BASE_URL}/Partner/${id}`);
   if (!response.ok) throw new Error(`Failed to fetch partner: ${response.status}`);
   return await response.json();
 };
 
 export const fetchPartnerFilterOptions = async (): Promise<PartnerFilterOptions> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/Partner/FilterOptions`);
+    const response = await apiFetch(`${API_BASE_URL}/Partner/FilterOptions`);
     if (!response.ok) throw new Error(`Failed to fetch partner filter options: ${response.status}`);
     return await response.json();
   } catch (error) {
@@ -217,14 +218,14 @@ export const fetchPartnerSafehouses = async (
   if (filters.programArea) params.set('programArea', filters.programArea);
   if (filters.status) params.set('status', filters.status);
 
-  const response = await fetch(`${API_BASE_URL}/Partner/${partnerId}/Safehouses?${params}`);
+  const response = await apiFetch(`${API_BASE_URL}/Partner/${partnerId}/Safehouses?${params}`);
   if (!response.ok) throw new Error(`Failed to fetch partner safehouses: ${response.status}`);
   return await response.json();
 };
 
 export const createPartner = async (data: Partial<Partner>): Promise<Partner> => {
   const cleaned = cleanPayload(data as Record<string, unknown>, ['partnerId']);
-  const response = await fetch(`${API_BASE_URL}/Partner`, {
+  const response = await apiFetch(`${API_BASE_URL}/Partner`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(cleaned),
@@ -237,7 +238,7 @@ export const createPartner = async (data: Partial<Partner>): Promise<Partner> =>
 };
 
 export const updatePartner = async (id: number, data: Partner): Promise<Partner> => {
-  const response = await fetch(`${API_BASE_URL}/Partner/${id}`, {
+  const response = await apiFetch(`${API_BASE_URL}/Partner/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -247,7 +248,7 @@ export const updatePartner = async (id: number, data: Partner): Promise<Partner>
 };
 
 export const deletePartner = async (id: number): Promise<void> => {
-  const response = await fetch(`${API_BASE_URL}/Partner/${id}`, { method: 'DELETE' });
+  const response = await apiFetch(`${API_BASE_URL}/Partner/${id}`, { method: 'DELETE' });
   if (!response.ok) throw new Error(`Failed to delete partner: ${response.status}`);
 };
 
@@ -257,7 +258,7 @@ export const deletePartner = async (id: number): Promise<void> => {
 
 export const fetchAssignmentFilterOptions = async (): Promise<AssignmentFilterOptions> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/PartnerAssignment/FilterOptions`);
+    const response = await apiFetch(`${API_BASE_URL}/PartnerAssignment/FilterOptions`);
     if (!response.ok) throw new Error(`Failed to fetch assignment filter options: ${response.status}`);
     return await response.json();
   } catch (error) {
@@ -268,7 +269,7 @@ export const fetchAssignmentFilterOptions = async (): Promise<AssignmentFilterOp
 
 export const createAssignment = async (data: Partial<PartnerAssignment>): Promise<PartnerAssignment> => {
   const cleaned = cleanPayload(data as unknown as Record<string, unknown>, ['assignmentId', 'partner', 'safehouse']);
-  const response = await fetch(`${API_BASE_URL}/PartnerAssignment`, {
+  const response = await apiFetch(`${API_BASE_URL}/PartnerAssignment`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(cleaned),
@@ -282,7 +283,7 @@ export const createAssignment = async (data: Partial<PartnerAssignment>): Promis
 
 export const updateAssignment = async (id: number, data: PartnerAssignment): Promise<PartnerAssignment> => {
   const cleaned = cleanPayload(data as unknown as Record<string, unknown>, ['partner', 'safehouse']);
-  const response = await fetch(`${API_BASE_URL}/PartnerAssignment/${id}`, {
+  const response = await apiFetch(`${API_BASE_URL}/PartnerAssignment/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(cleaned),
@@ -292,6 +293,7 @@ export const updateAssignment = async (id: number, data: PartnerAssignment): Pro
 };
 
 export const deleteAssignment = async (id: number): Promise<void> => {
-  const response = await fetch(`${API_BASE_URL}/PartnerAssignment/${id}`, { method: 'DELETE' });
+  const response = await apiFetch(`${API_BASE_URL}/PartnerAssignment/${id}`, { method: 'DELETE' });
   if (!response.ok) throw new Error(`Failed to delete assignment: ${response.status}`);
 };
+

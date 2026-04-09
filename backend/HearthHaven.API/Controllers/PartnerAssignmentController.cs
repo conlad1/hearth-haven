@@ -1,8 +1,11 @@
 using HearthHaven.API.Data;
+using HearthHaven.API.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HearthHaven.API.Controllers;
 
+[Authorize(Roles = AppRoles.Admin + "," + AppRoles.OutreachManager + "," + AppRoles.CaseManager)]
 [Route("[controller]")]
 [ApiController]
 public class PartnerAssignmentController : ControllerBase
@@ -24,6 +27,7 @@ public class PartnerAssignmentController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = AppRoles.Admin + "," + AppRoles.OutreachManager)]
     public IActionResult Create([FromBody] PartnerAssignment assignment)
     {
         assignment.Partner = null;
@@ -36,6 +40,7 @@ public class PartnerAssignmentController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize(Roles = AppRoles.Admin + "," + AppRoles.OutreachManager)]
     public IActionResult Update(int id, [FromBody] PartnerAssignment updated)
     {
         var assignment = _context.PartnerAssignments.Find(id);
@@ -52,6 +57,7 @@ public class PartnerAssignmentController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = AppRoles.Admin + "," + AppRoles.OutreachManager)]
     public IActionResult Delete(int id)
     {
         var assignment = _context.PartnerAssignments.Find(id);

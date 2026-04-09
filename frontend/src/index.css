@@ -69,7 +69,7 @@
   }
 
   .modal-body {
-    @apply relative mx-4 max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-800 dark:shadow-black/30;
+    @apply relative mx-3 max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl ring-1 ring-black/5 sm:mx-4 sm:p-8 dark:bg-gray-800 dark:shadow-black/30 dark:ring-white/10;
   }
 
   .table-base {

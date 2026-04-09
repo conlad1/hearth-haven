@@ -2,7 +2,12 @@ import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AuthService } from '../api/AuthService';
 import { Check, Eye, EyeOff, UserPlus } from 'lucide-react';
-import { getPasswordRuleStatus, validatePassword, PASSWORD_MIN_LENGTH } from '../utils/passwordPolicy';
+import {
+  getPasswordRuleStatus,
+  validatePassword,
+  PASSWORD_MIN_LENGTH,
+  PASSWORD_MIN_UNIQUE_CHARS,
+} from '../utils/passwordPolicy';
 
 type RegisterNavigationState = { returnTo?: string } | null;
 
@@ -31,15 +36,13 @@ export default function RegisterPage() {
 
     const passwordErrors = validatePassword(password);
     if (passwordErrors.length > 0) {
-      setError(`Password must be at least ${PASSWORD_MIN_LENGTH} characters and include lowercase, uppercase, number, and special character.`);
+      setError(`Password does not meet policy: ${passwordErrors.join(', ')}.`);
       return;
     }
 
     try {
-      const response = await AuthService.register(email, password);
+      const response = await AuthService.register(email, fullName, password);
       if (response.ok) {
-        AuthService.setUserName(fullName);
-        AuthService.setUserEmail(email);
         navigate('/login', {
           replace: true,
           state: { registered: true, returnTo: locationState?.returnTo || '/' },
@@ -100,6 +103,9 @@ export default function RegisterPage() {
               </div>
               <div className="mt-3 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/60">
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Password requirements</p>
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  Minimum {PASSWORD_MIN_LENGTH} characters with lowercase, uppercase, number, special character, and at least {PASSWORD_MIN_UNIQUE_CHARS} unique characters.
+                </p>
                 <ul className="mt-3 space-y-2">
                   {passwordRuleStatus.map((rule) => (
                     <li key={rule.id} className={`flex items-center gap-2 text-sm ${rule.isMet ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400'}`}>

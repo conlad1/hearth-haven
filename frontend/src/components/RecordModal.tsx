@@ -38,12 +38,13 @@ export default function RecordModal({
 }: RecordModalProps) {
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const dialogTitleId = `record-modal-title-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
 
   const renderField = (f: RecordFieldDef) => {
     const value = data[f.key];
 
     if (mode === 'view' || f.readOnly) {
-      return <span className="text-sm text-gray-700 dark:text-gray-300">{fmt(value)}</span>;
+      return <span className="text-sm font-medium text-gray-900 dark:text-white">{fmt(value)}</span>;
     }
 
     if (f.type === 'checkbox') {
@@ -113,12 +114,12 @@ export default function RecordModal({
 
   return createPortal(
     <>
-      <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby={dialogTitleId} onClick={onClose}>
         <div className="modal-body" onClick={(e) => e.stopPropagation()}>
           {/* Top bar */}
-          <div className="mb-6 flex items-start justify-between">
+          <div className="mb-6 flex items-start justify-between border-b border-gray-100 pb-5 dark:border-gray-700">
             <div className="min-w-0 flex-1">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+              <h2 id={dialogTitleId} className="text-lg font-bold text-gray-900 dark:text-white">
                 {mode === 'create' ? `New ${title}` : title}
               </h2>
               <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
@@ -133,6 +134,7 @@ export default function RecordModal({
                     <button
                       className="btn-icon"
                       onClick={onEdit}
+                      aria-label="Edit record"
                       title="Edit"
                     >
                       <Pencil size={16} />
@@ -142,6 +144,7 @@ export default function RecordModal({
                     <button
                       className="inline-flex items-center justify-center rounded-lg p-2 text-red-500 transition hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-700 disabled:opacity-50 cursor-pointer"
                       onClick={() => setShowDeleteConfirm(true)}
+                      aria-label="Delete record"
                       title="Delete"
                     >
                       <Trash2 size={16} />
@@ -155,6 +158,7 @@ export default function RecordModal({
                     className="inline-flex items-center justify-center rounded-lg bg-orange-500 p-2 text-white shadow-sm transition hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 disabled:opacity-50 cursor-pointer"
                     onClick={onSave}
                     disabled={saving}
+                    aria-label={saving ? 'Saving record' : 'Save record'}
                     title="Save"
                   >
                     {saving ? <span className="text-xs font-medium">Saving...</span> : <Check size={16} />}
@@ -163,6 +167,7 @@ export default function RecordModal({
                     className="inline-flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 p-2 text-gray-600 dark:text-gray-400 transition hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200 disabled:opacity-50 cursor-pointer"
                     onClick={onCancel}
                     disabled={saving}
+                    aria-label="Cancel editing"
                     title="Cancel"
                   >
                     <X size={16} />
@@ -175,6 +180,7 @@ export default function RecordModal({
                     className="inline-flex items-center justify-center rounded-lg bg-orange-500 p-2 text-white shadow-sm transition hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 disabled:opacity-50 cursor-pointer"
                     onClick={onSave}
                     disabled={saving}
+                    aria-label={saving ? 'Creating record' : 'Create record'}
                     title="Create"
                   >
                     {saving ? <span className="text-xs font-medium">Creating...</span> : <Check size={16} />}
@@ -183,6 +189,7 @@ export default function RecordModal({
                     className="inline-flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 p-2 text-gray-600 dark:text-gray-400 transition hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200 disabled:opacity-50 cursor-pointer"
                     onClick={onCancel}
                     disabled={saving}
+                    aria-label="Cancel creating record"
                     title="Cancel"
                   >
                     <X size={16} />
@@ -195,6 +202,7 @@ export default function RecordModal({
               <button
                 className="ml-2 inline-flex items-center justify-center rounded-lg p-1 text-gray-400 transition hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer"
                 onClick={onClose}
+                aria-label="Close dialog"
               >
                 <X size={20} />
               </button>
@@ -202,10 +210,10 @@ export default function RecordModal({
           </div>
 
           {/* Fields */}
-          <div className="space-y-4">
+          <div className="space-y-4 rounded-xl bg-gray-50 p-4 dark:bg-white/5">
             {fields.map((f) => (
               <div className="flex flex-col gap-1.5" key={f.key}>
-                <label className="text-sm font-semibold text-gray-800 dark:text-gray-200">{f.label}{f.required && <span className="ml-0.5 text-orange-500">*</span>}</label>
+                <label className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{f.label}{f.required && <span className="ml-0.5 text-orange-500">*</span>}</label>
                 {renderField(f)}
               </div>
             ))}
@@ -217,6 +225,9 @@ export default function RecordModal({
       {showDeleteConfirm && (
         <div
           className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="record-delete-title"
           onClick={() => setShowDeleteConfirm(false)}
         >
           <div
@@ -226,7 +237,7 @@ export default function RecordModal({
             <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-red-100 dark:bg-red-500/10">
               <Trash2 size={20} className="text-red-500" />
             </div>
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Delete Record</h3>
+            <h3 id="record-delete-title" className="text-lg font-bold text-gray-900 dark:text-white">Delete Record</h3>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               Are you sure you want to delete this record? This action cannot be undone.
             </p>

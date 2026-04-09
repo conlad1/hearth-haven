@@ -65,3 +65,46 @@ export interface PaginatedResponse<T> {
   pageSize: number;
   totalPages: number;
 }
+
+export interface DonorAnalyticsSummary {
+  totalSupporters: number;
+  activeSupporters: number;
+  totalDonations: number;
+  totalDonationValue: number;
+}
+
+export interface DonationTrendPoint {
+  period: string;
+  label: string;
+  totalAmount: number;
+  donationCount: number;
+  supporterCount: number;
+}
+
+export interface DonationTypeBreakdownItem {
+  donationType: string;
+  totalAmount: number;
+  donationCount: number;
+  supporterCount: number;
+}
+
+export interface CampaignLeaderboardItem {
+  campaignName: string;
+  totalAmount: number;
+  donationCount: number;
+  supporterCount: number;
+}
+
+export interface SupporterTypeBreakdownItem {
+  supporterType: string;
+  supporterCount: number;
+  activeCount: number;
+}
+
+export interface DonorAnalyticsResponse {
+  summary: DonorAnalyticsSummary;
+  donationsOverTime: DonationTrendPoint[];
+  donationTypeBreakdown: DonationTypeBreakdownItem[];
+  topCampaigns: CampaignLeaderboardItem[];
+  supporterTypeBreakdown: SupporterTypeBreakdownItem[];
+}

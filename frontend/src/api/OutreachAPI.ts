@@ -1,4 +1,5 @@
 import { API_BASE_URL as OUTREACH_API_BASE_URL } from './config';
+import { apiFetch } from './http';
 
 export type OutreachSummary = {
   generatedAt: string;
@@ -42,7 +43,7 @@ export type OutreachSummary = {
 };
 
 export async function fetchOutreachSummary(): Promise<OutreachSummary> {
-  const response = await fetch(`${OUTREACH_API_BASE_URL}/outreach/summary`, {
+  const response = await apiFetch(`${OUTREACH_API_BASE_URL}/outreach/summary`, {
     credentials: 'include',
   });
 
@@ -52,3 +53,4 @@ export async function fetchOutreachSummary(): Promise<OutreachSummary> {
 
   return response.json();
 }
+

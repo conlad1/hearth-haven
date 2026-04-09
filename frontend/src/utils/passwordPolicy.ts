@@ -1,4 +1,5 @@
 export const PASSWORD_MIN_LENGTH = 14;
+export const PASSWORD_MIN_UNIQUE_CHARS = 4;
 
 export type PasswordRule = {
   id: string;
@@ -31,6 +32,11 @@ export const PASSWORD_RULES: PasswordRule[] = [
     id: 'special',
     label: 'One special character',
     test: (password) => /[^A-Za-z0-9]/.test(password),
+  },
+  {
+    id: 'uniqueChars',
+    label: `At least ${PASSWORD_MIN_UNIQUE_CHARS} unique characters`,
+    test: (password) => new Set(password).size >= PASSWORD_MIN_UNIQUE_CHARS,
   },
 ];
 

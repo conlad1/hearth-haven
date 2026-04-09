@@ -1,0 +1,7 @@
+{
+  "r2": 0.8055,
+  "rmse": 0.0243,
+  "mae": 0.0182,
+  "baseline_rmse": 0.0553,
+  "pct_improvement": 56.1
+}

@@ -1,9 +1,12 @@
 using HearthHaven.API.Data;
+using HearthHaven.API.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace HearthHaven.API.Controllers;
 
+[Authorize(Roles = AppRoles.Admin)]
 [Route("[controller]")]
 [ApiController]
 public class AdminDashboardController : ControllerBase

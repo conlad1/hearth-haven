@@ -1,9 +1,12 @@
 using HearthHaven.API.Data;
+using HearthHaven.API.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace HearthHaven.API.Controllers;
 
+[Authorize(Roles = AppRoles.Admin + "," + AppRoles.CaseManager)]
 [Route("[controller]")]
 [ApiController]
 public class SafehouseController : ControllerBase
@@ -65,6 +68,20 @@ public class SafehouseController : ControllerBase
                 .Select(s => s.Region).Distinct().OrderBy(s => s).ToList(),
             statuses = _context.Safehouses
                 .Select(s => s.Status).Distinct().OrderBy(s => s).ToList(),
+        });
+    }
+
+    [HttpGet("PublicRegions")]
+    [AllowAnonymous]
+    public IActionResult GetPublicRegions()
+    {
+        return Ok(new
+        {
+            regions = _context.Safehouses
+                .Select(s => s.Region)
+                .Distinct()
+                .OrderBy(s => s)
+                .ToList(),
         });
     }
 

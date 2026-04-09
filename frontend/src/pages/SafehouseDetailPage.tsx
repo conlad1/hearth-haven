@@ -288,7 +288,7 @@ export default function SafehouseDetailPage() {
   if (!safehouse) return <p className="py-12 text-center text-sm text-gray-500">Safehouse not found.</p>;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6">
+    <div className="p-4 sm:p-6 lg:p-8">
       {/* Back button */}
       <button className="btn-ghost mb-4" onClick={() => navigate(backTo)}>
         <ArrowLeft className="h-4 w-4" /> {backLabel}

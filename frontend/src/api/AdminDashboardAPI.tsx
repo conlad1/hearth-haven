@@ -1,4 +1,5 @@
 import { API_BASE_URL } from './config';
+import { apiFetch } from './http';
 
 // -- Stats --
 
@@ -116,49 +117,49 @@ export interface DashboardDonation {
 // -- Fetch functions --
 
 export const fetchDashboardStats = async (): Promise<DashboardStats> => {
-  const response = await fetch(`${API_BASE_URL}/AdminDashboard/Stats`);
+  const response = await apiFetch(`${API_BASE_URL}/AdminDashboard/Stats`);
   if (!response.ok) throw new Error(`Failed to fetch dashboard stats: ${response.status}`);
   return await response.json();
 };
 
 export const fetchSafehouseOccupancy = async (): Promise<SafehouseOccupancy[]> => {
-  const response = await fetch(`${API_BASE_URL}/AdminDashboard/SafehouseOccupancy`);
+  const response = await apiFetch(`${API_BASE_URL}/AdminDashboard/SafehouseOccupancy`);
   if (!response.ok) throw new Error(`Failed to fetch occupancy: ${response.status}`);
   return await response.json();
 };
 
 export const fetchRecentIncidents = async (limit = 10): Promise<DashboardIncident[]> => {
-  const response = await fetch(`${API_BASE_URL}/AdminDashboard/RecentIncidents?limit=${limit}`);
+  const response = await apiFetch(`${API_BASE_URL}/AdminDashboard/RecentIncidents?limit=${limit}`);
   if (!response.ok) throw new Error(`Failed to fetch incidents: ${response.status}`);
   return await response.json();
 };
 
 export const fetchRecentVisitations = async (limit = 10): Promise<DashboardVisitation[]> => {
-  const response = await fetch(`${API_BASE_URL}/AdminDashboard/RecentVisitations?limit=${limit}`);
+  const response = await apiFetch(`${API_BASE_URL}/AdminDashboard/RecentVisitations?limit=${limit}`);
   if (!response.ok) throw new Error(`Failed to fetch visitations: ${response.status}`);
   return await response.json();
 };
 
 export const fetchConcerningSessions = async (limit = 10): Promise<DashboardSession[]> => {
-  const response = await fetch(`${API_BASE_URL}/AdminDashboard/ConcerningSessions?limit=${limit}`);
+  const response = await apiFetch(`${API_BASE_URL}/AdminDashboard/ConcerningSessions?limit=${limit}`);
   if (!response.ok) throw new Error(`Failed to fetch sessions: ${response.status}`);
   return await response.json();
 };
 
 export const fetchUpcomingConferences = async (limit = 10): Promise<DashboardConference[]> => {
-  const response = await fetch(`${API_BASE_URL}/AdminDashboard/UpcomingConferences?limit=${limit}`);
+  const response = await apiFetch(`${API_BASE_URL}/AdminDashboard/UpcomingConferences?limit=${limit}`);
   if (!response.ok) throw new Error(`Failed to fetch conferences: ${response.status}`);
   return await response.json();
 };
 
 export const fetchHighRiskResidents = async (limit = 10): Promise<DashboardHighRiskResident[]> => {
-  const response = await fetch(`${API_BASE_URL}/AdminDashboard/HighRiskResidents?limit=${limit}`);
+  const response = await apiFetch(`${API_BASE_URL}/AdminDashboard/HighRiskResidents?limit=${limit}`);
   if (!response.ok) throw new Error(`Failed to fetch high-risk residents: ${response.status}`);
   return await response.json();
 };
 
 export const fetchRecentDonations = async (limit = 10): Promise<DashboardDonation[]> => {
-  const response = await fetch(`${API_BASE_URL}/AdminDashboard/RecentDonations?limit=${limit}`);
+  const response = await apiFetch(`${API_BASE_URL}/AdminDashboard/RecentDonations?limit=${limit}`);
   if (!response.ok) throw new Error(`Failed to fetch donations: ${response.status}`);
   return await response.json();
 };
