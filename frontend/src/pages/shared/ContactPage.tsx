@@ -7,7 +7,7 @@ function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [successModalMessage, setSuccessModalMessage] = useState("");
-  const web3FormsAccessKey = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY ?? "";
+  const web3FormsAccessKey = 83d97da9-fc41-414d-9528-45394bc1976a ?? "";
 
   useEffect(() => {
     if (!isSuccessModalOpen) return;
