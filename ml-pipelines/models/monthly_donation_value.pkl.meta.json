@@ -1,0 +1,5 @@
+{
+  "target": "monthly_donation_value",
+  "model": "Ridge",
+  "saved_at": "2026-04-10T04:04:18.550661"
+}

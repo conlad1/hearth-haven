@@ -1,26 +1,26 @@
 {
   "top_value_drivers": [
     {
-      "feature": "relationship_type_Local",
-      "coefficient": 8043.92685465553
-    },
-    {
-      "feature": "relationship_type_PartnerOrganization",
-      "coefficient": 7894.705565362901
-    },
-    {
       "feature": "monetary_donation_count",
-      "coefficient": 4245.347993197815
+      "coefficient": 560.9903829386494
+    },
+    {
+      "feature": "supporter_type_PartnerOrganization",
+      "coefficient": 449.617957673031
     },
     {
       "feature": "status_Inactive",
-      "coefficient": 1409.4747272261802
+      "coefficient": 254.1563717249835
     },
     {
       "feature": "supporter_type_SocialMediaAdvocate",
-      "coefficient": 1050.9889194734194
+      "coefficient": 217.85121328821208
+    },
+    {
+      "feature": "avg_monetary_gift",
+      "coefficient": 204.21693774825215
     }
   ],
-  "model_r2": 0.9595,
+  "model_r2": 0.8766,
   "model_version": "donor_retention_v1"
 }

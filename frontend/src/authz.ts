@@ -86,15 +86,15 @@ export function canAccessRoute(pathname: string, isAuthenticated: boolean, role:
     return false;
   }
 
-  if (role === AppRoles.CaseManager && (exactMatches(pathname, '/cases') || exactMatches(pathname, '/safehouse-management'))) {
+  if (role === AppRoles.CaseManager && (exactMatches(pathname, '/admin') || exactMatches(pathname, '/cases') || exactMatches(pathname, '/safehouse-management'))) {
     return true;
   }
 
-  if (role === AppRoles.DonationsManager && (exactMatches(pathname, '/donors') || exactMatches(pathname, '/donor-analytics'))) {
+  if (role === AppRoles.DonationsManager && (exactMatches(pathname, '/admin') || exactMatches(pathname, '/donors') || exactMatches(pathname, '/donor-analytics'))) {
     return true;
   }
 
-  if (role === AppRoles.OutreachManager && (exactMatches(pathname, '/outreach') || exactMatches(pathname, '/social-media') || exactMatches(pathname, '/reports'))) {
+  if (role === AppRoles.OutreachManager && (exactMatches(pathname, '/admin') || exactMatches(pathname, '/outreach') || exactMatches(pathname, '/social-media'))) {
     return true;
   }
 
@@ -129,13 +129,12 @@ export const footerLinks: NavLink[] = [
   { to: '/impact', label: 'Impact' },
   { to: '/donate', label: 'Donate' },
   { to: '/profile', label: 'My Donations', authRequired: true },
-  { to: '/admin', label: 'Dashboard', roles: [AppRoles.Admin] },
+  { to: '/admin', label: 'Dashboard', roles: [AppRoles.Admin, AppRoles.CaseManager, AppRoles.DonationsManager, AppRoles.OutreachManager] },
   { to: '/cases', label: 'Case Management', roles: [AppRoles.Admin, AppRoles.CaseManager] },
   { to: '/safehouse-management', label: 'Safehouse Management', roles: [AppRoles.Admin, AppRoles.CaseManager] },
   { to: '/donors', label: 'Donors', roles: [AppRoles.Admin, AppRoles.DonationsManager] },
   { to: '/outreach', label: 'Outreach', roles: [AppRoles.Admin, AppRoles.OutreachManager] },
   { to: '/social-media', label: 'Social Media', roles: [AppRoles.Admin, AppRoles.OutreachManager] },
-  { to: '/reports', label: 'Reports', roles: [AppRoles.Admin, AppRoles.OutreachManager] },
   { to: '/login', label: 'Sign In', authRequired: false },
   { to: '/register', label: 'Create an Account', authRequired: false },
   { to: '/privacy', label: 'Privacy Policy' },

@@ -1,6 +1,17 @@
 {
   "navigationFallback": {
     "rewrite": "/index.html",
-    "exclude": ["/assets/*", "/Logo.svg", "/portrait_resident.png", "/sitemap.xml", "/robots.txt"]
+    "exclude": [
+      "/assets/*",
+      "/causal/*",
+      "/Logo.svg",
+      "/Logo.png",
+      "/heart-dark.svg",
+      "/hearth-dark.png",
+      "/portrait_resident.png",
+      "/llms.txt",
+      "/sitemap.xml",
+      "/robots.txt"
+    ]
   }
 }

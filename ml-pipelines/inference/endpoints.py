@@ -201,6 +201,38 @@ def progress_prediction(resident_id: int, features: dict, pipeline) -> dict:
     }
 
 
+def monthly_donation_prediction(month: str, features: dict, pipeline) -> dict:
+    """
+    Predict monthly donation volume from a content calendar.
+
+    Parameters:
+        month (str): target month in YYYY-MM format
+        features (dict): monthly aggregated posting features assembled by the caller.
+                         Must match the feature set used during training — see
+                         models/monthly_donation_features.json for the full list.
+                         Key fields: total_posts, boosted_posts, total_engagement,
+                         posts_with_cta, posts_with_story, platform_* proportions,
+                         content_topic_* proportions.
+        pipeline: fitted sklearn Pipeline (monthly_donation_value.pkl)
+
+    Returns:
+        dict matching MonthlyForecastResponse schema
+    """
+    features_df = pd.DataFrame([features])
+
+    predicted = float(pipeline.predict(features_df)[0])
+    predicted = max(0.0, predicted)  # clip negative predictions
+
+    return {
+        "month":                              month,
+        "predicted_donation_value":           round(predicted, 2),
+        "predicted_donation_value_formatted": f"PHP {predicted:,.0f}",
+        "confidence_note":                    "Estimate based on historical posting patterns. Accuracy improves with more months of data.",
+        "model_version":                      "monthly_donation_value_v1",
+        "predicted_at":                       datetime.now(timezone.utc).isoformat(),
+    }
+
+
 def donation_conversion_prediction(post_id: int, features: dict, pipeline) -> dict:
     """
     Score a social media post's estimated donation conversion probability.

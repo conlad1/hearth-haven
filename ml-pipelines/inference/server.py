@@ -28,6 +28,7 @@ from endpoints import (
     engagement_rate_prediction,
     donor_lapse_prediction,
     donor_upgrade_prediction,
+    monthly_donation_prediction,
 )
 
 # ── Config ─────────────────────────────────────────────────────────────────────
@@ -130,6 +131,18 @@ class ProgressResponse(BaseModel):
     recommendation: str
     model_version:  str
     predicted_at:   str
+
+class MonthlyForecastRequest(BaseModel):
+    month:    str                # YYYY-MM
+    features: Dict[str, Any]
+
+class MonthlyForecastResponse(BaseModel):
+    month:                              str
+    predicted_donation_value:           float
+    predicted_donation_value_formatted: str
+    confidence_note:                    str
+    model_version:                      str
+    predicted_at:                       str
 
 class HealthCheckResponse(BaseModel):
     status:        str
@@ -260,6 +273,28 @@ def predict_donor_lapse(request: DonorScoringRequest):
         )
     except Exception as e:
         log.error(f"Lapse prediction failed for supporter {request.supporter_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Prediction failed: {e}")
+
+
+@app.post("/predict/monthly-donations", response_model=MonthlyForecastResponse)
+def predict_monthly_donations(request: MonthlyForecastRequest):
+    """
+    Predict expected monthly donation volume from a planned content calendar.
+    Caller assembles monthly posting aggregates and POSTs here.
+    """
+    try:
+        pipeline = load_model("monthly_donation_value")
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+
+    try:
+        return monthly_donation_prediction(
+            month=request.month,
+            features=request.features,
+            pipeline=pipeline,
+        )
+    except Exception as e:
+        log.error(f"Monthly donation prediction failed for {request.month}: {e}")
         raise HTTPException(status_code=500, detail=f"Prediction failed: {e}")
 
 

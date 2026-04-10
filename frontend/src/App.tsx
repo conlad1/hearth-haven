@@ -17,13 +17,11 @@ import SocialMediaPage from './pages/socialsManager/SocialMediaPage';
 import ImpactDashboard from './pages/shared/ImpactDashboard';
 import { AuthService, type CurrentUser } from './api/core/AuthService';
 import { AppRoles, getCurrentRole } from './authz';
-import OutreachPage from './pages/socialsManager/OutreachPage';
 import SafehouseManagementPage from './pages/caseManager/SafehouseManagementPage';
 import AdminLayout from './components/AdminLayout';
 import SafehouseDetailPage from './pages/caseManager/SafehouseDetailPage';
 import PartnerDetailPage from './pages/caseManager/PartnerDetailPage';
-import AdminDashboardPage from './pages/admin/AdminDashboardPage';
-import ReportsPage from './pages/caseManager/ReportsPage';
+import AdminDashboardPage from './pages/admin/AdminDashboard';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
 import PrivacyPolicyPage from './pages/shared/PrivacyPolicyPage';
 import TermsPage from './pages/shared/TermsPage';
@@ -31,7 +29,7 @@ import TeapotPage from './pages/shared/TeapotPage';
 import CookieConsentBanner from './components/CookieConsentBanner';
 import ResourcesPage from './pages/shared/ResourcePage';
 import ContactPage from './pages/shared/ContactPage';
-import DonorAnalytics from './pages/donationManager/DonorAnalytics';
+import AllocationPage from './pages/donationManager/AllocationPage';
 import ProfilePage from './pages/shared/ProfilePage';
 import AccessDeniedPage from './pages/shared/AccessDeniedPage';
 import { AuthSessionProvider } from './authSession';
@@ -106,27 +104,6 @@ function ScrollToTop() {
   return null;
 }
 
-function getStaffLandingRoute(user: CurrentUser | null): string {
-  const roles = user?.roles ?? [];
-
-  if (roles.includes(AppRoles.Admin)) {
-    return '/admin';
-  }
-
-  if (roles.includes(AppRoles.CaseManager)) {
-    return '/cases';
-  }
-
-  if (roles.includes(AppRoles.DonationsManager)) {
-    return '/donors';
-  }
-
-  if (roles.includes(AppRoles.OutreachManager)) {
-    return '/outreach';
-  }
-
-  return '/profile';
-}
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -199,14 +176,7 @@ function App() {
                       AppRoles.OutreachManager,
                     ]}
                   >
-                    {getCurrentRole(currentUser) === AppRoles.Admin ? (
-                      <AdminDashboardPage />
-                    ) : (
-                      <Navigate
-                        to={getStaffLandingRoute(currentUser)}
-                        replace
-                      />
-                    )}
+                    <AdminDashboardPage />
                   </ProtectedRoute>
                 }
               />
@@ -315,19 +285,6 @@ function App() {
                 }
               />
               <Route
-                path="/outreach"
-                element={
-                  <ProtectedRoute
-                    isAuthenticated={isAuthenticated}
-                    sessionReady={sessionReady}
-                    currentUser={currentUser}
-                    allowedRoles={[AppRoles.Admin, AppRoles.OutreachManager]}
-                  >
-                    <OutreachPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
                 path="/social-media"
                 element={
                   <ProtectedRoute
@@ -341,20 +298,7 @@ function App() {
                 }
               />
               <Route
-                path="/reports"
-                element={
-                  <ProtectedRoute
-                    isAuthenticated={isAuthenticated}
-                    sessionReady={sessionReady}
-                    currentUser={currentUser}
-                    allowedRoles={[AppRoles.Admin, AppRoles.OutreachManager]}
-                  >
-                    <ReportsPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/donor-analytics"
+                path="/allocations"
                 element={
                   <ProtectedRoute
                     isAuthenticated={isAuthenticated}
@@ -362,7 +306,7 @@ function App() {
                     currentUser={currentUser}
                     allowedRoles={[AppRoles.Admin, AppRoles.DonationsManager]}
                   >
-                    <DonorAnalytics />
+                    <AllocationPage />
                   </ProtectedRoute>
                 }
               />

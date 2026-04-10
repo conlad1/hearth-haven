@@ -1,5 +1,5 @@
 {
   "target": "engagement_rate",
   "model": "GradientBoostingRegressor",
-  "saved_at": "2026-04-09T01:32:46.179102"
+  "saved_at": "2026-04-10T04:04:52.253980"
 }

@@ -700,6 +700,57 @@ const interventionPlanFields: RecordFieldDef[] = [
   { key: 'caseConferenceDate', label: 'Case Conference Date', type: 'date' },
 ];
 
+// ── Predictive Insights card ────────────────────────────────────────────────
+
+function InsightCard({
+  label, score, unit, maxScore, interpretation, predictedAt,
+}: {
+  label: string;
+  score: number;
+  unit: string;
+  maxScore: number;
+  interpretation: string;
+  predictedAt: string;
+}) {
+  const pct = Math.min(Math.round((score / maxScore) * 100), 100);
+  const tier = score >= 70 ? 'green' : score >= 40 ? 'orange' : 'slate';
+
+  const scoreColor =
+    tier === 'green' ? 'text-green-600 dark:text-green-400' :
+    tier === 'orange' ? 'text-orange-500 dark:text-orange-400' :
+    'text-slate-500 dark:text-slate-400';
+  const barColor =
+    tier === 'green' ? 'bg-green-500' :
+    tier === 'orange' ? 'bg-orange-400' :
+    'bg-slate-400';
+  const cardBg =
+    tier === 'green' ? 'bg-green-50 border-green-100 dark:bg-green-500/5 dark:border-green-500/20' :
+    tier === 'orange' ? 'bg-orange-50 border-orange-100 dark:bg-orange-500/5 dark:border-orange-500/20' :
+    'bg-slate-50 border-slate-200 dark:bg-slate-800/40 dark:border-slate-700';
+
+  return (
+    <div className={`rounded-lg border p-4 ${cardBg}`}>
+      <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+        {label}
+      </div>
+      <div className="mb-2 flex items-baseline gap-1">
+        <span className={`text-3xl font-bold tabular-nums ${scoreColor}`}>{score}</span>
+        <span className="text-sm text-gray-400">{unit}</span>
+      </div>
+      <div className="mb-3 h-1.5 w-full rounded-full bg-gray-200 dark:bg-gray-700">
+        <div className={`h-1.5 rounded-full transition-all ${barColor}`} style={{ width: `${pct}%` }} />
+      </div>
+      <p className="mb-2 text-xs leading-snug text-gray-600 dark:text-gray-400">{interpretation}</p>
+      <div className="text-[11px] text-gray-400 dark:text-gray-500">
+        Predicted ·{' '}
+        {new Date(predictedAt).toLocaleString(undefined, {
+          month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function ResidentDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -1619,7 +1670,9 @@ export default function ResidentDetailPage() {
                 renderInput(col)
               ) : (
                 <span className="text-sm text-gray-900 dark:text-white">
-                  {fmt(resident[col.key])}
+                  {col.key === 'safehouseId'
+                    ? (safehouses.find(s => s.safehouseId === resident.safehouseId)?.name ?? fmt(resident[col.key]))
+                    : fmt(resident[col.key])}
                 </span>
               )}
             </div>
@@ -2321,10 +2374,14 @@ export default function ResidentDetailPage() {
         <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-6 shadow-md mb-6">
           <SafetyChart plan={plan} incidents={allIncidents} />
         </div>
-        <h3 className="mb-3 mt-6 text-base font-bold text-gray-900 dark:text-white">
-          Incidents
-        </h3>
-        {renderIncidentsTab()}
+        {allIncidents.length > 0 && (
+          <>
+            <h3 className="mb-3 mt-6 text-base font-bold text-gray-900 dark:text-white">
+              Incidents
+            </h3>
+            {renderIncidentsTab()}
+          </>
+        )}
         <h3 className="mb-3 mt-8 text-base font-bold text-gray-900 dark:text-white">
           Visitations
         </h3>
@@ -2482,100 +2539,37 @@ export default function ResidentDetailPage() {
             </div>
           </div>
 
-          {/* ML Reintegration Score */}
-          {mlPrediction && (
-            <div
-              className={`flex flex-wrap items-center gap-4 border-b border-gray-100 dark:border-gray-700 px-4 py-3 sm:px-6 ${
-                mlPrediction.readiness_score >= 75
-                  ? 'bg-green-50 dark:bg-green-500/5'
-                  : mlPrediction.readiness_score >= 50
-                    ? 'bg-yellow-50 dark:bg-yellow-500/5'
-                    : 'bg-red-50 dark:bg-red-500/5'
-              }`}
-            >
-              <Brain
-                className={`h-5 w-5 shrink-0 ${
-                  mlPrediction.readiness_score >= 75
-                    ? 'text-green-500'
-                    : mlPrediction.readiness_score >= 50
-                      ? 'text-yellow-500'
-                      : 'text-red-500'
-                }`}
-              />
-              <div className="flex flex-1 flex-wrap items-center gap-3">
-                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Reintegration Readiness
-                </span>
-                <span
-                  className={`text-2xl font-bold ${
-                    mlPrediction.readiness_score >= 75
-                      ? 'text-green-600 dark:text-green-400'
-                      : mlPrediction.readiness_score >= 50
-                        ? 'text-yellow-600 dark:text-yellow-400'
-                        : 'text-red-600 dark:text-red-400'
-                  }`}
-                >
-                  {mlPrediction.readiness_score}
-                  <span className="ml-0.5 text-sm font-normal text-gray-400">
-                    /100
-                  </span>
-                </span>
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  {mlPrediction.recommendation}
+          {/* Predictive Insights */}
+          {(mlPrediction || progressPrediction) && (
+            <div className="border-b border-gray-100 dark:border-gray-700 px-4 py-4 sm:px-6">
+              <div className="mb-3 flex items-center gap-2">
+                <Brain className="h-4 w-4 shrink-0 text-orange-500" />
+                <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                  Predictive Insights
                 </span>
               </div>
-              <span className="shrink-0 text-xs text-gray-400 dark:text-gray-500">
-                ML · {new Date(mlPrediction.predicted_at).toLocaleTimeString()}
-              </span>
-            </div>
-          )}
-
-          {/* ML Education Progress Score */}
-          {progressPrediction && (
-            <div
-              className={`flex flex-wrap items-center gap-4 border-b border-gray-100 dark:border-gray-700 px-4 py-3 sm:px-6 ${
-                progressPrediction.progress_score >= 80
-                  ? 'bg-green-50 dark:bg-green-500/5'
-                  : progressPrediction.progress_score >= 60
-                    ? 'bg-yellow-50 dark:bg-yellow-500/5'
-                    : 'bg-red-50 dark:bg-red-500/5'
-              }`}
-            >
-              <Brain
-                className={`h-5 w-5 shrink-0 ${
-                  progressPrediction.progress_score >= 80
-                    ? 'text-green-500'
-                    : progressPrediction.progress_score >= 60
-                      ? 'text-yellow-500'
-                      : 'text-red-500'
-                }`}
-              />
-              <div className="flex flex-1 flex-wrap items-center gap-3">
-                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Education Progress
-                </span>
-                <span
-                  className={`text-2xl font-bold ${
-                    progressPrediction.progress_score >= 80
-                      ? 'text-green-600 dark:text-green-400'
-                      : progressPrediction.progress_score >= 60
-                        ? 'text-yellow-600 dark:text-yellow-400'
-                        : 'text-red-600 dark:text-red-400'
-                  }`}
-                >
-                  {progressPrediction.progress_score}
-                  <span className="ml-0.5 text-sm font-normal text-gray-400">
-                    %
-                  </span>
-                </span>
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  {progressPrediction.recommendation}
-                </span>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {mlPrediction && (
+                  <InsightCard
+                    label="Reintegration Readiness"
+                    score={mlPrediction.readiness_score}
+                    unit="/100"
+                    maxScore={100}
+                    interpretation={mlPrediction.recommendation}
+                    predictedAt={mlPrediction.predicted_at}
+                  />
+                )}
+                {progressPrediction && (
+                  <InsightCard
+                    label="Education Progress"
+                    score={progressPrediction.progress_score}
+                    unit="%"
+                    maxScore={100}
+                    interpretation={progressPrediction.recommendation}
+                    predictedAt={progressPrediction.predicted_at}
+                  />
+                )}
               </div>
-              <span className="shrink-0 text-xs text-gray-400 dark:text-gray-500">
-                ML ·{' '}
-                {new Date(progressPrediction.predicted_at).toLocaleTimeString()}
-              </span>
             </div>
           )}
 

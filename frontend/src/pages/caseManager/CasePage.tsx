@@ -11,9 +11,6 @@ import {
   Info,
   ArrowUpDown,
   Filter,
-  MapPin,
-  PanelLeftClose,
-  PanelLeftOpen,
   Download,
 } from 'lucide-react';
 import { Resident } from '../../types/Resident';
@@ -315,7 +312,6 @@ export default function CasePage() {
   const [totalCount, setTotalCount] = useState(0);
 
   const [safehouses, setSafehouses] = useState<Safehouse[]>([]);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [filterOptions, setFilterOptions] = useState<FilterOptions | null>(
     null
   );
@@ -395,6 +391,7 @@ export default function CasePage() {
   };
 
   const hasActiveFilters =
+    filters.safehouseId !== undefined ||
     filters.caseStatus ||
     filters.caseCategory ||
     filters.currentRiskLevel ||
@@ -407,11 +404,7 @@ export default function CasePage() {
   const clearFilters = () => {
     setSearchInput('');
     setDebouncedSearch('');
-    setFilters((prev) => {
-      const next: CaseFilters = {};
-      if (prev.safehouseId !== undefined) next.safehouseId = prev.safehouseId;
-      return next;
-    });
+    setFilters({});
     setPage(1);
   };
 
@@ -458,16 +451,10 @@ export default function CasePage() {
 
   // onboard handlers
   const openOnboard = () => {
-    if (filters.safehouseId === undefined) {
-      alert(
-        'Please select a location from the sidebar before onboarding a resident.'
-      );
-      return;
-    }
     const today = new Date().toISOString().slice(0, 10);
     setOnboardData({
       ...blankResident,
-      safehouseId: filters.safehouseId,
+      safehouseId: filters.safehouseId ?? 0,
       dateOfAdmission: today,
       dateEnrolled: today,
     });
@@ -664,85 +651,7 @@ export default function CasePage() {
 
   return (
     <>
-      <div className="flex flex-col lg:flex-row">
-        {/* Sidebar */}
-        <aside
-          className={`w-full shrink-0 border-b border-gray-200 bg-white transition-all duration-200 dark:border-gray-700 dark:bg-gray-900 lg:border-b-0 lg:border-r ${sidebarCollapsed ? 'lg:w-16' : 'lg:w-60'}`}
-        >
-          {/* Header with collapse toggle */}
-          <div
-            className={`flex items-center pt-6 pb-2 ${sidebarCollapsed ? 'lg:justify-center lg:px-2 px-5' : 'justify-between px-5'}`}
-          >
-            {!sidebarCollapsed && (
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                Locations
-              </h2>
-            )}
-            <button
-              onClick={() => setSidebarCollapsed((prev) => !prev)}
-              className="btn-icon hidden lg:inline-flex"
-              aria-label={
-                sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'
-              }
-              title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            >
-              {sidebarCollapsed ? (
-                <PanelLeftOpen className="h-4 w-4" />
-              ) : (
-                <PanelLeftClose className="h-4 w-4" />
-              )}
-            </button>
-          </div>
-          <div className={`pb-6 ${sidebarCollapsed ? 'lg:px-2 px-5' : 'px-5'}`}>
-            <ul className="flex gap-2 overflow-x-auto pb-1 lg:block lg:space-y-1 lg:pb-0">
-              <li>
-                <button
-                  title={sidebarCollapsed ? 'All Locations' : undefined}
-                  className={`flex w-full min-w-max items-center gap-3 whitespace-nowrap rounded-lg py-2 text-sm font-medium transition lg:min-w-0 ${
-                    sidebarCollapsed
-                      ? 'lg:justify-center lg:px-2 px-3'
-                      : 'px-3 text-left'
-                  } ${
-                    filters.safehouseId === undefined
-                      ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-700'
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
-                  }`}
-                  onClick={() => handleSafehouseChange(undefined)}
-                >
-                  <MapPin className="h-4 w-4 shrink-0" />
-                  <span className={sidebarCollapsed ? 'lg:hidden' : ''}>
-                    All Locations
-                  </span>
-                </button>
-              </li>
-              {safehouses.map((sh) => (
-                <li key={sh.safehouseId}>
-                  <button
-                    title={sidebarCollapsed ? sh.name : undefined}
-                    className={`flex w-full min-w-max items-center gap-3 whitespace-nowrap rounded-lg py-2 text-sm font-medium transition lg:min-w-0 ${
-                      sidebarCollapsed
-                        ? 'lg:justify-center lg:px-2 px-3'
-                        : 'px-3 text-left'
-                    } ${
-                      filters.safehouseId === sh.safehouseId
-                        ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-700'
-                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
-                    }`}
-                    onClick={() => handleSafehouseChange(sh.safehouseId)}
-                  >
-                    <MapPin className="h-4 w-4 shrink-0" />
-                    <span className={sidebarCollapsed ? 'lg:hidden' : ''}>
-                      {sh.name}
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </aside>
-
-        {/* Main content */}
-        <div className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
+      <div className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
           {/* Header */}
           <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -799,6 +708,22 @@ export default function CasePage() {
             {filterOptions && (
               <div className="flex flex-wrap items-center gap-3">
                 <Filter className="h-4 w-4 text-gray-400" />
+
+                <select
+                  value={filters.safehouseId ?? ''}
+                  onChange={(e) =>
+                    handleSafehouseChange(e.target.value ? Number(e.target.value) : undefined)
+                  }
+                  className="select-field w-auto"
+                  aria-label="Filter by location"
+                >
+                  <option value="">All Locations</option>
+                  {safehouses.map((sh) => (
+                    <option key={sh.safehouseId} value={sh.safehouseId}>
+                      {sh.name}
+                    </option>
+                  ))}
+                </select>
 
                 <select
                   value={filters.caseStatus || ''}
@@ -1013,7 +938,6 @@ export default function CasePage() {
             </>
           )}
         </div>
-      </div>
 
       {/* Onboarding Modal */}
       {isOnboarding &&

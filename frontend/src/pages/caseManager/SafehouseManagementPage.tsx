@@ -12,12 +12,15 @@ import {
   Filter,
   Home,
   Handshake,
-  PanelLeftClose,
-  PanelLeftOpen,
+  ExternalLink,
+  Users,
+  AlertTriangle,
 } from 'lucide-react';
 import { Safehouse } from '../../types/Safehouse';
 import { Partner } from '../../types/Partner';
+import { PartnerAssignment } from '../../types/PartnerAssignment';
 import AlertModal from '../../components/AlertModal';
+import { DetailModal } from '../../components/admin/dashboard/DetailModal';
 import {
   fetchSafehouses,
   fetchSafehouseFilterOptions,
@@ -25,17 +28,22 @@ import {
   fetchPartners,
   fetchPartnerFilterOptions,
   createPartner,
+  fetchSafehousePartners,
   SafehouseFilters,
   SafehouseFilterOptions,
   PartnerFilters,
   PartnerFilterOptions,
 } from '../../api/caseManager/NetworkAPI';
+import {
+  fetchCaseManager,
+  fetchCaseAnalytics,
+} from '../../api/admin/RoleDashboardAPI';
 
 const PAGE_SIZE_OPTIONS = [20, 50, 100];
 
 type ViewMode = 'safehouses' | 'partners';
 
-// -- Safehouse table columns --
+// -- Safehouse table columns (Occupancy rendered separately) --
 const safehouseColumns: { key: keyof Safehouse; label: string }[] = [
   { key: 'safehouseCode', label: 'Code' },
   { key: 'name', label: 'Name' },
@@ -183,14 +191,192 @@ function formatCell(value: unknown): string {
   return String(value);
 }
 
+// -- Occupancy bar component --
+function OccupancyBar({ occupancy, capacity }: { occupancy: number; capacity: number }) {
+  const pct = capacity > 0 ? Math.round((occupancy / capacity) * 100) : 0;
+  const color =
+    pct >= 90
+      ? 'bg-red-500'
+      : pct >= 70
+      ? 'bg-orange-400'
+      : 'bg-emerald-500';
+  const textColor =
+    pct >= 90
+      ? 'text-red-600 dark:text-red-400'
+      : pct >= 70
+      ? 'text-orange-600 dark:text-orange-400'
+      : 'text-emerald-600 dark:text-emerald-400';
+  return (
+    <div className="flex items-center gap-2 min-w-[120px]">
+      <div className="flex-1 h-2 rounded-full bg-gray-100 dark:bg-gray-700">
+        <div
+          className={`h-2 rounded-full ${color}`}
+          style={{ width: `${Math.min(pct, 100)}%` }}
+        />
+      </div>
+      <span className={`text-xs font-medium tabular-nums ${textColor}`}>
+        {occupancy}/{capacity}
+      </span>
+    </div>
+  );
+}
+
+// -- Safehouse detail modal content --
+interface ShModalData {
+  partners: PartnerAssignment[];
+  incidentCount: number;
+  avgHealthScore: number | null;
+  avgEduProgress: number | null;
+}
+
+function SafehouseModalContent({
+  safehouse,
+  data,
+  loading,
+  navigate,
+}: {
+  safehouse: Safehouse;
+  data: ShModalData | null;
+  loading: boolean;
+  navigate: (path: string) => void;
+}) {
+  const occ = safehouse.currentOccupancy;
+  const cap = safehouse.capacityGirls;
+  const pct = cap > 0 ? Math.round((occ / cap) * 100) : 0;
+  const barColor =
+    pct >= 90 ? 'bg-red-500' : pct >= 70 ? 'bg-orange-400' : 'bg-emerald-500';
+  const pctColor =
+    pct >= 90
+      ? 'text-red-600 dark:text-red-400'
+      : pct >= 70
+      ? 'text-orange-600 dark:text-orange-400'
+      : 'text-emerald-600 dark:text-emerald-400';
+
+  const infoRows: { label: string; value: string }[] = [
+    { label: 'Code', value: safehouse.safehouseCode },
+    { label: 'Region', value: safehouse.region },
+    { label: 'City', value: safehouse.city },
+    { label: 'Province', value: safehouse.province },
+    { label: 'Status', value: safehouse.status },
+    { label: 'Open Date', value: safehouse.openDate || '—' },
+  ];
+
+  return (
+    <div className="space-y-5">
+      {/* Info */}
+      <div className="space-y-1.5">
+        {infoRows.map(({ label, value }) => (
+          <div key={label} className="flex items-center justify-between text-sm">
+            <span className="text-gray-500 dark:text-gray-400">{label}</span>
+            <span className="font-medium text-gray-900 dark:text-white">{value}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Occupancy bar */}
+      <div>
+        <div className="mb-1 flex items-center justify-between text-sm">
+          <span className="text-gray-500 dark:text-gray-400">Occupancy</span>
+          <span className={`font-bold ${pctColor}`}>
+            {occ} / {cap} ({pct}%)
+          </span>
+        </div>
+        <div className="h-3 w-full rounded-full bg-gray-100 dark:bg-gray-700">
+          <div
+            className={`h-3 rounded-full ${barColor} transition-all`}
+            style={{ width: `${Math.min(pct, 100)}%` }}
+          />
+        </div>
+        <p className={`mt-1 text-xs font-medium ${pctColor}`}>
+          {pct >= 90 ? 'Near capacity' : pct >= 70 ? 'Approaching capacity' : 'Healthy occupancy'}
+        </p>
+      </div>
+
+      {/* Stats row */}
+      {loading ? (
+        <p className="text-xs text-gray-400 dark:text-gray-500">Loading details…</p>
+      ) : data ? (
+        <>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="rounded-lg bg-gray-50 dark:bg-gray-800 px-3 py-2.5 text-center">
+              <p className="text-lg font-bold text-gray-900 dark:text-white">{data.incidentCount}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">incidents this month</p>
+            </div>
+            <div className="rounded-lg bg-gray-50 dark:bg-gray-800 px-3 py-2.5 text-center">
+              <p className="text-lg font-bold text-gray-900 dark:text-white">
+                {data.avgHealthScore !== null ? data.avgHealthScore.toFixed(1) : '—'}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">avg health (org)</p>
+            </div>
+            <div className="rounded-lg bg-gray-50 dark:bg-gray-800 px-3 py-2.5 text-center">
+              <p className="text-lg font-bold text-gray-900 dark:text-white">
+                {data.avgEduProgress !== null ? data.avgEduProgress.toFixed(0) + '%' : '—'}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">avg edu (org)</p>
+            </div>
+          </div>
+
+          {/* Active partners */}
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              Active Partner Assignments
+            </p>
+            {data.partners.length === 0 ? (
+              <p className="text-sm text-gray-400 dark:text-gray-500">No active assignments.</p>
+            ) : (
+              <div className="space-y-1.5">
+                {data.partners.map((a) => (
+                  <div
+                    key={a.assignmentId}
+                    className="flex items-center justify-between rounded-lg border border-gray-100 dark:border-gray-700 px-3 py-2"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
+                        {a.partner?.partnerName ?? `Partner #${a.partnerId}`}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{a.programArea}</p>
+                    </div>
+                    {a.isPrimary && (
+                      <span className="ml-2 shrink-0 rounded-full bg-orange-100 dark:bg-orange-500/10 px-2 py-0.5 text-xs font-medium text-orange-700 dark:text-orange-400">
+                        Primary
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      ) : null}
+
+      {/* Manage button */}
+      <button
+        onClick={() =>
+          navigate(`/safehouse-management/safehouses/${safehouse.safehouseId}`)
+        }
+        className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-orange-500 px-3 py-2 text-sm font-medium text-white transition hover:bg-orange-600"
+      >
+        Manage safehouse <ExternalLink className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
+}
+
 export default function SafehouseManagementPage() {
   const navigate = useNavigate();
   const [view, setView] = useState<ViewMode>('safehouses');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [alertModal, setAlertModal] = useState<{
     title: string;
     message: string;
   } | null>(null);
+
+  // -- All safehouses for org-wide stats --
+  const [allSh, setAllSh] = useState<Safehouse[]>([]);
+
+  // -- Safehouse detail modal state --
+  const [selectedSh, setSelectedSh] = useState<Safehouse | null>(null);
+  const [modalData, setModalData] = useState<ShModalData | null>(null);
+  const [modalLoading, setModalLoading] = useState(false);
 
   // -- Safehouse state --
   const [shList, setShList] = useState<Safehouse[]>([]);
@@ -228,6 +414,11 @@ export default function SafehouseManagementPage() {
   const [pCreating, setPCreating] = useState(false);
   const [pCreateData, setPCreateData] = useState<Partner>({ ...blankPartner });
   const [pSaving, setPSaving] = useState(false);
+
+  // -- Load all safehouses for stats (once) --
+  useEffect(() => {
+    fetchSafehouses(1, 9999).then((res) => setAllSh(res.data)).catch(console.error);
+  }, []);
 
   // -- Load filter options on mount --
   useEffect(() => {
@@ -298,6 +489,50 @@ export default function SafehouseManagementPage() {
   useEffect(() => {
     loadPartners();
   }, [pPage, pPageSize, pFilters]);
+
+  // -- Load safehouse modal data lazily --
+  useEffect(() => {
+    if (!selectedSh) {
+      setModalData(null);
+      return;
+    }
+    setModalLoading(true);
+    const now = new Date();
+    const thisMonthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+    Promise.all([
+      fetchSafehousePartners(selectedSh.safehouseId, 1, 20, { status: 'Active' }),
+      fetchCaseManager(),
+      fetchCaseAnalytics(),
+    ])
+      .then(([assignRes, caseData, analytics]) => {
+        const incidentCount = caseData.recentIncidents.filter(
+          (i) =>
+            i.safehouseName === selectedSh.name &&
+            i.incidentDate.startsWith(thisMonthPrefix)
+        ).length;
+
+        const healthSeries = analytics.monthlyHealthScores;
+        const eduSeries = analytics.monthlyEducationProgress;
+        const avgHealthScore =
+          healthSeries.length > 0
+            ? healthSeries[healthSeries.length - 1].avgScore
+            : null;
+        const avgEduProgress =
+          eduSeries.length > 0
+            ? eduSeries[eduSeries.length - 1].avgProgress
+            : null;
+
+        setModalData({
+          partners: assignRes.data,
+          incidentCount,
+          avgHealthScore,
+          avgEduProgress,
+        });
+      })
+      .catch(console.error)
+      .finally(() => setModalLoading(false));
+  }, [selectedSh]);
 
   // -- Safehouse filter helpers --
   const updateShFilter = (
@@ -592,443 +827,447 @@ export default function SafehouseManagementPage() {
     );
   }
 
+  // -- Compute org-wide stats --
+  const totalOccupancy = allSh.reduce((s, h) => s + h.currentOccupancy, 0);
+  const totalCapacity = allSh.reduce((s, h) => s + h.capacityGirls, 0);
+  const nearCapacityCount = allSh.filter(
+    (h) => h.capacityGirls > 0 && h.currentOccupancy / h.capacityGirls >= 0.9
+  ).length;
+  const avgOccupancyPct =
+    totalCapacity > 0 ? Math.round((totalOccupancy / totalCapacity) * 100) : 0;
+
   return (
     <>
-      <div className="flex flex-col lg:flex-row">
-        {/* Sidebar */}
-        <aside
-          className={`w-full shrink-0 border-b border-gray-200 bg-white transition-all duration-200 dark:border-gray-700 dark:bg-gray-900 lg:border-b-0 lg:border-r ${sidebarCollapsed ? 'lg:w-16' : 'lg:w-60'}`}
-        >
-          {/* Header with collapse toggle */}
-          <div
-            className={`flex items-center pt-6 pb-2 ${sidebarCollapsed ? 'lg:justify-center lg:px-2 px-5' : 'justify-between px-5'}`}
+      <div className="p-4 sm:p-6 lg:p-8">
+        {/* Header */}
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Safehouse Management
+          </h1>
+          <button
+            className="btn-primary"
+            onClick={() =>
+              view === 'safehouses' ? setShCreating(true) : setPCreating(true)
+            }
           >
-            {!sidebarCollapsed && (
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                Safehouse Management
-              </h2>
-            )}
-            <button
-              onClick={() => setSidebarCollapsed((prev) => !prev)}
-              className="btn-icon hidden lg:inline-flex"
-              aria-label={
-                sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'
-              }
-              title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            >
-              {sidebarCollapsed ? (
-                <PanelLeftOpen className="h-4 w-4" />
-              ) : (
-                <PanelLeftClose className="h-4 w-4" />
-              )}
-            </button>
-          </div>
-          <div className={`pb-6 ${sidebarCollapsed ? 'lg:px-2 px-5' : 'px-5'}`}>
-            <ul className="flex gap-2 overflow-x-auto pb-1 lg:block lg:space-y-1 lg:pb-0">
-              <li>
-                <button
-                  title={sidebarCollapsed ? 'Safehouses' : undefined}
-                  className={`flex w-full min-w-max items-center gap-3 whitespace-nowrap rounded-lg py-2 text-sm font-medium transition lg:min-w-0 ${
-                    sidebarCollapsed
-                      ? 'lg:justify-center lg:px-2 px-3'
-                      : 'px-3 text-left'
-                  } ${
-                    view === 'safehouses'
-                      ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-700'
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
-                  }`}
-                  onClick={() => setView('safehouses')}
-                >
-                  <Home className="h-4 w-4 shrink-0" />
-                  <span className={sidebarCollapsed ? 'lg:hidden' : ''}>
-                    Safehouses
-                  </span>
-                </button>
-              </li>
-              <li>
-                <button
-                  title={sidebarCollapsed ? 'Partners' : undefined}
-                  className={`flex w-full min-w-max items-center gap-3 whitespace-nowrap rounded-lg py-2 text-sm font-medium transition lg:min-w-0 ${
-                    sidebarCollapsed
-                      ? 'lg:justify-center lg:px-2 px-3'
-                      : 'px-3 text-left'
-                  } ${
-                    view === 'partners'
-                      ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-700'
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
-                  }`}
-                  onClick={() => setView('partners')}
-                >
-                  <Handshake className="h-4 w-4 shrink-0" />
-                  <span className={sidebarCollapsed ? 'lg:hidden' : ''}>
-                    Partners
-                  </span>
-                </button>
-              </li>
-            </ul>
-          </div>
-        </aside>
-
-        {/* Main content */}
-        <div className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
-          {view === 'safehouses' ? (
-            <>
-              {/* Header */}
-              <div className="mb-6 flex items-center justify-between">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  Safehouses
-                </h1>
-                <div className="flex items-center gap-4">
-                  <button
-                    className="btn-primary"
-                    onClick={() => setShCreating(true)}
-                  >
-                    <Plus className="h-4 w-4" /> New Safehouse
-                  </button>
-                </div>
-              </div>
-
-              {/* Filter bar */}
-              <div className="mb-6 space-y-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 shadow-md">
-                <div className="relative">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Search by name, code, city, province..."
-                    value={shSearch}
-                    onChange={(e) => setShSearch(e.target.value)}
-                    className="input-field pl-10"
-                  />
-                </div>
-                {shFilterOpts && (
-                  <div className="flex flex-wrap items-center gap-3">
-                    <Filter className="h-4 w-4 text-gray-400" />
-                    <select
-                      value={shFilters.region || ''}
-                      onChange={(e) =>
-                        updateShFilter('region', e.target.value || undefined)
-                      }
-                      className="select-field w-auto"
-                    >
-                      <option value="">All Regions</option>
-                      {shFilterOpts.regions.map((r) => (
-                        <option key={r} value={r}>
-                          {r}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      value={shFilters.status || ''}
-                      onChange={(e) =>
-                        updateShFilter('status', e.target.value || undefined)
-                      }
-                      className="select-field w-auto"
-                    >
-                      <option value="">All Statuses</option>
-                      {shFilterOpts.statuses.map((s) => (
-                        <option key={s} value={s}>
-                          {s}
-                        </option>
-                      ))}
-                    </select>
-                    <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                      Per page:
-                      <select
-                        value={shPageSize}
-                        onChange={(e) => {
-                          setShPageSize(Number(e.target.value));
-                          setShPage(1);
-                        }}
-                        className="select-field w-auto"
-                        aria-label="Safehouses per page"
-                      >
-                        {PAGE_SIZE_OPTIONS.map((s) => (
-                          <option key={s} value={s}>
-                            {s}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    {shHasActiveFilters && (
-                      <button
-                        className="btn-ghost text-red-500 hover:text-red-700"
-                        onClick={clearShFilters}
-                      >
-                        <X className="h-4 w-4" /> Clear Filters
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Table */}
-              {shLoading && (
-                <p className="py-12 text-center text-sm text-gray-500">
-                  Loading safehouses...
-                </p>
-              )}
-              {shError && (
-                <p className="py-12 text-center text-sm text-red-500">
-                  Error: {shError}
-                </p>
-              )}
-              {!shLoading && !shError && shList.length === 0 && (
-                <p className="py-12 text-center text-sm text-gray-500">
-                  No safehouses found.
-                </p>
-              )}
-              {shList.length > 0 && (
-                <>
-                  <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-md">
-                    <table className="table-base">
-                      <thead>
-                        <tr>
-                          {safehouseColumns.map((col) => (
-                            <th key={col.key}>
-                              <span className="inline-flex items-center gap-1">
-                                {col.label}
-                                <ArrowUpDown className="h-3 w-3 text-gray-400" />
-                              </span>
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {shList.map((s) => (
-                          <tr
-                            key={s.safehouseId}
-                            onClick={() =>
-                              navigate(
-                                `/safehouse-management/safehouses/${s.safehouseId}`
-                              )
-                            }
-                            className="cursor-pointer"
-                          >
-                            {safehouseColumns.map((col) => (
-                              <td key={col.key}>{formatCell(s[col.key])}</td>
-                            ))}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  <div className="mt-4 flex items-center justify-between">
-                    <button
-                      className="btn-secondary"
-                      disabled={shPage <= 1}
-                      onClick={() => setShPage(shPage - 1)}
-                    >
-                      <ChevronLeft className="h-4 w-4" /> Previous
-                    </button>
-                    <span className="text-sm text-gray-500 dark:text-gray-400">
-                      Page {shPage} of {shTotalPages} ({shTotalCount} total)
-                    </span>
-                    <button
-                      className="btn-secondary"
-                      disabled={shPage >= shTotalPages}
-                      onClick={() => setShPage(shPage + 1)}
-                    >
-                      Next <ChevronRight className="h-4 w-4" />
-                    </button>
-                  </div>
-                </>
-              )}
-            </>
-          ) : (
-            <>
-              {/* Partner list */}
-              <div className="mb-6 flex items-center justify-between">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  Partners
-                </h1>
-                <div className="flex items-center gap-4">
-                  <button
-                    className="btn-primary"
-                    onClick={() => setPCreating(true)}
-                  >
-                    <Plus className="h-4 w-4" /> New Partner
-                  </button>
-                </div>
-              </div>
-
-              <div className="mb-6 space-y-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 shadow-md">
-                <div className="relative">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Search by name, contact, email..."
-                    value={pSearch}
-                    onChange={(e) => setPSearch(e.target.value)}
-                    className="input-field pl-10"
-                  />
-                </div>
-                {pFilterOpts && (
-                  <div className="flex flex-wrap items-center gap-3">
-                    <Filter className="h-4 w-4 text-gray-400" />
-                    <select
-                      value={pFilters.partnerType || ''}
-                      onChange={(e) =>
-                        updatePFilter(
-                          'partnerType',
-                          e.target.value || undefined
-                        )
-                      }
-                      className="select-field w-auto"
-                    >
-                      <option value="">All Types</option>
-                      {pFilterOpts.partnerTypes.map((t) => (
-                        <option key={t} value={t}>
-                          {t}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      value={pFilters.roleType || ''}
-                      onChange={(e) =>
-                        updatePFilter('roleType', e.target.value || undefined)
-                      }
-                      className="select-field w-auto"
-                    >
-                      <option value="">All Roles</option>
-                      {pFilterOpts.roleTypes.map((r) => (
-                        <option key={r} value={r}>
-                          {r}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      value={pFilters.status || ''}
-                      onChange={(e) =>
-                        updatePFilter('status', e.target.value || undefined)
-                      }
-                      className="select-field w-auto"
-                    >
-                      <option value="">All Statuses</option>
-                      {pFilterOpts.statuses.map((s) => (
-                        <option key={s} value={s}>
-                          {s}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      value={pFilters.region || ''}
-                      onChange={(e) =>
-                        updatePFilter('region', e.target.value || undefined)
-                      }
-                      className="select-field w-auto"
-                    >
-                      <option value="">All Regions</option>
-                      {pFilterOpts.regions.map((r) => (
-                        <option key={r} value={r}>
-                          {r}
-                        </option>
-                      ))}
-                    </select>
-                    <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                      Per page:
-                      <select
-                        value={pPageSize}
-                        onChange={(e) => {
-                          setPPageSize(Number(e.target.value));
-                          setPPage(1);
-                        }}
-                        className="select-field w-auto"
-                        aria-label="Partners per page"
-                      >
-                        {PAGE_SIZE_OPTIONS.map((s) => (
-                          <option key={s} value={s}>
-                            {s}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    {pHasActiveFilters && (
-                      <button
-                        className="btn-ghost text-red-500 hover:text-red-700"
-                        onClick={clearPFilters}
-                      >
-                        <X className="h-4 w-4" /> Clear Filters
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {pLoading && (
-                <p className="py-12 text-center text-sm text-gray-500">
-                  Loading partners...
-                </p>
-              )}
-              {pError && (
-                <p className="py-12 text-center text-sm text-red-500">
-                  Error: {pError}
-                </p>
-              )}
-              {!pLoading && !pError && pList.length === 0 && (
-                <p className="py-12 text-center text-sm text-gray-500">
-                  No partners found.
-                </p>
-              )}
-              {pList.length > 0 && (
-                <>
-                  <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-md">
-                    <table className="table-base">
-                      <thead>
-                        <tr>
-                          {partnerColumns.map((col) => (
-                            <th key={col.key}>
-                              <span className="inline-flex items-center gap-1">
-                                {col.label}
-                                <ArrowUpDown className="h-3 w-3 text-gray-400" />
-                              </span>
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {pList.map((p) => (
-                          <tr
-                            key={p.partnerId}
-                            onClick={() =>
-                              navigate(
-                                `/safehouse-management/partners/${p.partnerId}`
-                              )
-                            }
-                            className="cursor-pointer"
-                          >
-                            {partnerColumns.map((col) => (
-                              <td key={col.key}>{formatCell(p[col.key])}</td>
-                            ))}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  <div className="mt-4 flex items-center justify-between">
-                    <button
-                      className="btn-secondary"
-                      disabled={pPage <= 1}
-                      onClick={() => setPPage(pPage - 1)}
-                    >
-                      <ChevronLeft className="h-4 w-4" /> Previous
-                    </button>
-                    <span className="text-sm text-gray-500 dark:text-gray-400">
-                      Page {pPage} of {pTotalPages} ({pTotalCount} total)
-                    </span>
-                    <button
-                      className="btn-secondary"
-                      disabled={pPage >= pTotalPages}
-                      onClick={() => setPPage(pPage + 1)}
-                    >
-                      Next <ChevronRight className="h-4 w-4" />
-                    </button>
-                  </div>
-                </>
-              )}
-            </>
-          )}
+            <Plus className="h-4 w-4" />
+            {view === 'safehouses' ? 'New Safehouse' : 'New Partner'}
+          </button>
         </div>
+
+        {/* Stats strip (safehouses only) */}
+        {view === 'safehouses' && allSh.length > 0 && (
+          <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="card flex items-center gap-3 px-4 py-3">
+              <Users className="h-5 w-5 shrink-0 text-orange-500" />
+              <div>
+                <p className="text-lg font-bold text-gray-900 dark:text-white">
+                  {totalOccupancy} / {totalCapacity}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">girls housed org-wide</p>
+              </div>
+            </div>
+            <div className={`card flex items-center gap-3 px-4 py-3 ${nearCapacityCount > 0 ? 'border-orange-200 dark:border-orange-500/30' : ''}`}>
+              <AlertTriangle className={`h-5 w-5 shrink-0 ${nearCapacityCount > 0 ? 'text-orange-500' : 'text-gray-300 dark:text-gray-600'}`} />
+              <div>
+                <p className={`text-lg font-bold ${nearCapacityCount > 0 ? 'text-orange-600 dark:text-orange-400' : 'text-gray-900 dark:text-white'}`}>
+                  {nearCapacityCount}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">at ≥90% capacity</p>
+              </div>
+            </div>
+            <div className="card flex items-center gap-3 px-4 py-3">
+              <div
+                className={`h-5 w-5 shrink-0 rounded-full flex items-center justify-center text-[10px] font-bold text-white ${
+                  avgOccupancyPct >= 90 ? 'bg-red-500' : avgOccupancyPct >= 70 ? 'bg-orange-400' : 'bg-emerald-500'
+                }`}
+              >
+                %
+              </div>
+              <div>
+                <p className="text-lg font-bold text-gray-900 dark:text-white">{avgOccupancyPct}%</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">avg occupancy rate</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Pill toggle */}
+        <div className="mb-5 inline-flex rounded-xl bg-gray-100 dark:bg-gray-800 p-1 gap-1">
+          <button
+            className={`flex items-center gap-2 rounded-lg px-4 py-1.5 text-sm font-medium transition ${
+              view === 'safehouses'
+                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+            }`}
+            onClick={() => setView('safehouses')}
+          >
+            <Home className="h-4 w-4" />
+            Safehouses
+          </button>
+          <button
+            className={`flex items-center gap-2 rounded-lg px-4 py-1.5 text-sm font-medium transition ${
+              view === 'partners'
+                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+            }`}
+            onClick={() => setView('partners')}
+          >
+            <Handshake className="h-4 w-4" />
+            Partners
+          </button>
+        </div>
+
+        {view === 'safehouses' ? (
+          <>
+            {/* Safehouse filter bar */}
+            <div className="mb-6 space-y-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 shadow-md">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search by name, code, city, province..."
+                  value={shSearch}
+                  onChange={(e) => setShSearch(e.target.value)}
+                  className="input-field pl-10"
+                />
+              </div>
+              {shFilterOpts && (
+                <div className="flex flex-wrap items-center gap-3">
+                  <Filter className="h-4 w-4 text-gray-400" />
+                  <select
+                    value={shFilters.region || ''}
+                    onChange={(e) =>
+                      updateShFilter('region', e.target.value || undefined)
+                    }
+                    className="select-field w-auto"
+                  >
+                    <option value="">All Regions</option>
+                    {shFilterOpts.regions.map((r) => (
+                      <option key={r} value={r}>
+                        {r}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={shFilters.status || ''}
+                    onChange={(e) =>
+                      updateShFilter('status', e.target.value || undefined)
+                    }
+                    className="select-field w-auto"
+                  >
+                    <option value="">All Statuses</option>
+                    {shFilterOpts.statuses.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                  <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                    Per page:
+                    <select
+                      value={shPageSize}
+                      onChange={(e) => {
+                        setShPageSize(Number(e.target.value));
+                        setShPage(1);
+                      }}
+                      className="select-field w-auto"
+                      aria-label="Safehouses per page"
+                    >
+                      {PAGE_SIZE_OPTIONS.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  {shHasActiveFilters && (
+                    <button
+                      className="btn-ghost text-red-500 hover:text-red-700"
+                      onClick={clearShFilters}
+                    >
+                      <X className="h-4 w-4" /> Clear Filters
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Safehouse table */}
+            {shLoading && (
+              <p className="py-12 text-center text-sm text-gray-500">
+                Loading safehouses...
+              </p>
+            )}
+            {shError && (
+              <p className="py-12 text-center text-sm text-red-500">
+                Error: {shError}
+              </p>
+            )}
+            {!shLoading && !shError && shList.length === 0 && (
+              <p className="py-12 text-center text-sm text-gray-500">
+                No safehouses found.
+              </p>
+            )}
+            {shList.length > 0 && (
+              <>
+                <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-md">
+                  <table className="table-base">
+                    <thead>
+                      <tr>
+                        {safehouseColumns.map((col) => (
+                          <th key={col.key}>
+                            <span className="inline-flex items-center gap-1">
+                              {col.label}
+                              <ArrowUpDown className="h-3 w-3 text-gray-400" />
+                            </span>
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {shList.map((s) => (
+                        <tr
+                          key={s.safehouseId}
+                          onClick={() => setSelectedSh(s)}
+                          className="cursor-pointer"
+                        >
+                          {safehouseColumns.map((col) =>
+                            col.key === 'currentOccupancy' ? (
+                              <td key={col.key}>
+                                <OccupancyBar
+                                  occupancy={s.currentOccupancy}
+                                  capacity={s.capacityGirls}
+                                />
+                              </td>
+                            ) : (
+                              <td key={col.key}>{formatCell(s[col.key])}</td>
+                            )
+                          )}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="mt-4 flex items-center justify-between">
+                  <button
+                    className="btn-secondary"
+                    disabled={shPage <= 1}
+                    onClick={() => setShPage(shPage - 1)}
+                  >
+                    <ChevronLeft className="h-4 w-4" /> Previous
+                  </button>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    Page {shPage} of {shTotalPages} ({shTotalCount} total)
+                  </span>
+                  <button
+                    className="btn-secondary"
+                    disabled={shPage >= shTotalPages}
+                    onClick={() => setShPage(shPage + 1)}
+                  >
+                    Next <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+              </>
+            )}
+          </>
+        ) : (
+          <>
+            {/* Partner filter bar */}
+            <div className="mb-6 space-y-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 shadow-md">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search by name, contact, email..."
+                  value={pSearch}
+                  onChange={(e) => setPSearch(e.target.value)}
+                  className="input-field pl-10"
+                />
+              </div>
+              {pFilterOpts && (
+                <div className="flex flex-wrap items-center gap-3">
+                  <Filter className="h-4 w-4 text-gray-400" />
+                  <select
+                    value={pFilters.partnerType || ''}
+                    onChange={(e) =>
+                      updatePFilter(
+                        'partnerType',
+                        e.target.value || undefined
+                      )
+                    }
+                    className="select-field w-auto"
+                  >
+                    <option value="">All Types</option>
+                    {pFilterOpts.partnerTypes.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={pFilters.roleType || ''}
+                    onChange={(e) =>
+                      updatePFilter('roleType', e.target.value || undefined)
+                    }
+                    className="select-field w-auto"
+                  >
+                    <option value="">All Roles</option>
+                    {pFilterOpts.roleTypes.map((r) => (
+                      <option key={r} value={r}>
+                        {r}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={pFilters.status || ''}
+                    onChange={(e) =>
+                      updatePFilter('status', e.target.value || undefined)
+                    }
+                    className="select-field w-auto"
+                  >
+                    <option value="">All Statuses</option>
+                    {pFilterOpts.statuses.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={pFilters.region || ''}
+                    onChange={(e) =>
+                      updatePFilter('region', e.target.value || undefined)
+                    }
+                    className="select-field w-auto"
+                  >
+                    <option value="">All Regions</option>
+                    {pFilterOpts.regions.map((r) => (
+                      <option key={r} value={r}>
+                        {r}
+                      </option>
+                    ))}
+                  </select>
+                  <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                    Per page:
+                    <select
+                      value={pPageSize}
+                      onChange={(e) => {
+                        setPPageSize(Number(e.target.value));
+                        setPPage(1);
+                      }}
+                      className="select-field w-auto"
+                      aria-label="Partners per page"
+                    >
+                      {PAGE_SIZE_OPTIONS.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  {pHasActiveFilters && (
+                    <button
+                      className="btn-ghost text-red-500 hover:text-red-700"
+                      onClick={clearPFilters}
+                    >
+                      <X className="h-4 w-4" /> Clear Filters
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {pLoading && (
+              <p className="py-12 text-center text-sm text-gray-500">
+                Loading partners...
+              </p>
+            )}
+            {pError && (
+              <p className="py-12 text-center text-sm text-red-500">
+                Error: {pError}
+              </p>
+            )}
+            {!pLoading && !pError && pList.length === 0 && (
+              <p className="py-12 text-center text-sm text-gray-500">
+                No partners found.
+              </p>
+            )}
+            {pList.length > 0 && (
+              <>
+                <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-md">
+                  <table className="table-base">
+                    <thead>
+                      <tr>
+                        {partnerColumns.map((col) => (
+                          <th key={col.key}>
+                            <span className="inline-flex items-center gap-1">
+                              {col.label}
+                              <ArrowUpDown className="h-3 w-3 text-gray-400" />
+                            </span>
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pList.map((p) => (
+                        <tr
+                          key={p.partnerId}
+                          onClick={() =>
+                            navigate(
+                              `/safehouse-management/partners/${p.partnerId}`
+                            )
+                          }
+                          className="cursor-pointer"
+                        >
+                          {partnerColumns.map((col) => (
+                            <td key={col.key}>{formatCell(p[col.key])}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="mt-4 flex items-center justify-between">
+                  <button
+                    className="btn-secondary"
+                    disabled={pPage <= 1}
+                    onClick={() => setPPage(pPage - 1)}
+                  >
+                    <ChevronLeft className="h-4 w-4" /> Previous
+                  </button>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    Page {pPage} of {pTotalPages} ({pTotalCount} total)
+                  </span>
+                  <button
+                    className="btn-secondary"
+                    disabled={pPage >= pTotalPages}
+                    onClick={() => setPPage(pPage + 1)}
+                  >
+                    Next <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+              </>
+            )}
+          </>
+        )}
       </div>
+
+      {/* Safehouse detail modal */}
+      {selectedSh && (
+        <DetailModal
+          title={selectedSh.name}
+          subtitle={`${selectedSh.safehouseCode} · ${selectedSh.region} · ${selectedSh.city}`}
+          onClose={() => setSelectedSh(null)}
+          content={
+            <SafehouseModalContent
+              safehouse={selectedSh}
+              data={modalData}
+              loading={modalLoading}
+              navigate={navigate}
+            />
+          }
+        />
+      )}
 
       {/* Create Safehouse Modal */}
       {renderCreateModal<Safehouse>(

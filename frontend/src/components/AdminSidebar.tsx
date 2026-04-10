@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard, Users, Home, Heart, Globe, Share2, FileText, BarChart3, UserCog,
+  LayoutDashboard, Users, Home, Heart, Share2, Wallet, UserCog,
   X, PanelLeftClose, PanelLeftOpen,
 } from 'lucide-react';
 import { useAuthSession } from '../authSession';
@@ -11,15 +11,13 @@ type SidebarItem = NavLink & {
 };
 
 const navItems: SidebarItem[] = [
-  { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, roles: [AppRoles.Admin] },
+  { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, roles: [AppRoles.Admin, AppRoles.CaseManager, AppRoles.DonationsManager, AppRoles.OutreachManager] },
   { to: '/admin/users', label: 'User Management', icon: UserCog, roles: [AppRoles.Admin] },
   { to: '/cases', label: 'Cases', icon: Users, roles: [AppRoles.Admin, AppRoles.CaseManager] },
   { to: '/safehouse-management', label: 'Safehouses', icon: Home, roles: [AppRoles.Admin, AppRoles.CaseManager] },
   { to: '/donors', label: 'Donors', icon: Heart, roles: [AppRoles.Admin, AppRoles.DonationsManager] },
-  { to: '/donor-analytics', label: 'Donor Analytics', icon: BarChart3, roles: [AppRoles.Admin, AppRoles.DonationsManager] },
-  { to: '/outreach', label: 'Outreach', icon: Globe, roles: [AppRoles.Admin, AppRoles.OutreachManager] },
+  { to: '/allocations', label: 'Allocations', icon: Wallet, roles: [AppRoles.Admin, AppRoles.DonationsManager] },
   { to: '/social-media', label: 'Social Media', icon: Share2, roles: [AppRoles.Admin, AppRoles.OutreachManager] },
-  { to: '/reports', label: 'Reports', icon: FileText, roles: [AppRoles.Admin, AppRoles.OutreachManager] },
 ];
 
 type AdminSidebarProps = {
@@ -51,7 +49,7 @@ function AdminSidebar({ open, onClose, collapsed, onToggleCollapse, headerOffset
       )}
 
       <aside
-        className={`fixed bottom-0 left-0 z-30 flex shrink-0 flex-col border-r border-gray-200 bg-white transition-all duration-200 dark:border-gray-700 dark:bg-gray-900 lg:static lg:top-0 lg:translate-x-0 ${
+        className={`fixed bottom-0 left-0 z-30 flex shrink-0 flex-col border-r border-gray-200 bg-white transition-all duration-200 dark:border-gray-700 dark:bg-gray-900 lg:sticky lg:self-start lg:min-h-screen lg:translate-x-0 ${
           collapsed ? 'w-16' : 'w-60'
         } ${open ? 'translate-x-0' : '-translate-x-full'}`}
         style={{ top: `${headerOffset}px` }}

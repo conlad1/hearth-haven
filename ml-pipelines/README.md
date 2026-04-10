@@ -1,22 +1,35 @@
+## Starting the Inference Server
+
+Run from the `inference/` subdirectory — uvicorn must find `server.py` in the current directory, and `MODELS_DIR` defaults to `../models` relative to that file.
+
+```bash
+cd ml-pipelines/inference
 uvicorn server:app --port 8000 --reload
+```
+
+Health check: http://127.0.0.1:8000/health
 
 ## Pipeline Quick Reference
 
 | Pipeline notebook | Output | sklearn model | FastAPI endpoint | .NET endpoint | Frontend |
 |---|---|---|---|---|---|
-| `pipelines/residents_pred_reintegration_chance.ipynb` | `.pkl` — `reintegration_achieved.pkl` | LogisticRegression | `POST /predict/reintegration` | `POST /MLPredict/reintegration/{residentId}` | Resident case page — score bar below the header |
-| `pipelines/residents_pred_progress_chance.ipynb` | `.pkl` — `progress_percent_latest.pkl` | Ridge (regression) | `POST /predict/progress` | `POST /MLPredict/progress/{residentId}` | Resident case page — education progress score bar below reintegration |
-| `pipelines/residents_cause_risk_drivers.ipynb` | `.csv` — `current_risk_num_coefficients.csv`, `current_risk_num_drivers.csv` | OLS regression | — | — | — |
-| `pipelines/residents_cause_intervention_drivers.ipynb` | `.csv` — `intervention_effectiveness_coefficients.csv` + `.json` summary | OLS regression | — | — | — |
-| `pipelines/donations_pred_lapse_chance.ipynb` | `.pkl` — `is_lapsed.pkl` | DecisionTreeClassifier | `POST /predict/donor-lapse` | `POST /MLPredict/donor/{supporterId}` | Donor page — lapse risk card in supporter modal |
-| `pipelines/donations_pred_upgrade_chance.ipynb` | `.pkl` — `will_increase_donation.pkl` | LogisticRegression | `POST /predict/donor-upgrade` | `POST /MLPredict/donor/{supporterId}` | Donor page — upgrade potential card in supporter modal |
-| `pipelines/donations_cause_retention_drivers.ipynb` | `.csv` — `donor_retention_coefficients.csv` + `.json` summary | OLS regression | — | — | — |
-| `pipelines/socials_pred_donation_chance.ipynb` | `.pkl` — `led_to_donation.pkl` | RandomForestClassifier | `POST /predict/donation-conversion` | `POST /MLPredict/social-post/{postId}` | Social media page — conversion score in post detail modal |
-| `pipelines/socials_pred_engagement_amount.ipynb` | `.pkl` — `engagement_rate.pkl` | GradientBoostingRegressor | `POST /predict/engagement-rate` | `POST /MLPredict/social-post/{postId}` | Social media page — engagement % in post detail modal |
-| `pipelines/socials_cause_posting_drivers.ipynb` | `.csv` — `posting_strategy_coefficients.csv` + `.json` summary | OLS regression | — | — | — |
+| `pipelines/residents_pred_reintegration_chance.ipynb` | `.pkl` → `models/` | LogisticRegression | `POST /predict/reintegration` | `POST /MLPredict/reintegration/{residentId}` | Resident case page — readiness score bar |
+| `pipelines/residents_pred_progress_chance.ipynb` | `.pkl` → `models/` | Ridge (regression) | `POST /predict/progress` | `POST /MLPredict/progress/{residentId}` | Resident case page — education progress score bar |
+| `pipelines/residents_cause_risk_drivers.ipynb` | `.csv` → `frontend/public/causal/` | OLS regression | — | — | Reports page — What Drives Resident Risk Level? |
+| `pipelines/residents_cause_intervention_drivers.ipynb` | `.csv` + `.json` → `frontend/public/causal/` | OLS regression | — | — | Reports page — What Drives Intervention Success? |
+| `pipelines/residents_cause_safehouse_performance.ipynb` | `.csv` + `.json` → `frontend/public/causal/` | OLS regression | — | — | Reports page — What Drives Safehouse Outcomes? |
+| `pipelines/donations_pred_lapse_chance.ipynb` | `.pkl` → `models/` | DecisionTreeClassifier | `POST /predict/donor-lapse` | `POST /MLPredict/donor/{supporterId}` | Donor page — lapse risk card |
+| `pipelines/donations_pred_upgrade_chance.ipynb` | `.pkl` → `models/` | LogisticRegression | `POST /predict/donor-upgrade` | `POST /MLPredict/donor/{supporterId}` | Donor page — upgrade potential card |
+| `pipelines/donations_cause_retention_drivers.ipynb` | `.csv` + `.json` → `frontend/public/causal/` | OLS regression | — | — | Reports page — What Drives Total Donor Value? |
+| `pipelines/donations_cause_acquisition_drivers.ipynb` | `.csv` + `.json` → `frontend/public/causal/` | OLS regression | — | — | Reports page — Which Acquisition Channels Drive Donor Value? |
+| `pipelines/socials_pred_donation_chance.ipynb` | `.pkl` → `models/` | RandomForestClassifier | `POST /predict/donation-conversion` | `POST /MLPredict/social-post/{postId}` | Social media page — conversion score in post detail modal |
+| `pipelines/socials_pred_engagement_amount.ipynb` | `.pkl` → `models/` | GradientBoostingRegressor | `POST /predict/engagement-rate` | `POST /MLPredict/social-post/{postId}` | Social media page — engagement % in post detail modal |
+| `pipelines/socials_pred_monthly_donation_amount.ipynb` | `.pkl` → `models/` | Ridge (regression) | `POST /predict/monthly-donations` | `POST /MLPredict/monthly-donations/{month}` | Reports page — Monthly Donation Forecast card |
+| `pipelines/socials_cause_posting_drivers.ipynb` | `.csv` + `.json` → `frontend/public/causal/` | OLS regression | — | — | Reports page — What Drives Post Engagement Rate? |
 
+> **PKL files** (predictive models) → `models/` — loaded at runtime by the FastAPI server.
+> **CSV/JSON files** (causal/explanatory models) → `frontend/public/causal/` — served as static assets, fetched directly by the frontend.
 > The `.NET` donor and social-post endpoints each call **two** FastAPI predictions in parallel and return them combined.
-> Explanatory (`cause_*`) pipelines output coefficient CSVs + summary JSONs to `models/` — they describe *why* patterns exist and are not wired to the live API.
 
 ## Local Environment Setup
 

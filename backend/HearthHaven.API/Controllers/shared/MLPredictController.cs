@@ -324,7 +324,7 @@ public class MLPredictController : ControllerBase
 
         var results = await Task.WhenAll(scoringTasks);
 
-        // 4. Parse, sort by readiness_score desc, take top N, project to display shape.
+        // 4. Parse, filter to meaningful scores, sort desc, take top N, project to display shape.
         var ranked = results
             .Where(x => x.ok)
             .Select(x =>
@@ -345,6 +345,7 @@ public class MLPredictController : ControllerBase
                     prediction,
                 };
             })
+            .Where(x => x.readinessScore >= 20)
             .OrderByDescending(x => x.readinessScore)
             .Take(limit)
             .ToList();
@@ -857,6 +858,96 @@ public class MLPredictController : ControllerBase
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    // ── Monthly donation forecast ──────────────────────────────────────────────
+
+    /// <summary>
+    /// Predict total monetary donation volume for a given month.
+    /// Aggregates that month's social media posting activity from the DB
+    /// and proxies to the monthly_donation_value model.
+    /// </summary>
+    [HttpPost("monthly-donations/{month}")]
+    public async Task<IActionResult> PredictMonthlyDonations(string month)
+    {
+        if (!DateTime.TryParseExact(month, "yyyy-MM",
+                System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None, out var parsed))
+            return BadRequest(new { error = "month must be in YYYY-MM format" });
+
+        var start = new DateTime(parsed.Year, parsed.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var end   = start.AddMonths(1);
+
+        var posts = await _db.SocialMediaPosts
+            .Where(p => p.CreatedAt >= start && p.CreatedAt < end)
+            .ToListAsync();
+
+        if (posts.Count == 0)
+            return Ok(new
+            {
+                month,
+                predicted_donation_value = 0.0,
+                predicted_donation_value_formatted = "PHP 0",
+                confidence_note = "No posts found for this month — forecast is zero.",
+                model_version = "monthly_donation_value_v1",
+                predicted_at = DateTime.UtcNow,
+            });
+
+        // Aggregate features matching the training schema
+        int   totalPosts       = posts.Count;
+        double totalImpressions = posts.Sum(p => (double)p.Impressions);
+        double totalReach       = posts.Sum(p => (double)p.Reach);
+        double totalLikes       = posts.Sum(p => (double)p.Likes);
+        double totalEngagement  = posts.Count > 0 ? posts.Average(p => (double)p.EngagementRate) : 0;
+        int    boostedPosts     = posts.Count(p => p.IsBoosted);
+        double avgCaptionLength = posts.Count > 0 ? posts.Average(p => (double)p.CaptionLength) : 0;
+        int    postsWithCta     = posts.Count(p => p.HasCallToAction);
+        int    postsWithStory   = posts.Count(p => p.FeaturesResidentStory);
+        double totalVideoViews  = posts.Sum(p => (double)(p.VideoViews ?? 0));
+
+        // Platform proportions
+        double pfFacebook  = posts.Count(p => p.Platform == "Facebook")  / (double)totalPosts;
+        double pfInstagram = posts.Count(p => p.Platform == "Instagram")  / (double)totalPosts;
+        double pfTwitter   = posts.Count(p => p.Platform == "Twitter")    / (double)totalPosts;
+        double pfWhatsApp  = posts.Count(p => p.Platform == "WhatsApp")   / (double)totalPosts;
+
+        // Content topic proportions
+        double ctCampaignLaunch = posts.Count(p => p.ContentTopic == "CampaignLaunch") / (double)totalPosts;
+        double ctGratitude      = posts.Count(p => p.ContentTopic == "Gratitude")      / (double)totalPosts;
+        double ctResidentStory  = posts.Count(p => p.ContentTopic == "ResidentStory")  / (double)totalPosts;
+
+        // Post type proportions
+        double ptPhoto  = posts.Count(p => p.PostType == "Photo")  / (double)totalPosts;
+        double ptVideo  = posts.Count(p => p.PostType == "Video")  / (double)totalPosts;
+        double ptReel   = posts.Count(p => p.PostType == "Reel")   / (double)totalPosts;
+        double ptStory  = posts.Count(p => p.PostType == "Story")  / (double)totalPosts;
+
+        var features = new Dictionary<string, object>
+        {
+            ["total_posts"]            = totalPosts,
+            ["total_impressions"]      = totalImpressions,
+            ["total_reach"]            = totalReach,
+            ["total_likes"]            = totalLikes,
+            ["total_engagement"]       = totalEngagement,
+            ["boosted_posts"]          = boostedPosts,
+            ["avg_caption_length"]     = avgCaptionLength,
+            ["posts_with_cta"]         = postsWithCta,
+            ["posts_with_story"]       = postsWithStory,
+            ["total_video_views"]      = totalVideoViews,
+            ["platform_Facebook"]      = pfFacebook,
+            ["platform_Instagram"]     = pfInstagram,
+            ["platform_Twitter"]       = pfTwitter,
+            ["platform_WhatsApp"]      = pfWhatsApp,
+            ["content_topic_CampaignLaunch"] = ctCampaignLaunch,
+            ["content_topic_Gratitude"]      = ctGratitude,
+            ["content_topic_ResidentStory"]  = ctResidentStory,
+            ["post_type_Photo"]        = ptPhoto,
+            ["post_type_Video"]        = ptVideo,
+            ["post_type_Reel"]         = ptReel,
+            ["post_type_Story"]        = ptStory,
+        };
+
+        return await ProxyToMl("predict/monthly-donations", new { month, features });
+    }
 
     private async Task<IActionResult> ProxyToMl(string path, object payload)
     {

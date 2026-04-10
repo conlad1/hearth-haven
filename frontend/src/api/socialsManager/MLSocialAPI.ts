@@ -37,3 +37,24 @@ export const fetchSocialPostPrediction = async (
   if (!response.ok) throw new Error(`ML prediction failed: ${response.status}`);
   return await response.json();
 };
+
+// ── Monthly donation forecast ─────────────────────────────────────────────────
+
+export interface MonthlyDonationForecast {
+  month: string;
+  predicted_donation_value: number;
+  predicted_donation_value_formatted: string;
+  confidence_note: string;
+  model_version: string;
+  predicted_at: string;
+}
+
+export const fetchMonthlyDonationForecast = async (
+  month: string,
+): Promise<MonthlyDonationForecast> => {
+  const response = await apiFetch(`${API_BASE_URL}/MLPredict/monthly-donations/${month}`, {
+    method: 'POST',
+  });
+  if (!response.ok) throw new Error(`Monthly forecast failed: ${response.status}`);
+  return await response.json();
+};

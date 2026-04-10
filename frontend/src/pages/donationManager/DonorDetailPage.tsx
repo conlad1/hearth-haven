@@ -4,7 +4,6 @@ import { createPortal } from 'react-dom';
 import {
   Supporter,
   Contribution,
-  ContributionFilters,
 } from '../../types/Donor';
 import {
   fetchSupporters,

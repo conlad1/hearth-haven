@@ -25,18 +25,14 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # ── EDIT THESE FOUR THINGS ────────────────────────────────────────────────────
 
-from functions.fn_domain_prep import prepare_residents as prepare_fn
+from functions.fn_domain_prep import prepare_donors as prepare_fn
 
-TARGET = 'progress_percent_latest'
+TARGET = 'total_monetary_value'
 PROBLEM_TYPE = 'regression'
 OTHER_TARGETS = [
-    'risk_escalated',
-    'risk_improved',
-    'reintegration_achieved',
-    'reintegration_status',
-    'current_risk_num',
-    'current_risk_level',
-    'initial_risk_num',
+    'is_lapsed',
+    'days_since_last_donation',
+    'monetary_donation_count',
 ]
 
 # ── NOTHING BELOW THIS LINE NEEDS TO CHANGE ───────────────────────────────────

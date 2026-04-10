@@ -114,6 +114,8 @@ def fit_causal_regression(X_train, y_train):
     print(f"     F-statistic: {results.fvalue:.4f}  |  p(F): {results.f_pvalue:.6f}")
     print(f"     Observations: {int(results.nobs)}  |  Features: {len(results.params) - 1}")
     print(f"     Call results.summary() for the full output.")
+    print(f"     Fitted columns ({len(results.model.exog_names) - 1}): "
+        f"{[c for c in results.model.exog_names if c != 'const']}")
 
     return results
 
@@ -214,6 +216,8 @@ def fit_causal_classification(X_train, y_train, max_iter=200):
     print(f"     Observations: {int(results.nobs)}  |  Features: {len(results.params) - 1}")
     print(f"     Call results.summary() for the full output.")
     print(f"     Use get_coefficients(results, model_type='logistic') for odds ratios.")
+    print(f"     Fitted columns ({len(results.model.exog_names) - 1}): "
+        f"{[c for c in results.model.exog_names if c != 'const']}")
 
     return results
 
