@@ -10,6 +10,7 @@ import {
   Search,
   Plus,
   Brain,
+  ClipboardList,
 } from 'lucide-react';
 import { API_BASE_URL as API } from '../../api/core/config';
 import { apiFetch } from '../../api/core/http';
@@ -19,6 +20,20 @@ import {
 } from '../../api/socialsManager/MLSocialAPI';
 
 const PAGE_SIZE_OPTIONS = [20, 50, 100];
+
+function generatePlatformPostId(): string {
+  return `pp_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+}
+
+function countHashtags(hashtags: string | null | undefined): number {
+  if (!hashtags?.trim()) return 0;
+  return hashtags.trim().split(/\s+/).filter((t) => t.startsWith('#') && t.length > 1).length;
+}
+
+function countMentions(caption: string | null | undefined): number {
+  if (!caption) return 0;
+  return (caption.match(/@\w+/g) ?? []).length;
+}
 
 interface SocialMediaPost {
   postId: number;
@@ -140,10 +155,15 @@ export default function SocialMediaPage() {
   const [form, setForm] = useState<PostForm>(blankForm());
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const [modalMode, setModalMode] = useState<'view' | 'edit' | 'create'>(
-    'create'
-  );
+  const [modalMode, setModalMode] = useState<
+    'view' | 'edit' | 'create' | 'metrics'
+  >('create');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const [needsMetricsPosts, setNeedsMetricsPosts] = useState<SocialMediaPost[]>(
+    []
+  );
+  const [needsMetricsOpen, setNeedsMetricsOpen] = useState(true);
 
   // ML scores for the currently-viewed post
   const [postPrediction, setPostPrediction] =
@@ -187,6 +207,19 @@ export default function SocialMediaPage() {
     }
   }
 
+  async function loadNeedsMetrics() {
+    try {
+      const res = await apiFetch(
+        `${API}/SocialMediaPost?page=1&pageSize=200`
+      );
+      if (!res.ok) return;
+      const json = await res.json();
+      setNeedsMetricsPosts(
+        (json.data as SocialMediaPost[]).filter((p) => p.engagementRate === 0)
+      );
+    } catch {}
+  }
+
   useEffect(() => {
     apiFetch(`${API}/SocialMediaPost/FilterOptions`)
       .then((r) =>
@@ -207,6 +240,17 @@ export default function SocialMediaPage() {
   useEffect(() => {
     loadPosts();
   }, [page, pageSize, debouncedSearch, platformFilter, postTypeFilter]);
+  useEffect(() => {
+    loadNeedsMetrics();
+  }, []);
+
+  // Auto-compute derived counts whenever the source fields change
+  useEffect(() => {
+    setField('numHashtags', countHashtags(form.hashtags));
+  }, [form.hashtags]);
+  useEffect(() => {
+    setField('mentionsCount', countMentions(form.caption));
+  }, [form.caption]);
 
   function clearFilters() {
     setSearchTerm('');
@@ -218,7 +262,7 @@ export default function SocialMediaPage() {
 
   function openCreate() {
     setEditing(null);
-    setForm(blankForm());
+    setForm({ ...blankForm(), platformPostId: generatePlatformPostId() });
     setFormError(null);
     setSectionsOpen({
       details: true,
@@ -286,6 +330,50 @@ export default function SocialMediaPage() {
     setModalOpen(true);
   }
 
+  function openMetrics(p: SocialMediaPost) {
+    setEditing(p);
+    setForm({
+      platform: p.platform,
+      platformPostId: p.platformPostId,
+      postUrl: p.postUrl ?? '',
+      createdAt: p.createdAt ? p.createdAt.slice(0, 16) : '',
+      postType: p.postType,
+      mediaType: p.mediaType,
+      caption: p.caption ?? '',
+      hashtags: p.hashtags ?? '',
+      numHashtags: p.numHashtags,
+      mentionsCount: p.mentionsCount,
+      hasCallToAction: p.hasCallToAction,
+      callToActionType: p.callToActionType ?? '',
+      contentTopic: p.contentTopic,
+      sentimentTone: p.sentimentTone,
+      featuresResidentStory: p.featuresResidentStory,
+      campaignName: p.campaignName ?? '',
+      isBoosted: p.isBoosted,
+      boostBudgetPhp: p.boostBudgetPhp,
+      impressions: p.impressions,
+      reach: p.reach,
+      likes: p.likes,
+      comments: p.comments,
+      shares: p.shares,
+      saves: p.saves,
+      clickThroughs: p.clickThroughs,
+      videoViews: p.videoViews,
+      engagementRate: p.engagementRate,
+      profileVisits: p.profileVisits,
+      donationReferrals: p.donationReferrals,
+      estimatedDonationValuePhp: p.estimatedDonationValuePhp,
+      followerCountAtPost: p.followerCountAtPost,
+      watchTimeSeconds: p.watchTimeSeconds,
+      avgViewDurationSeconds: p.avgViewDurationSeconds,
+      subscriberCountAtPost: p.subscriberCountAtPost,
+      forwards: p.forwards,
+    });
+    setFormError(null);
+    setModalMode('metrics');
+    setModalOpen(true);
+  }
+
   async function handleSave() {
     if (!form.platform) return setFormError('Platform is required.');
     if (!form.platformPostId.trim())
@@ -326,6 +414,7 @@ export default function SocialMediaPage() {
       if (!res.ok) return setFormError(await res.text());
       setModalOpen(false);
       loadPosts();
+      loadNeedsMetrics();
       // Refresh filter options in case new values were added
       apiFetch(`${API}/SocialMediaPost/FilterOptions`)
         .then((r) => (r.ok ? r.json() : null))
@@ -411,6 +500,69 @@ export default function SocialMediaPage() {
 
       {!loading && !error && (
         <>
+          {/* Needs Metrics Banner */}
+          {needsMetricsPosts.length > 0 && (
+            <div className="mb-4 rounded-xl border border-orange-200 bg-orange-50 shadow-md dark:border-orange-500/30 dark:bg-orange-500/5">
+              <button
+                type="button"
+                className="flex w-full items-center justify-between px-4 py-3"
+                onClick={() => setNeedsMetricsOpen((o) => !o)}
+              >
+                <div className="flex items-center gap-2">
+                  <ClipboardList className="h-4 w-4 text-orange-500" />
+                  <span className="text-sm font-semibold text-orange-700 dark:text-orange-400">
+                    Needs Metrics
+                  </span>
+                  <span className="rounded-full bg-orange-500 px-2 py-0.5 text-xs font-bold text-white">
+                    {needsMetricsPosts.length}
+                  </span>
+                </div>
+                <span className="text-xs text-orange-500">
+                  {needsMetricsOpen ? '\u25B2' : '\u25BC'}
+                </span>
+              </button>
+              {needsMetricsOpen && (
+                <div className="border-t border-orange-200 dark:border-orange-500/20">
+                  <ul className="divide-y divide-orange-100 dark:divide-orange-500/10">
+                    {needsMetricsPosts.slice(0, 10).map((p) => (
+                      <li
+                        key={p.postId}
+                        className="flex items-center justify-between gap-3 px-4 py-2.5"
+                      >
+                        <div className="flex min-w-0 flex-1 items-center gap-2">
+                          <span className="badge bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400">
+                            {p.platform}
+                          </span>
+                          <span className="truncate text-sm text-gray-700 dark:text-gray-300">
+                            {p.postType}
+                            {p.contentTopic ? ` · ${p.contentTopic}` : ''}
+                          </span>
+                          <span className="hidden text-xs text-gray-400 sm:block">
+                            {p.createdAt
+                              ? new Date(p.createdAt).toLocaleDateString()
+                              : ''}
+                          </span>
+                        </div>
+                        <button
+                          className="shrink-0 rounded-lg bg-orange-500 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-orange-600"
+                          onClick={() => openMetrics(p)}
+                        >
+                          Enter Metrics
+                        </button>
+                      </li>
+                    ))}
+                    {needsMetricsPosts.length > 10 && (
+                      <li className="px-4 py-2 text-xs text-gray-500 dark:text-gray-400">
+                        +{needsMetricsPosts.length - 10} more — scroll the table
+                        to find them
+                      </li>
+                    )}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Filters */}
           <div className="mb-4 rounded-xl border border-gray-200 bg-white p-4 shadow-md dark:border-gray-700 dark:bg-gray-900">
             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
@@ -502,6 +654,7 @@ export default function SocialMediaPage() {
                     <th>Likes</th>
                     <th>Comments</th>
                     <th>Shares</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -527,6 +680,19 @@ export default function SocialMediaPage() {
                       <td>{p.likes.toLocaleString()}</td>
                       <td>{p.comments.toLocaleString()}</td>
                       <td>{p.shares.toLocaleString()}</td>
+                      <td
+                        onClick={(e) => e.stopPropagation()}
+                        className="whitespace-nowrap"
+                      >
+                        {p.engagementRate === 0 && (
+                          <button
+                            className="rounded-md bg-orange-500 px-2.5 py-1 text-xs font-medium text-white transition hover:bg-orange-600"
+                            onClick={() => openMetrics(p)}
+                          >
+                            Enter Metrics
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -581,14 +747,20 @@ export default function SocialMediaPage() {
                       id="sm-dialog-title"
                       className="text-lg font-bold text-gray-900 dark:text-white"
                     >
-                      {modalMode === 'create' ? 'New Post' : 'Post'}
+                      {modalMode === 'create'
+                        ? 'New Post'
+                        : modalMode === 'metrics'
+                          ? 'Enter Metrics'
+                          : 'Post'}
                     </h2>
                     <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
                       {modalMode === 'create'
                         ? 'Fill in the details below'
-                        : modalMode === 'edit'
-                          ? 'Editing record'
-                          : 'Viewing record'}
+                        : modalMode === 'metrics'
+                          ? 'Enter performance metrics for this post'
+                          : modalMode === 'edit'
+                            ? 'Editing record'
+                            : 'Viewing record'}
                     </p>
                   </div>
 
@@ -715,6 +887,34 @@ export default function SocialMediaPage() {
                           onClick={() => setModalOpen(false)}
                           disabled={saving}
                           aria-label="Cancel creating record"
+                          title="Cancel"
+                        >
+                          <X size={16} />
+                        </button>
+                      </>
+                    )}
+                    {modalMode === 'metrics' && (
+                      <>
+                        <button
+                          className="inline-flex items-center justify-center rounded-lg bg-orange-500 p-2 text-white shadow-sm transition hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 disabled:opacity-50 cursor-pointer"
+                          onClick={handleSave}
+                          disabled={saving}
+                          aria-label={saving ? 'Saving metrics' : 'Save metrics'}
+                          title="Save Metrics"
+                        >
+                          {saving ? (
+                            <span className="text-xs font-medium">
+                              Saving...
+                            </span>
+                          ) : (
+                            <Check size={16} />
+                          )}
+                        </button>
+                        <button
+                          className="inline-flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 p-2 text-gray-600 dark:text-gray-400 transition hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200 disabled:opacity-50 cursor-pointer"
+                          onClick={() => setModalOpen(false)}
+                          disabled={saving}
+                          aria-label="Cancel"
                           title="Cancel"
                         >
                           <X size={16} />
@@ -1183,6 +1383,7 @@ export default function SocialMediaPage() {
                             ))}
                           </select>
                         </div>
+                        {modalMode !== 'create' && (
                         <div>
                           <label className="mb-1 block text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                             Platform Post ID *
@@ -1195,6 +1396,7 @@ export default function SocialMediaPage() {
                             }
                           />
                         </div>
+                        )}
                         <div>
                           <label className="mb-1 block text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                             Post URL
@@ -1341,8 +1543,6 @@ export default function SocialMediaPage() {
                               placeholder="#hearth #haven"
                             />
                           </div>
-                          {numField('numHashtags', 'Num Hashtags')}
-                          {numField('mentionsCount', 'Mentions Count')}
                           <div>
                             <label className="mb-1 block text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                               Campaign Name
@@ -1380,6 +1580,16 @@ export default function SocialMediaPage() {
                             />
                             Features Resident Story
                           </label>
+                          <label className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
+                            <input
+                              type="checkbox"
+                              checked={form.isBoosted}
+                              onChange={(e) =>
+                                setField('isBoosted', e.target.checked)
+                              }
+                            />
+                            Boosted Post
+                          </label>
                         </div>
                         {form.hasCallToAction && (
                           <div>
@@ -1402,32 +1612,6 @@ export default function SocialMediaPage() {
                             </select>
                           </div>
                         )}
-                      </div>
-                    )}
-
-                    {/* ── Boost ── */}
-                    <button
-                      type="button"
-                      className="mt-2 flex w-full items-center justify-between rounded-lg bg-gray-50 px-3 py-2 text-sm font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-200"
-                      onClick={() => toggleSection('boost')}
-                    >
-                      Boost
-                      <span className="text-xs">
-                        {sectionsOpen.boost ? '\u25B2' : '\u25BC'}
-                      </span>
-                    </button>
-                    {sectionsOpen.boost && (
-                      <div className="space-y-3 px-1 pt-2">
-                        <label className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
-                          <input
-                            type="checkbox"
-                            checked={form.isBoosted}
-                            onChange={(e) =>
-                              setField('isBoosted', e.target.checked)
-                            }
-                          />
-                          Is Boosted
-                        </label>
                         {form.isBoosted && (
                           <div className="max-w-xs">
                             {numField('boostBudgetPhp', 'Boost Budget (PHP)', {
@@ -1438,7 +1622,8 @@ export default function SocialMediaPage() {
                       </div>
                     )}
 
-                    {/* ── Engagement Metrics ── */}
+                    {/* ── Engagement Metrics (edit only — use Enter Metrics after posting) ── */}
+                    {modalMode !== 'create' && (
                     <button
                       type="button"
                       className="mt-2 flex w-full items-center justify-between rounded-lg bg-gray-50 px-3 py-2 text-sm font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-200"
@@ -1449,7 +1634,8 @@ export default function SocialMediaPage() {
                         {sectionsOpen.engagement ? '\u25B2' : '\u25BC'}
                       </span>
                     </button>
-                    {sectionsOpen.engagement && (
+                    )}
+                    {modalMode !== 'create' && sectionsOpen.engagement && (
                       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 px-1 pt-2">
                         {numField('impressions', 'Impressions')}
                         {numField('reach', 'Reach')}
@@ -1489,9 +1675,88 @@ export default function SocialMediaPage() {
 
                     {/* Error */}
                     {formError && (
-                      <p className="my-1 text-xs text-red-600">{formError}</p>
+                      <p className="mb-2 text-xs text-red-600">{formError}</p>
                     )}
+
+                    {/* Bottom action bar */}
+                    <div className="mt-2 flex items-center justify-end gap-3 border-t border-gray-100 pt-4 dark:border-gray-700">
+                      <button
+                        className="btn-secondary"
+                        onClick={() => setModalOpen(false)}
+                        disabled={saving}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        className="btn-primary"
+                        onClick={handleSave}
+                        disabled={saving}
+                      >
+                        {saving
+                          ? modalMode === 'create'
+                            ? 'Creating...'
+                            : 'Saving...'
+                          : modalMode === 'create'
+                            ? 'Create Post'
+                            : 'Save Changes'}
+                      </button>
+                    </div>
                   </>
+                )}
+
+                {/* Metrics-only mode */}
+                {modalMode === 'metrics' && editing && (
+                  <div className="space-y-4">
+                    <div className="rounded-xl border border-orange-100 bg-orange-50 p-3 dark:border-orange-500/20 dark:bg-orange-500/5">
+                      <p className="text-xs text-orange-700 dark:text-orange-400">
+                        Entering metrics for{' '}
+                        <span className="font-semibold">{editing.platform}</span>{' '}
+                        · {editing.postType}
+                        {editing.contentTopic
+                          ? ` · ${editing.contentTopic}`
+                          : ''}
+                        {editing.createdAt
+                          ? ` · ${new Date(editing.createdAt).toLocaleDateString()}`
+                          : ''}
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                      {numField('impressions', 'Impressions')}
+                      {numField('reach', 'Reach')}
+                      {numField('likes', 'Likes')}
+                      {numField('comments', 'Comments')}
+                      {numField('shares', 'Shares')}
+                      {numField('saves', 'Saves')}
+                      {numField('clickThroughs', 'Click Throughs')}
+                      {numField('videoViews', 'Video Views', { optional: true })}
+                      {numField('engagementRate', 'Engagement Rate (%)')}
+                      {numField('profileVisits', 'Profile Visits')}
+                      {numField('donationReferrals', 'Donation Referrals')}
+                      {numField(
+                        'estimatedDonationValuePhp',
+                        'Est. Donation Value (PHP)'
+                      )}
+                    </div>
+                    {formError && (
+                      <p className="mb-2 text-xs text-red-600">{formError}</p>
+                    )}
+                    <div className="flex items-center justify-end gap-3 border-t border-gray-100 pt-4 dark:border-gray-700">
+                      <button
+                        className="btn-secondary"
+                        onClick={() => setModalOpen(false)}
+                        disabled={saving}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        className="btn-primary"
+                        onClick={handleSave}
+                        disabled={saving}
+                      >
+                        {saving ? 'Saving...' : 'Save Metrics'}
+                      </button>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>

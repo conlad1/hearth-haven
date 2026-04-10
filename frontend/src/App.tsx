@@ -22,8 +22,8 @@ import SafehouseManagementPage from './pages/caseManager/SafehouseManagementPage
 import AdminLayout from './components/AdminLayout';
 import SafehouseDetailPage from './pages/caseManager/SafehouseDetailPage';
 import PartnerDetailPage from './pages/caseManager/PartnerDetailPage';
-import AdminDashboardPage from './pages/admin/AdminDashboardPage';
-import ReportsPage from './pages/caseManager/ReportsPage';
+import AdminDashboardPage from './pages/admin/AdminDashboard';
+import ReportsPage from './pages/admin/ReportsPage';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
 import PrivacyPolicyPage from './pages/shared/PrivacyPolicyPage';
 import TermsPage from './pages/shared/TermsPage';
@@ -31,7 +31,7 @@ import TeapotPage from './pages/shared/TeapotPage';
 import CookieConsentBanner from './components/CookieConsentBanner';
 import ResourcesPage from './pages/shared/ResourcePage';
 import ContactPage from './pages/shared/ContactPage';
-import DonorAnalytics from './pages/donationManager/DonorAnalytics';
+import AllocationPage from './pages/donationManager/AllocationPage';
 import ProfilePage from './pages/shared/ProfilePage';
 import AccessDeniedPage from './pages/shared/AccessDeniedPage';
 import { AuthSessionProvider } from './authSession';
@@ -354,7 +354,7 @@ function App() {
                 }
               />
               <Route
-                path="/donor-analytics"
+                path="/allocations"
                 element={
                   <ProtectedRoute
                     isAuthenticated={isAuthenticated}
@@ -362,7 +362,7 @@ function App() {
                     currentUser={currentUser}
                     allowedRoles={[AppRoles.Admin, AppRoles.DonationsManager]}
                   >
-                    <DonorAnalytics />
+                    <AllocationPage />
                   </ProtectedRoute>
                 }
               />

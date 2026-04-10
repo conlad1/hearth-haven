@@ -10,7 +10,9 @@ import {
   TrendingDown,
   FlaskConical,
   AlertTriangle,
+  CalendarDays,
 } from 'lucide-react';
+import { fetchMonthlyDonationForecast, type MonthlyDonationForecast } from '../../api/socialsManager/MLSocialAPI';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -108,12 +110,30 @@ interface InterventionSummary {
   model_version: string;
 }
 
+interface AcquisitionChannelSummary {
+  channel_coefficients: { channel: string; coefficient: number; p_value: number }[];
+  model_r2: number;
+  model_adj_r2: number;
+  n_donors: number;
+  model_version: string;
+}
+
+interface SafehousePerformanceSummary {
+  top_performance_drivers: { feature: string; coefficient: number; p_value: number }[];
+  model_r2: number;
+  model_adj_r2: number;
+  n_safehouse_months: number;
+  model_version: string;
+}
+
 interface CausalData {
   riskDrivers: CoefRow[];
   donorRetention: DonorRetentionSummary | null;
   postingStrategy: PostingStrategySummary | null;
   interventions: InterventionSummary | null;
   interventionCoefs: CoefRow[];
+  acquisitionChannel: AcquisitionChannelSummary | null;
+  safehousePerformance: SafehousePerformanceSummary | null;
 }
 
 // ── Helpers ──
@@ -251,6 +271,7 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [causal, setCausal] = useState<CausalData | null>(null);
+  const [monthlyForecast, setMonthlyForecast] = useState<MonthlyDonationForecast | null>(null);
 
   // Fetch causal insight files once on mount (static, not filtered)
   useEffect(() => {
@@ -264,6 +285,8 @@ export default function ReportsPage() {
       fetch('/causal/intervention_effectiveness_coefficients.csv').then((r) =>
         r.text()
       ),
+      fetch('/causal/acquisition_channel_summary.json').then((r) => r.json()).catch(() => null),
+      fetch('/causal/safehouse_performance_summary.json').then((r) => r.json()).catch(() => null),
     ])
       .then(
         ([
@@ -272,6 +295,8 @@ export default function ReportsPage() {
           postingJson,
           interventionJson,
           interventionCsv,
+          acquisitionJson,
+          safehouseJson,
         ]) => {
           const riskDrivers: CoefRow[] = parseCsv(riskCsv).map((r) => ({
             feature: r['feature'] ?? '',
@@ -291,12 +316,22 @@ export default function ReportsPage() {
             postingStrategy: postingJson as PostingStrategySummary,
             interventions: interventionJson as InterventionSummary,
             interventionCoefs,
+            acquisitionChannel: acquisitionJson as AcquisitionChannelSummary | null,
+            safehousePerformance: safehouseJson as SafehousePerformanceSummary | null,
           });
         }
       )
       .catch(() => {
         /* causal section simply won't render */
       });
+  }, []);
+
+  // Fetch monthly donation forecast for current month (proof of concept)
+  useEffect(() => {
+    const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+    fetchMonthlyDonationForecast(currentMonth)
+      .then(setMonthlyForecast)
+      .catch(() => { /* panel won't render if endpoint is unavailable */ });
   }, []);
 
   useEffect(() => {
@@ -1204,6 +1239,106 @@ export default function ReportsPage() {
               </div>
             )}
 
+            {/* Acquisition Channel Drivers */}
+            {causal.acquisitionChannel && (
+              <div className="card">
+                <div className="mb-3 flex items-center gap-2">
+                  <FlaskConical className="h-4 w-4 text-yellow-500 shrink-0" />
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    Which Acquisition Channels Drive Donor Value?
+                  </h3>
+                </div>
+                <p className="mb-3 text-xs text-gray-400 dark:text-gray-500">
+                  OLS on {causal.acquisitionChannel.n_donors} donors · R² ={' '}
+                  {(causal.acquisitionChannel.model_r2 * 100).toFixed(1)}%
+                </p>
+                <div className="space-y-2">
+                  {[...causal.acquisitionChannel.channel_coefficients]
+                    .sort((a, b) => b.coefficient - a.coefficient)
+                    .map((d) => {
+                      const isPositive = d.coefficient > 0;
+                      const sig = d.p_value < 0.01 ? '**' : d.p_value < 0.05 ? '*' : '(ns)';
+                      return (
+                        <div
+                          key={d.channel}
+                          className="flex items-center justify-between gap-3 rounded-lg bg-gray-50 px-3 py-2 dark:bg-gray-800"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            {isPositive ? (
+                              <TrendingUp className="h-3.5 w-3.5 shrink-0 text-yellow-400" />
+                            ) : (
+                              <TrendingDown className="h-3.5 w-3.5 shrink-0 text-gray-400" />
+                            )}
+                            <span className="truncate text-sm text-gray-700 dark:text-gray-300">
+                              {cleanFeatureName(d.channel)}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span
+                              className={`text-sm font-mono font-medium ${isPositive ? 'text-yellow-500' : 'text-gray-500'}`}
+                            >
+                              {isPositive ? '+' : ''}$
+                              {Math.round(d.coefficient).toLocaleString()}
+                            </span>
+                            <span className="text-xs text-gray-400">{sig}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
+
+            {/* Safehouse Performance Drivers */}
+            {causal.safehousePerformance && (
+              <div className="card">
+                <div className="mb-3 flex items-center gap-2">
+                  <FlaskConical className="h-4 w-4 text-teal-500 shrink-0" />
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    What Drives Safehouse Outcomes?
+                  </h3>
+                </div>
+                <p className="mb-3 text-xs text-gray-400 dark:text-gray-500">
+                  {causal.safehousePerformance.n_safehouse_months} safehouse-months
+                  · Adj R² = {(causal.safehousePerformance.model_adj_r2 * 100).toFixed(1)}%
+                </p>
+                <div className="space-y-2">
+                  {[...causal.safehousePerformance.top_performance_drivers]
+                    .sort((a, b) => b.coefficient - a.coefficient)
+                    .map((d) => {
+                      const isPositive = d.coefficient > 0;
+                      const sig = d.p_value < 0.01 ? '**' : d.p_value < 0.05 ? '*' : '(ns)';
+                      return (
+                        <div
+                          key={d.feature}
+                          className="flex items-center justify-between gap-3 rounded-lg bg-gray-50 px-3 py-2 dark:bg-gray-800"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            {isPositive ? (
+                              <TrendingUp className="h-3.5 w-3.5 shrink-0 text-teal-400" />
+                            ) : (
+                              <TrendingDown className="h-3.5 w-3.5 shrink-0 text-gray-400" />
+                            )}
+                            <span className="truncate text-sm text-gray-700 dark:text-gray-300">
+                              {cleanFeatureName(d.feature)}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span
+                              className={`text-sm font-mono font-medium ${isPositive ? 'text-teal-500' : 'text-gray-500'}`}
+                            >
+                              {isPositive ? '+' : ''}
+                              {d.coefficient.toFixed(3)}
+                            </span>
+                            <span className="text-xs text-gray-400">{sig}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
+
             {/* Intervention Effectiveness */}
             {causal.interventions && (
               <div className="card">
@@ -1269,6 +1404,34 @@ export default function ReportsPage() {
                 )}
               </div>
             )}
+          </div>
+        </>
+      )}
+
+      {/* ── Monthly Donation Forecast (socials_pred_monthly_donation_amount) ── */}
+      {monthlyForecast && (
+        <>
+          <h2 className="mt-10 mb-4 text-lg font-bold text-gray-900 dark:text-white">
+            Monthly Donation Forecast
+          </h2>
+          <div className="card flex items-start gap-4">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-500 dark:bg-emerald-500/10">
+              <CalendarDays className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                Predicted donation volume for {monthlyForecast.month}
+              </p>
+              <p className="mt-1 text-3xl font-bold text-gray-900 dark:text-white">
+                {monthlyForecast.predicted_donation_value_formatted}
+              </p>
+              <p className="mt-2 text-xs text-gray-400 dark:text-gray-500">
+                {monthlyForecast.confidence_note}
+              </p>
+              <p className="mt-1 text-xs text-gray-300 dark:text-gray-600">
+                {monthlyForecast.model_version} · {new Date(monthlyForecast.predicted_at).toLocaleString()}
+              </p>
+            </div>
           </div>
         </>
       )}
