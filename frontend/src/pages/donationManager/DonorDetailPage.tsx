@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import {
   Supporter,
@@ -202,6 +202,10 @@ const tabList: { key: TabKey; label: string }[] = [
 export default function DonorDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const navState = location.state as { from?: string; dashboardTab?: string } | null;
+  const backTo = navState?.from || '/donors';
+  const backLabel = backTo === '/admin' ? 'Back to Dashboard' : 'Back to Donors';
   const supporterId = Number(id);
 
   const [supporter, setSupporter] = useState<Supporter | null>(null);
@@ -613,9 +617,9 @@ export default function DonorDetailPage() {
   return (
     <>
       <div className="p-4 sm:p-6 lg:p-8">
-        <button className="btn-ghost mb-4" onClick={() => navigate('/donors')}>
+        <button className="btn-ghost mb-4" onClick={() => navigate(backTo, navState?.dashboardTab ? { state: { dashboardTab: navState.dashboardTab } } : undefined)}>
           <ArrowLeft size={16} />
-          Back to Donors
+          {backLabel}
         </button>
 
         <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-md">

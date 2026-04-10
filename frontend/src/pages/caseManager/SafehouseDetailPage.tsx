@@ -91,7 +91,8 @@ export default function SafehouseDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const backTo = (location.state as { from?: string })?.from || '/safehouse-management';
+  const navState = location.state as { from?: string; dashboardTab?: string } | null;
+  const backTo = navState?.from || '/safehouse-management';
   const backLabel = backTo === '/admin' ? 'Back to Dashboard' : 'Back to Safehouse Management';
   const safehouseId = Number(id);
 
@@ -290,7 +291,7 @@ export default function SafehouseDetailPage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       {/* Back button */}
-      <button className="btn-ghost mb-4" onClick={() => navigate(backTo)}>
+      <button className="btn-ghost mb-4" onClick={() => navigate(backTo, navState?.dashboardTab ? { state: { dashboardTab: navState.dashboardTab } } : undefined)}>
         <ArrowLeft className="h-4 w-4" /> {backLabel}
       </button>
 
