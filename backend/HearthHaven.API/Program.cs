@@ -37,7 +37,8 @@ builder.Services.AddDbContext<SecurityDbContext>(options =>
             errorNumbersToAdd: null);
     }));
 
-// 3. Identity
+// SHOW THIS: 
+// Identity
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
     options.Password.RequireDigit = true;
@@ -54,7 +55,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 .AddEntityFrameworkStores<SecurityDbContext>()
 .AddDefaultTokenProviders();
 
-// ✅ 4. COOKIE CONFIG (CRITICAL)
+// COOKIE CONFIG 
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.HttpOnly = true;
@@ -96,6 +97,11 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
     app.UseSwagger();
     app.UseSwaggerUI();
+}
+else
+{
+    app.UseExceptionHandler("/Error");
+    app.UseHsts();
 }
 
 app.UseHttpsRedirection();
