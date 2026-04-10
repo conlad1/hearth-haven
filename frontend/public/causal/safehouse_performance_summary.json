@@ -1,0 +1,13 @@
+{
+  "top_performance_drivers": [
+    {
+      "feature": "month_num",
+      "coefficient": 0.0050202232090970945,
+      "p_value": 0.017711025472213256
+    }
+  ],
+  "model_r2": 0.0239,
+  "model_adj_r2": 0.0104,
+  "n_safehouse_months": 367,
+  "model_version": "safehouse_performance_v1"
+}

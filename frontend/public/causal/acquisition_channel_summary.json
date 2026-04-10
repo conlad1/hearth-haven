@@ -1,0 +1,33 @@
+{
+  "channel_coefficients": [
+    {
+      "channel": "Website",
+      "coefficient": 171.5746583168791,
+      "p_value": 0.6792386776278373
+    },
+    {
+      "channel": "WordOfMouth",
+      "coefficient": 167.76285997627792,
+      "p_value": 0.6487945027191722
+    },
+    {
+      "channel": "SocialMedia",
+      "coefficient": 167.06555863421727,
+      "p_value": 0.6742738629383745
+    },
+    {
+      "channel": "Event",
+      "coefficient": -46.910915404365824,
+      "p_value": 0.917636423092191
+    },
+    {
+      "channel": "PartnerReferral",
+      "coefficient": -232.65257622021068,
+      "p_value": 0.5781138524681038
+    }
+  ],
+  "model_r2": 0.8766,
+  "model_adj_r2": 0.8252,
+  "n_donors": 86,
+  "model_version": "acquisition_channel_v1"
+}
