@@ -4,7 +4,7 @@ import { AlertTriangle } from 'lucide-react';
 import {
   fetchTopLapseRiskDonors,
   TopLapseRiskDonor,
-} from '../api/MLPredictAPI';
+} from '../api/donationManager/MLDonorAPI';
 
 interface TopLapseRiskDonorsCardProps {
   limit?: number;

@@ -4,7 +4,7 @@ import { Brain } from 'lucide-react';
 import {
   fetchTopReintegrationCandidates,
   TopReintegrationCandidate,
-} from '../api/MLPredictAPI';
+} from '../api/caseManager/MLResidentAPI';
 
 interface TopReintegrationCandidatesCardProps {
   limit?: number;

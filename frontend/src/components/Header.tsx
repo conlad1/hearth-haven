@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { AuthService, type CurrentUser } from '../api/AuthService';
-import { Menu, X, Sun, Moon, Monitor, UserRound, Heart } from 'lucide-react';
+import { AuthService, type CurrentUser } from '../api/core/AuthService';
+import { Menu, X, UserRound, Heart } from 'lucide-react';
 import { useTheme } from '../ThemeContext';
 import { AppRoles, canShowLink, getCurrentRole, headerLinks } from '../authz';
 
@@ -9,36 +9,6 @@ type HeaderProps = {
   isAuthenticated: boolean;
   currentUser: CurrentUser | null;
 };
-
-function ThemeToggle() {
-  const { preference, setPreference } = useTheme();
-  const options = [
-    { value: 'light' as const, icon: Sun, label: 'Light' },
-    { value: 'dark' as const, icon: Moon, label: 'Dark' },
-    { value: 'system' as const, icon: Monitor, label: 'System' },
-  ];
-
-  return (
-    <div className="inline-flex items-center rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
-      {options.map(({ value, icon: Icon, label }) => (
-        <button
-          key={value}
-          onClick={() => setPreference(value)}
-          aria-label={`Use ${label.toLowerCase()} theme`}
-          aria-pressed={preference === value}
-          title={label}
-          className={`inline-flex cursor-pointer items-center justify-center rounded-md p-1.5 transition ${
-            preference === value
-              ? 'bg-orange-500 text-white shadow-sm'
-              : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
-          }`}
-        >
-          <Icon className="h-3.5 w-3.5" />
-        </button>
-      ))}
-    </div>
-  );
-}
 
 function Header({ isAuthenticated, currentUser }: HeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -71,7 +41,7 @@ function Header({ isAuthenticated, currentUser }: HeaderProps) {
         <div className="mx-auto flex h-[57px] w-full max-w-7xl items-center justify-between gap-3 px-3 sm:px-6">
           <div className="flex min-w-0 items-center gap-2 lg:gap-4">
             <Link to="/" className="flex min-w-0 items-center gap-2 text-gray-900 no-underline hover:text-gray-900 dark:text-white dark:hover:text-white">
-              <img src={theme === 'dark' ? '/heart-dark.svg' : '/Logo.svg'} alt="The Hearth Project" className="h-8 w-8" />
+              <img src={theme === 'dark' ? '/hearth-dark.png' : '/Logo.svg'} alt="The Hearth Project" className="h-8 w-auto shrink-0" />
               <span className="truncate text-base font-bold tracking-tight sm:text-lg">The Hearth Project</span>
             </Link>
 
@@ -130,7 +100,6 @@ function Header({ isAuthenticated, currentUser }: HeaderProps) {
               )}
             </div>
 
-            <ThemeToggle />
             <button
               className="btn-icon lg:hidden"
               onClick={() => setMenuOpen(!menuOpen)}
@@ -199,10 +168,6 @@ function Header({ isAuthenticated, currentUser }: HeaderProps) {
                 </>
               )}
 
-              <div className="mt-2 flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 dark:bg-gray-800">
-                <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Theme</span>
-                <ThemeToggle />
-              </div>
             </div>
           </div>
         </div>

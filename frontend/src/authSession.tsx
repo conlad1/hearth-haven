@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import type { CurrentUser } from './api/AuthService';
+import type { CurrentUser } from './api/core/AuthService';
 
 export type AuthSessionState = {
   isAuthenticated: boolean;

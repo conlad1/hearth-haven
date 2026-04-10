@@ -1,4 +1,4 @@
-# Hearth Haven LLM Access Guidance
+# The Hearth Project LLM Access Guidance
 
 Site: https://the-hearth-project.org
 Purpose: Social impact, outreach, donations, and case-support workflows.
