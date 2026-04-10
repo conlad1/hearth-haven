@@ -211,7 +211,7 @@ export default function RecordModal({
 
           {/* Fields */}
           <div className="space-y-4 rounded-xl bg-gray-50 p-4 dark:bg-white/5">
-            {fields.map((f) => (
+            {fields.filter((f) => !(mode === 'create' && f.readOnly)).map((f) => (
               <div className="flex flex-col gap-1.5" key={f.key}>
                 <label className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{f.label}{f.required && <span className="ml-0.5 text-orange-500">*</span>}</label>
                 {renderField(f)}
