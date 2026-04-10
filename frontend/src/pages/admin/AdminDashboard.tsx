@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthSession } from '../../authSession';
 import { AppRoles, getCurrentRole } from '../../authz';
 import {
@@ -223,9 +223,10 @@ const roleTabMap: Partial<Record<string, Tab>> = {
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { currentUser } = useAuthSession();
   const role = getCurrentRole(currentUser);
-  const defaultTab: Tab = (role && roleTabMap[role]) ?? 'case';
+  const defaultTab: Tab = (location.state as { dashboardTab?: Tab })?.dashboardTab ?? (role && roleTabMap[role]) ?? 'case';
   const [activeTab, setActiveTab] = useState<Tab>(defaultTab);
   const [activeModal, setActiveModal] = useState<ActiveModal | null>(null);
 
@@ -417,6 +418,7 @@ export default function AdminDashboard() {
           lapseRisk={lapseRisk}
           upgradeCands={upgradeCands}
           navigate={navigate}
+          activeTab={activeTab}
           onAllocationCreated={() => {
             // Re-fetch allocations after creating one
             fetchDonorAllocations().then(setAllocData).catch(() => {});
@@ -440,7 +442,7 @@ export default function AdminDashboard() {
       {/* ── Detail Modal ──────────────────────────────────────────────────────── */}
       {activeModal && caseData && (() => {
         const close = () => setActiveModal(null);
-        const nav = (path: string) => { close(); navigate(path); };
+        const nav = (path: string, state?: object) => { close(); navigate(path, { state: { ...state, from: '/admin', dashboardTab: activeTab } }); };
 
         const modalProps = (() => {
           switch (activeModal.type) {
@@ -991,7 +993,7 @@ function CaseTabSkeleton() {
 // ══════════════════════════════════════════════════════════════════════════════
 
 function DonorTab({
-  loading, error, donorData, allocData, lapseRisk, upgradeCands, navigate, onAllocationCreated,
+  loading, error, donorData, allocData, lapseRisk, upgradeCands, navigate, activeTab, onAllocationCreated,
 }: {
   loading: boolean;
   error: string | null;
@@ -1000,6 +1002,7 @@ function DonorTab({
   lapseRisk: TopLapseRiskDonor[] | null;
   upgradeCands: TopUpgradePotentialDonor[] | null;
   navigate: ReturnType<typeof useNavigate>;
+  activeTab: Tab;
   onAllocationCreated: () => void;
 }) {
   if (loading) return <DonorTabSkeleton />;
@@ -1069,7 +1072,11 @@ function DonorTab({
           ) : (
             <div className="flex-1 space-y-2 overflow-y-auto pr-1">
               {lapseRisk.map(d => (
-                <div key={d.supporterId} className="flex items-center justify-between rounded-lg border border-gray-100 dark:border-gray-700 px-3 py-2">
+                <div
+                  key={d.supporterId}
+                  className="flex items-center justify-between rounded-lg border border-gray-100 dark:border-gray-700 px-3 py-2 transition hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
+                  onClick={() => navigate(`/donors/${d.supporterId}`, { state: { from: '/admin', dashboardTab: activeTab } })}
+                >
                   <div className="min-w-0 flex-1">
                     <div className="text-sm font-medium text-gray-900 dark:text-white truncate">{d.displayName}</div>
                     <div className="text-xs text-gray-500 dark:text-gray-400">{d.supporterType}</div>
@@ -1109,7 +1116,7 @@ function DonorTab({
                 <div
                   key={d.supporterId}
                   className="flex items-center justify-between rounded-lg border border-gray-100 dark:border-gray-700 px-3 py-2 transition hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
-                  onClick={() => navigate(`/donors/${d.supporterId}`, { state: { from: '/admin' } })}
+                  onClick={() => navigate(`/donors/${d.supporterId}`, { state: { from: '/admin', dashboardTab: activeTab } })}
                 >
                   <div className="min-w-0 flex-1">
                     <div className="text-sm font-medium text-gray-900 dark:text-white truncate">{d.displayName}</div>
@@ -1164,7 +1171,7 @@ function DonorTab({
               </thead>
               <tbody>
                 {donorData.volunteersPartners.map(v => (
-                  <tr key={v.supporterId} className="cursor-pointer" onClick={() => navigate(`/donors/${v.supporterId}`)}>
+                  <tr key={v.supporterId} className="cursor-pointer" onClick={() => navigate(`/donors/${v.supporterId}`, { state: { from: '/admin', dashboardTab: activeTab } })}>
                     <td className="font-medium">{v.displayName}</td>
                     <td><span className="badge bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">{v.supporterType}</span></td>
                     <td>{v.relationshipType}</td>
