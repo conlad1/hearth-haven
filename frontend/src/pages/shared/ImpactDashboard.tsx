@@ -320,7 +320,8 @@ export default function ImpactDashboard() {
               transition: 'none',
             }}
           >
-            <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-orange-400">
+            <p className="mb-4 flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-widest text-orange-400">
+              <img src="/hearth-dark.png" alt="" className="h-7 w-auto" />
               The Hearth Project · Impact Report
             </p>
             <h1 className="text-5xl font-black leading-tight text-white sm:text-6xl lg:text-7xl">
