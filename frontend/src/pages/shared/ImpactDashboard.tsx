@@ -21,10 +21,16 @@ interface Stats {
   totalResidents: number;
   activeResidents: number;
   totalAllocated: number;
-  completedReintegrations: number; // residents WHERE reintegration_status = 'Completed'
-  totalCounselingSessions: number; // COUNT(*) FROM process_recordings
-  yearsOfOperation: number; // YEAR(NOW()) - YEAR(MIN(safehouses.open_date))
+  completedReintegrations: number;
+  totalCounselingSessions: number;
+  yearsOfOperation: number;
   byProgramArea: { area: string; amount: number }[];
+}
+
+interface OutcomeStats {
+  educationEngagementRate: number;
+  healthImprovementRate: number;
+  safetyRate: number;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -56,15 +62,31 @@ function useOnScreen(threshold = 0.15) {
   return { ref, visible };
 }
 
+// Tracks how far the hero has scrolled out of view (0 = fully visible, 1 = fully gone)
+function useHeroFade() {
+  const heroRef = useRef<HTMLDivElement>(null);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const onScroll = () => {
+      const el = heroRef.current;
+      if (!el) return;
+      const h = el.offsetHeight;
+      const scrolled = window.scrollY;
+      setProgress(Math.min(scrolled / (h * 0.6), 1));
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  return { heroRef, progress };
+}
+
 function AnimatedNumber({
   value,
-  prefix = '',
-  suffix = '',
   duration = 1800,
 }: {
   value: number;
-  prefix?: string;
-  suffix?: string;
   duration?: number;
 }) {
   const [display, setDisplay] = useState(0);
@@ -84,13 +106,7 @@ function AnimatedNumber({
     requestAnimationFrame(tick);
   }, [visible, value, duration]);
 
-  return (
-    <span ref={ref}>
-      {prefix}
-      {display.toLocaleString()}
-      {suffix}
-    </span>
-  );
+  return <span ref={ref}>{display.toLocaleString()}</span>;
 }
 
 function FadeIn({
@@ -111,6 +127,35 @@ function FadeIn({
         opacity: visible ? 1 : 0,
         transform: visible ? 'translateY(0)' : 'translateY(28px)',
         transition: `opacity 0.65s ease ${delay}ms, transform 0.65s ease ${delay}ms`,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+// Slides in from left or right, one-shot on first intersection
+function SlideIn({
+  children,
+  className = '',
+  direction = 'left',
+  delay = 0,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  direction?: 'left' | 'right';
+  delay?: number;
+}) {
+  const { ref, visible } = useOnScreen(0.12);
+  const offset = direction === 'left' ? '-60px' : '60px';
+  return (
+    <div
+      ref={ref}
+      className={className}
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? 'translateX(0)' : `translateX(${offset})`,
+        transition: `opacity 0.7s cubic-bezier(0.22,1,0.36,1) ${delay}ms, transform 0.7s cubic-bezier(0.22,1,0.36,1) ${delay}ms`,
       }}
     >
       {children}
@@ -154,20 +199,86 @@ const programMeta: Record<
   },
 };
 
+// ─── Stat row — alternates big number left/right ──────────────────────────────
+
+function StatRow({
+  value,
+  color,
+  label,
+  description,
+  flip = false,
+  extra,
+}: {
+  value: number;
+  color: string;
+  label: React.ReactNode;
+  description: string;
+  flip?: boolean;
+  extra?: React.ReactNode;
+}) {
+  const numberSide = (
+    <SlideIn direction={flip ? 'right' : 'left'} className="flex items-end gap-4 justify-center sm:justify-start">
+      <span className={`text-[clamp(5rem,12vw,8rem)] font-black leading-none ${color}`}>
+        <AnimatedNumber value={value} />
+      </span>
+      <span className="mb-2 text-2xl font-bold text-gray-700 dark:text-gray-300 leading-tight">
+        {label}
+      </span>
+    </SlideIn>
+  );
+
+  const textSide = (
+    <SlideIn direction={flip ? 'left' : 'right'} delay={80} className="flex flex-col gap-4">
+      <p className="text-gray-500 dark:text-gray-400 text-base leading-relaxed">
+        {description}
+      </p>
+      {extra}
+    </SlideIn>
+  );
+
+  return (
+    <section className="bg-white dark:bg-gray-900 py-24 px-6">
+      <div className="mx-auto max-w-5xl grid grid-cols-1 gap-10 sm:grid-cols-2 items-center">
+        {flip ? (
+          <>
+            {textSide}
+            {numberSide}
+          </>
+        ) : (
+          <>
+            {numberSide}
+            {textSide}
+          </>
+        )}
+      </div>
+    </section>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function ImpactDashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
+  const [outcomeStats, setOutcomeStats] = useState<OutcomeStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { heroRef, progress } = useHeroFade();
 
   useEffect(() => {
-    apiFetch(`${API}/Impact/Stats`)
-      .then((r) => {
-        if (!r.ok) throw new Error('Failed to load');
-        return r.json();
+    Promise.all([
+      apiFetch(`${API}/Impact/Stats`).then((r) => {
+        if (!r.ok) throw new Error('Failed to load stats');
+        return r.json() as Promise<Stats>;
+      }),
+      apiFetch(`${API}/Impact/OutcomeStats`).then((r) => {
+        if (!r.ok) throw new Error('Failed to load outcome stats');
+        return r.json() as Promise<OutcomeStats>;
+      }),
+    ])
+      .then(([s, o]) => {
+        setStats(s);
+        setOutcomeStats(o);
       })
-      .then(setStats)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
@@ -184,14 +295,14 @@ export default function ImpactDashboard() {
         Could not load impact data.
       </p>
     );
-  if (!stats) return null;
+  if (!stats || !outcomeStats) return null;
 
   const totalArea = stats.byProgramArea.reduce((s, a) => s + a.amount, 0) || 1;
 
   return (
     <div className="overflow-x-hidden">
-      {/* ── STICKY HERO ── pinned behind; content scrolls up over it */}
-      <div className="sticky top-0 z-0">
+      {/* ── STICKY HERO — fades out as you scroll ── */}
+      <div className="sticky top-0 z-0" ref={heroRef}>
         <section className="relative flex h-screen flex-col items-center justify-center overflow-hidden bg-gray-950 px-6 text-center">
           <div
             className="pointer-events-none absolute inset-0"
@@ -200,7 +311,15 @@ export default function ImpactDashboard() {
                 'radial-gradient(ellipse 70% 50% at 50% 60%, rgba(249,115,22,0.18) 0%, transparent 70%)',
             }}
           />
-          <div className="relative z-10 max-w-2xl">
+          {/* Hero text fades + lifts as scroll progresses */}
+          <div
+            className="relative z-10 max-w-2xl"
+            style={{
+              opacity: 1 - progress,
+              transform: `translateY(${-progress * 40}px)`,
+              transition: 'none',
+            }}
+          >
             <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-orange-400">
               Hearth Haven · Impact Report
             </p>
@@ -215,8 +334,11 @@ export default function ImpactDashboard() {
               possible.
             </p>
           </div>
-          {/* Scroll nudge — visual only, no button */}
-          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 opacity-40">
+          {/* Scroll nudge */}
+          <div
+            className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5"
+            style={{ opacity: (1 - progress) * 0.4 }}
+          >
             <div className="h-8 w-px bg-gray-500" />
             <div className="h-2 w-2 rounded-full bg-gray-400 animate-bounce" />
           </div>
@@ -225,132 +347,67 @@ export default function ImpactDashboard() {
 
       {/* ── SCROLLABLE CONTENT — z-10 slides over hero ── */}
       <div className="relative z-10">
-        {/* ── SECTION 1: SCALE ── */}
-        <section className="bg-white dark:bg-gray-900 px-6 pt-24 pb-16">
-          <div className="mx-auto max-w-5xl">
-            <FadeIn className="mb-16 text-center">
-              <p className="text-xs font-semibold uppercase tracking-widest text-orange-500 mb-3">
-                The Scale of Our Work
-              </p>
-              <h2 className="text-3xl font-black text-gray-900 dark:text-white sm:text-4xl">
-                Real numbers. Real lives.
-              </h2>
-            </FadeIn>
 
-            <div className="divide-y divide-gray-100 dark:divide-gray-800">
-              {/* Girls supported */}
-              <FadeIn className="py-12 grid grid-cols-1 gap-6 sm:grid-cols-2 items-center">
-                <div className="flex items-end gap-4">
-                  <span className="text-7xl font-black text-orange-500 leading-none sm:text-8xl">
-                    <AnimatedNumber value={stats.totalResidents} />
-                  </span>
-                  <span className="mb-2 text-2xl font-bold text-gray-700 dark:text-gray-300 leading-tight">
-                    girls
-                    <br />
-                    supported
-                  </span>
-                </div>
-                <p className="text-gray-500 dark:text-gray-400 text-base leading-relaxed sm:pl-8 sm:border-l sm:border-gray-200 sm:dark:border-gray-700">
-                  We provide a safe reprieve to children who are victims of
-                  sexual abuse, trafficking, and neglect — giving them access to
-                  proper care, counseling, education, and the resources they
-                  need to heal and rebuild their lives.
-                </p>
-              </FadeIn>
-
-              {/* Active safehouses */}
-              <FadeIn
-                className="py-12 grid grid-cols-1 gap-6 sm:grid-cols-2 items-center"
-                delay={80}
-              >
-                <div className="flex items-end gap-4">
-                  <span className="text-7xl font-black text-blue-500 leading-none sm:text-8xl">
-                    <AnimatedNumber value={stats.activeSafehouses} />
-                  </span>
-                  <span className="mb-2 text-2xl font-bold text-gray-700 dark:text-gray-300 leading-tight">
-                    active
-                    <br />
-                    safehouses
-                  </span>
-                </div>
-                <p className="text-gray-500 dark:text-gray-400 text-base leading-relaxed sm:pl-8 sm:border-l sm:border-gray-200 sm:dark:border-gray-700">
-                  Hearth Haven operates secure, dignified residential facilities
-                  across the Philippines where girls can escape dangerous
-                  situations and begin their journey toward stability and
-                  independence.
-                </p>
-              </FadeIn>
-
-              {/* Years + reintegrations — two smaller stats side by side */}
-              <FadeIn
-                className="py-12 grid grid-cols-1 gap-8 sm:grid-cols-2"
-                delay={160}
-              >
-                <div>
-                  <div className="flex items-end gap-3 mb-3">
-                    <span className="text-6xl font-black text-emerald-500 leading-none sm:text-7xl">
-                      <AnimatedNumber value={stats.yearsOfOperation} />
-                    </span>
-                    <span className="mb-1 text-xl font-bold text-gray-700 dark:text-gray-300 leading-tight">
-                      years
-                      <br />
-                      of service
-                    </span>
-                  </div>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
-                    Over a decade of uninterrupted care — building trust with
-                    communities, partners, and the girls we serve.
-                  </p>
-                </div>
-                <div>
-                  <div className="flex items-end gap-3 mb-3">
-                    <span className="text-6xl font-black text-purple-500 leading-none sm:text-7xl">
-                      <AnimatedNumber value={stats.completedReintegrations} />
-                    </span>
-                    <span className="mb-1 text-xl font-bold text-gray-700 dark:text-gray-300 leading-tight">
-                      girls found
-                      <br />a new home
-                    </span>
-                  </div>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
-                    Successfully reintegrated into loving families, foster care,
-                    or independent living — the ultimate measure of our mission.
-                  </p>
-                </div>
-              </FadeIn>
-
-              {/* Counseling sessions + inline donate CTA */}
-              <FadeIn
-                className="py-12 grid grid-cols-1 gap-6 sm:grid-cols-2 items-center"
-                delay={240}
-              >
-                <div className="flex items-end gap-4">
-                  <span className="text-7xl font-black text-orange-500 leading-none sm:text-8xl">
-                    <AnimatedNumber value={stats.totalCounselingSessions} />
-                  </span>
-                  <span className="mb-2 text-2xl font-bold text-gray-700 dark:text-gray-300 leading-tight">
-                    counseling
-                    <br />
-                    sessions
-                  </span>
-                </div>
-                <div className="sm:pl-8 sm:border-l sm:border-gray-200 sm:dark:border-gray-700">
-                  <p className="text-gray-500 dark:text-gray-400 text-base leading-relaxed mb-5">
-                    Every session is a step toward healing. Our social workers
-                    are with each girl through every stage of recovery — and
-                    none of it is possible without donor support.
-                  </p>
-                  <Link
-                    to="/donate"
-                    className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-semibold text-white hover:bg-orange-600 transition-colors no-underline"
-                  >
-                    Support the mission <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </div>
-              </FadeIn>
-            </div>
-          </div>
+        {/* ── SECTION HEADER ── */}
+        <section className="bg-white dark:bg-gray-900 pt-24 pb-0 px-6">
+          <FadeIn className="text-center max-w-5xl mx-auto">
+            <p className="text-xs font-semibold uppercase tracking-widest text-orange-500 mb-3">
+              The Scale of Our Work
+            </p>
+            <h2 className="text-3xl font-black text-gray-900 dark:text-white sm:text-4xl">
+              Real numbers. Real lives.
+            </h2>
+          </FadeIn>
         </section>
+
+        {/* ── STAT ROWS — alternating sides ── */}
+        <StatRow
+          value={stats.totalResidents}
+          color="text-orange-500"
+          label={<>girls<br />supported</>}
+          description="We provide a safe reprieve to children who are victims of sexual abuse, trafficking, and neglect — giving them access to proper care, counseling, education, and the resources they need to heal and rebuild their lives."
+          flip={false}
+        />
+
+        <StatRow
+          value={stats.activeSafehouses}
+          color="text-blue-500"
+          label={<>active<br />safehouses</>}
+          description="Hearth Haven operates secure, dignified residential facilities across the Philippines where girls can escape dangerous situations and begin their journey toward stability and independence."
+          flip={true}
+        />
+
+        <StatRow
+          value={stats.yearsOfOperation}
+          color="text-emerald-500"
+          label={<>years<br />of service</>}
+          description="Over a decade of uninterrupted care — building trust with communities, partners, and the girls we serve."
+          flip={false}
+        />
+
+        <StatRow
+          value={stats.completedReintegrations}
+          color="text-purple-500"
+          label={<>girls found<br />a new home</>}
+          description="Successfully reintegrated into loving families, foster care, or independent living — the ultimate measure of our mission."
+          flip={true}
+        />
+
+        <StatRow
+          value={stats.totalCounselingSessions}
+          color="text-orange-500"
+          label={<>counseling<br />sessions</>}
+          description="Every session is a step toward healing. Our social workers are with each girl through every stage of recovery — and none of it is possible without donor support."
+          flip={false}
+          extra={
+            <Link
+              to="/donate"
+              className="self-start inline-flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-semibold text-white hover:bg-orange-600 transition-colors no-underline"
+            >
+              Support the mission <ArrowRight className="h-4 w-4" />
+            </Link>
+          }
+        />
 
         {/* ── SECTION 2: WHERE DONATIONS GO ── */}
         <section className="bg-gray-50 dark:bg-gray-950 py-24 px-6">
@@ -398,7 +455,6 @@ export default function ImpactDashboard() {
                     </p>
                     <div className="mt-4">
                       <div className="h-1.5 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
-                        {/* Width matches the displayed percentage exactly */}
                         <div
                           className="h-full rounded-full bg-orange-500"
                           style={{ width: `${pct}%` }}
@@ -517,19 +573,19 @@ export default function ImpactDashboard() {
               {[
                 {
                   icon: BookOpen,
-                  stat: '94%',
+                  stat: `${outcomeStats.educationEngagementRate}%`,
                   label: 'Education Engagement',
                   desc: 'of residents maintain active school enrollment or vocational training.',
                 },
                 {
                   icon: TrendingUp,
-                  stat: '87%',
+                  stat: `${outcomeStats.healthImprovementRate}%`,
                   label: 'Health Improvement',
                   desc: 'of residents show improved physical health scores within 3 months of admission.',
                 },
                 {
                   icon: Shield,
-                  stat: '91%',
+                  stat: `${outcomeStats.safetyRate}%`,
                   label: 'Safety Record',
                   desc: 'of residents complete their stay without a serious safety incident.',
                 },
