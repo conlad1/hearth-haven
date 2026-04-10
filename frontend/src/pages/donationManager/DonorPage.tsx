@@ -483,8 +483,7 @@ export default function DonorPage() {
         if (cancelled) return;
         const match = res.data[0];
         if (match) {
-          openSupporter(match);
-          if (cameFromAdmin) setModalFromAdmin(true);
+          navigate(`/donors/${match.supporterId}`);
         }
       })
       .catch((e) =>
@@ -1262,7 +1261,7 @@ export default function DonorPage() {
                           <tr
                             key={s.supporterId}
                             className="cursor-pointer"
-                            onClick={() => openSupporter(s)}
+                            onClick={() => navigate(`/donors/${s.supporterId}`)}
                           >
                             <td>{s.supporterId}</td>
                             <td className="font-medium text-gray-900 dark:text-white">
@@ -1324,7 +1323,12 @@ export default function DonorPage() {
                             <td>{c.donationId}</td>
                             <td>{c.donationDate}</td>
                             <td className="font-medium text-gray-900 dark:text-white">
-                              {c.supporterName}
+                              <button
+                                className="text-orange-500 hover:text-orange-600 underline decoration-orange-500/30 hover:decoration-orange-500 transition cursor-pointer"
+                                onClick={(e) => { e.stopPropagation(); navigate(`/donors/${c.supporterId}`); }}
+                              >
+                                {c.supporterName}
+                              </button>
                             </td>
                             <td>
                               <span className="inline-flex items-center gap-1.5">
@@ -1690,7 +1694,12 @@ export default function DonorPage() {
                     id="contribution-dialog-title"
                     className="text-lg font-bold text-gray-900 dark:text-white"
                   >
-                    {selectedContribution.supporterName}
+                    <button
+                      className="text-orange-500 hover:text-orange-600 underline decoration-orange-500/30 hover:decoration-orange-500 transition cursor-pointer"
+                      onClick={() => navigate(`/donors/${selectedContribution.supporterId}`)}
+                    >
+                      {selectedContribution.supporterName}
+                    </button>
                   </h2>
                   <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
                     {selectedContribution.donationType} /{' '}

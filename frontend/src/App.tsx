@@ -12,6 +12,7 @@ import ResidentDetailPage from './pages/caseManager/ResidentDetailPage';
 import DonatePage from './pages/shared/DonatePage';
 import ThankYouPage from './pages/shared/ThankYouPage';
 import DonorsPage from './pages/donationManager/DonorPage';
+import DonorDetailPage from './pages/donationManager/DonorDetailPage';
 import SocialMediaPage from './pages/socialsManager/SocialMediaPage';
 import ImpactDashboard from './pages/shared/ImpactDashboard';
 import { AuthService, type CurrentUser } from './api/core/AuthService';
@@ -297,6 +298,19 @@ function App() {
                     allowedRoles={[AppRoles.Admin, AppRoles.DonationsManager]}
                   >
                     <DonorsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/donors/:id"
+                element={
+                  <ProtectedRoute
+                    isAuthenticated={isAuthenticated}
+                    sessionReady={sessionReady}
+                    currentUser={currentUser}
+                    allowedRoles={[AppRoles.Admin, AppRoles.DonationsManager]}
+                  >
+                    <DonorDetailPage />
                   </ProtectedRoute>
                 }
               />

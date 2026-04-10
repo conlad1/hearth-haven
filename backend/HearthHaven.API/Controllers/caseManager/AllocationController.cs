@@ -120,6 +120,18 @@ public class AllocationController : ControllerBase
     {
         if (req == null) return BadRequest("Invalid payload");
 
+        var donation = await _db.Donations.FindAsync(req.donation_id);
+        if (donation == null) return NotFound($"Donation {req.donation_id} not found.");
+
+        var donationTotal = donation.Amount ?? donation.EstimatedValue ?? 0;
+        var alreadyAllocated = _db.DonationAllocations
+            .Where(a => a.DonationId == req.donation_id)
+            .Sum(a => (decimal?)a.AmountAllocated) ?? 0;
+        var remaining = donationTotal - alreadyAllocated;
+
+        if (req.amount_allocated > remaining)
+            return BadRequest($"Amount exceeds available balance. Donation total: {donationTotal:F2}, already allocated: {alreadyAllocated:F2}, remaining: {remaining:F2}.");
+
         var allocation = new DonationAllocation
         {
             DonationId       = req.donation_id,
@@ -148,6 +160,16 @@ public class AllocationController : ControllerBase
     {
         var allocation = await _db.DonationAllocations.FindAsync(id);
         if (allocation == null) return NotFound($"Allocation {id} not found.");
+
+        var donation = await _db.Donations.FindAsync(allocation.DonationId);
+        var donationTotal = donation?.Amount ?? donation?.EstimatedValue ?? 0;
+        var alreadyAllocated = _db.DonationAllocations
+            .Where(a => a.DonationId == allocation.DonationId && a.AllocationId != id)
+            .Sum(a => (decimal?)a.AmountAllocated) ?? 0;
+        var remaining = donationTotal - alreadyAllocated;
+
+        if (req.amount_allocated > remaining)
+            return BadRequest($"Amount exceeds available balance. Donation total: {donationTotal:F2}, already allocated: {alreadyAllocated:F2}, remaining: {remaining:F2}.");
 
         allocation.SafehouseId     = req.safehouse_id;
         allocation.ProgramArea     = req.program_area;

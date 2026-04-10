@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HearthHaven.API.Controllers;
 
-[Authorize(Roles = AppRoles.Admin)]
+[Authorize(Roles = $"{AppRoles.Admin},{AppRoles.CaseManager},{AppRoles.DonationsManager},{AppRoles.OutreachManager}")]
 [Route("[controller]")]
 [ApiController]
 public class MLPredictController : ControllerBase

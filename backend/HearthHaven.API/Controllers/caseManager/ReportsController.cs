@@ -230,12 +230,24 @@ public class ReportsController : ControllerBase
         if (cutoff.HasValue)
             metricsQuery = metricsQuery.Where(m => m.MonthStart >= cutoff.Value);
 
-        var monthlyEducationProgress = metricsQuery
-            .Where(m => m.AvgEducationProgress.HasValue && m.ActiveResidents > 0)
-            .GroupBy(m => new { m.MonthStart.Year, m.MonthStart.Month })
+        var metricsRows = metricsQuery
+            .Where(m => m.ActiveResidents > 0)
+            .Select(m => new
+            {
+                m.MonthStart.Year,
+                m.MonthStart.Month,
+                m.AvgEducationProgress,
+                m.AvgHealthScore,
+                m.ActiveResidents,
+            })
+            .ToList();
+
+        var monthlyEducationProgress = metricsRows
+            .Where(m => m.AvgEducationProgress.HasValue)
+            .GroupBy(m => new { m.Year, m.Month })
             .Select(g => new
             {
-                month = g.Key.Year + "-" + (g.Key.Month < 10 ? "0" : "") + g.Key.Month,
+                month = $"{g.Key.Year}-{g.Key.Month:D2}",
                 avgProgress = Math.Round(
                     g.Sum(m => m.AvgEducationProgress!.Value * m.ActiveResidents)
                     / g.Sum(m => m.ActiveResidents), 1),
@@ -243,12 +255,12 @@ public class ReportsController : ControllerBase
             .OrderBy(x => x.month)
             .ToList();
 
-        var monthlyHealthScores = metricsQuery
-            .Where(m => m.AvgHealthScore.HasValue && m.ActiveResidents > 0)
-            .GroupBy(m => new { m.MonthStart.Year, m.MonthStart.Month })
+        var monthlyHealthScores = metricsRows
+            .Where(m => m.AvgHealthScore.HasValue)
+            .GroupBy(m => new { m.Year, m.Month })
             .Select(g => new
             {
-                month = g.Key.Year + "-" + (g.Key.Month < 10 ? "0" : "") + g.Key.Month,
+                month = $"{g.Key.Year}-{g.Key.Month:D2}",
                 avgScore = Math.Round(
                     g.Sum(m => m.AvgHealthScore!.Value * m.ActiveResidents)
                     / g.Sum(m => m.ActiveResidents), 1),
