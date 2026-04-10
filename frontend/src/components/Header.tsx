@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { AuthService, type CurrentUser } from '../api/AuthService';
+import { AuthService, type CurrentUser } from '../api/core/AuthService';
 import { Menu, X, Sun, Moon, Monitor, UserRound, Heart } from 'lucide-react';
 import { useTheme } from '../ThemeContext';
 import { AppRoles, canShowLink, getCurrentRole, headerLinks } from '../authz';

@@ -1,5 +1,5 @@
-import type { CurrentUser } from './api/AuthService';
-import type { UserProfile } from './api/ProfileAPI';
+import type { CurrentUser } from './api/core/AuthService';
+import type { UserProfile } from './api/shared/ProfileAPI';
 
 export const AppRoles = {
   Admin: 'Admin',
