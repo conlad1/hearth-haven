@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Phone } from 'lucide-react';
-import type { CurrentUser } from '../api/AuthService';
+import type { CurrentUser } from '../api/core/AuthService';
 import { canShowLink, footerLinks, getCurrentRole } from '../authz';
 
 type FooterProps = {
@@ -86,7 +86,7 @@ function Footer({ isAuthenticated, currentUser }: FooterProps) {
           <div>
             <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-900 dark:text-white">Support</h4>
             <div className="flex flex-col gap-2.5">
-              <Link to="/#contact" className="text-sm text-gray-500 no-underline transition hover:text-orange-500 dark:text-gray-400">Contact Us</Link>
+              <Link to="/contact" className="text-sm text-gray-500 no-underline transition hover:text-orange-500 dark:text-gray-400">Contact Us</Link>
               <Link to="/privacy" className="text-sm text-gray-500 no-underline transition hover:text-orange-500 dark:text-gray-400">Privacy Policy</Link>
               <Link to="/terms" className="text-sm text-gray-500 no-underline transition hover:text-orange-500 dark:text-gray-400">Terms of Service</Link>
             </div>

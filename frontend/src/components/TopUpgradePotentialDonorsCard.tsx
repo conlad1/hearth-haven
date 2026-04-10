@@ -4,7 +4,7 @@ import { TrendingUp } from 'lucide-react';
 import {
   fetchTopUpgradePotentialDonors,
   TopUpgradePotentialDonor,
-} from '../api/MLPredictAPI';
+} from '../api/donationManager/MLDonorAPI';
 
 interface TopUpgradePotentialDonorsCardProps {
   limit?: number;
