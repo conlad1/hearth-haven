@@ -60,7 +60,7 @@ var cookieDomain = builder.Configuration["CookieDomain"]; // e.g. ".the-hearth-p
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.HttpOnly = true;
-    options.Cookie.SameSite = SameSiteMode.None; // REQUIRED for frontend
+    options.Cookie.SameSite = SameSiteMode.Lax; // Same-site (shared root domain)
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // REQUIRED for HTTPS
     if (!string.IsNullOrEmpty(cookieDomain))
         options.Cookie.Domain = cookieDomain; // Share cookie across subdomains (fixes iOS Safari)
