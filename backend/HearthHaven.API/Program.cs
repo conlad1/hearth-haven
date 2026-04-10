@@ -55,12 +55,15 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 .AddEntityFrameworkStores<SecurityDbContext>()
 .AddDefaultTokenProviders();
 
-// COOKIE CONFIG 
+// COOKIE CONFIG
+var cookieDomain = builder.Configuration["CookieDomain"]; // e.g. ".the-hearth-project.org" in production
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.HttpOnly = true;
     options.Cookie.SameSite = SameSiteMode.None; // REQUIRED for frontend
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // REQUIRED for HTTPS
+    if (!string.IsNullOrEmpty(cookieDomain))
+        options.Cookie.Domain = cookieDomain; // Share cookie across subdomains (fixes iOS Safari)
 });
 
 // ✅ 5. CORS CONFIG (LONG-TERM CLEAN WAY)
