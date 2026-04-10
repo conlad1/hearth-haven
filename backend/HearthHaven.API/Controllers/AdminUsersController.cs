@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HearthHaven.API.Controllers;
 
+// SHOW THIS: 
+// Only users with the Admin role can access these endpoints.
 [Authorize(Roles = AppRoles.Admin)]
 [Route("AdminUsers")]
 [ApiController]
